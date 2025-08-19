@@ -1,6 +1,15 @@
+// "use client"
+import { getDictionary } from "@/app/getDictionary";
 import Image from "next/image";
+// import file from "@/public/file.svg";
+// import window from "../../../public/file.svg";
+// import globe from "@/public/globe.svg";
+// import next from "@/public/next.svg";
+// import vercel from "@/public/vercel.svg";
 
-export default function Home() {
+export default async function Home({params}: {params: Promise<{lang: 'en' | 'fr' }>})  {
+  const {lang} = await params
+  const dict = await getDictionary(lang)
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -21,7 +30,7 @@ export default function Home() {
             .
           </li>
           <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
+            Save and see your changes instantly. {dict?.home.title}
           </li>
         </ol>
 

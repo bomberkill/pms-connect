@@ -1,0 +1,249 @@
+{
+  "home": {
+    "title": "and see your changes instantly."
+  },
+  "login": {
+    "title": "Login to your account",
+    "description": "Enter your email below to login to your account",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "forgotPassword": "Forgot your password?",
+    "loginButton": "Login",
+    "continueWith": "Or continue with",
+    "googleButton": "Login with Google",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up"
+  },
+  "validation": {
+    "email": {
+      "invalid": "Invalid email format",
+      "required": "Email is required",
+      "alreadyInUse": "Email is already in use"
+    },
+    "password": {
+      "min": "Password must be at least 6 characters",
+      "required": "Password is required",
+      "weak": "Password is too weak, please choose a stronger password"
+    },
+    "file": {
+      "required": "A file is required",
+      "tooLarge": "File is too large (max 2MB)",
+      "onlyPDF": "Only PDF files are allowed",
+      "onlyPng": "Only PNG, JPEG, and JPG files are allowed",
+      "unsupported": "Unsupported File Format",
+      "min": "At least one file is required",
+      "max": "No more than 2 files are allowed",
+      "atLeast": "You must provide at least one accreditation file"
+    },
+    "websiteUrl": {
+      "invalidUrl": "Invalid URL format"
+    },
+    "country": {
+      "required": "Country is required"
+    },
+    "state": {
+      "required": "State is required"
+    },
+    "city": {
+      "required": "City is required"
+    }
+  },
+  "notifications": {
+    "warning": "Warning",
+    "login": {
+      "success": {
+        "title": "Login Successful",
+        "message": "Welcome back!"
+      },
+      "error": {
+        "title": "Login Failed",
+        "messages": {
+          "default": "Something went wrong. Please try again.",
+          "auth/invalid-credential": "Invalid email or password.",
+          "auth/user-disabled": "This account has been disabled.",
+          "auth/user-not-found": "No user found with this email address.",
+          "auth/network-request-failed": "Check your internet connection and try again.",
+          "auth/too-many-requests": "Too many attempts. Please try again later."
+        }
+      }
+    },
+    "forgotPassword": {
+      "success": {
+        "title": "Reset Link Sent",
+        "message":  "If an account exists with this email, a reset link has been sent."
+      },
+      "info": {
+        "title": "Sign-in Required",
+        "message": "This email is linked to an account created without a password. Please sign in using your original sign-in method."
+      },
+      "error": {
+        "title": "Reset Link Failed",
+        "message": "Unable to send reset link. Please try again."
+      }
+    },
+    "register": {
+      "success": {
+        "title": "Registration Successful",
+        "message": "Your account has been created successfully!",
+        "googleAccount": {
+          "title": "Google Account Linked",
+          "message": "Your Google account has been linked successfully, please complete your profile to continue."
+        }
+      },
+      "error": {
+        "title": "Registration Failed",
+        "message": "There was an error creating your account. Please try again."
+      }
+    },
+    "noChanges": {
+      "title": "No Changes",
+      "message": "You haven't made any changes."
+    },
+    "profileUpdated": {
+      "title": "Profile Updated",
+      "message": "Your profile has been successfully updated."
+    },
+    "updateFailed": {
+      "title": "Update Failed",
+      "defaultMessage": "An error occurred."
+    }
+  },
+  "register": {
+    "title": "Create Your Account",
+    "description": "Start your journey with us!",
+    "step1Title": "Account Type & Credentials",
+    "step1Description": "Choose your account type and set up your login details.",
+    "userTypeLabel": "User Type",
+    "individual": "Individual",
+    "legalEntity": "Legal Entity",
+    "individualDescription": "For healthcare professionals, researchers, students, etc.",
+    "legalEntityDescription": "For companies, hospitals, associations, clinics, research institutions and others healthcare entities.",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "step2Title": "Personal Details",
+    "step2Description": "Provide some information about yourself.",
+    "firstNameLabel": "First Name",
+    "lastNameLabel": "Last Name",
+    "specialityLabel": "Speciality",
+    "professionalTitleLabel": "Professional Title",
+    "entityNameLabel": "Entity Name",
+    "entityTypeLabel": "Entity Type",
+    "step3Title": "Optional Profile & Location Details",
+    "step3Description": "Add optional information for your profile and address.",
+    "bioLabel": "Bio",
+    "profilePicUrlLabel": "Profile Picture URL",
+    "coverPicUrlLabel": "Cover Picture URL",
+    "websiteUrlLabel": "Website URL",
+    "addressLine1Label": "Address Line 1",
+    "addressLine2Label": "Address Line 2",
+    "cityLabel": "City",
+    "stateOrProvinceLabel": "State/Province",
+    "postalCodeLabel": "Postal Code",
+    "countryLabel": "Country",
+    "next": "Next",
+    "previous": "Previous",
+    "registerButton": "Register",
+    "alreadyHaveAccount": "Already have an account?",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "uploadProfilePic": "Upload Profile Picture",
+    "uploadCoverPic": "Upload Cover Picture",
+    "professionalAccreditations": "Professional Accreditations",
+    "accreditationType": "Accreditation Type",
+    "document": "Document (PDF, JPG, PNG)",
+    "addAccreditation": "Add Accreditation",
+    "remove": "Remove"
+  },
+  "specialities": {
+    "MEDICAL_DOCTORS": "Medical Doctors",
+    "DENTAL_SURGEONS": "Dental Surgeons",
+    "PHARMACISTS": "Pharmacists",
+    "NURSES": "Nurses",
+    "SANITARY_ENGINEERING": "Sanitary Engineering",
+    "MEDICO_SANITARY_TECHNICIANS": "Medico-Sanitary Technicians",
+    "PUBLIC_HEALTH_ADMINISTRATION": "Public Health Administration",
+    "MIDWIVES": "Midwives",
+    "MEDICAL_REPRESENTATIVES": "Medical Representatives",
+    "CAREGIVERS": "Caregivers",
+    "PHARMACY_ASSISTANTS": "Pharmacy Assistants",
+    "OTHER_HEALTH_AUXILIARY": "Other Health Auxiliary"
+  },
+  "entityTypes": {
+    "HOSPITAL": "Hospital",
+    "CLINIC": "Clinic",
+    "LABORATORY": "Laboratory",
+    "PHARMACEUTICAL_COMPANY": "Pharmaceutical Company",
+    "MEDICAL_ASSOCIATION": "Medical Association",
+    "HEALTH_TRAINING_INSTITUTION": "Health Training Institution",
+    "COMPANY": "Company",
+    "IMAGING_CENTER": "Imaging Center",
+    "ASSOCIATION": "Association"
+  },
+  "appSideBar": {
+    "navMain": {
+      "feed": "Feed",
+      "group": "Groups",
+      "chat": "Chat",
+      "job": "Jobs",
+      "profile": "Profile",
+      "settings": "Settings",
+      "marketplace": "Marketplace",
+      "library": "Library",
+      "more": "More"
+    },
+    "navUser": {
+      "account": "Profile",
+      "billing": "Billing",
+      "notifications": "Notifications",
+      "support": "Support",
+      "settings": "Settings",
+      "logout": "Logout"
+    }
+  },
+  "profile": {
+    "noBio": "No bio available.",
+    "confirmUpdate": {
+      "title": "Confirm Update",
+      "messageProfile": "Are you sure you want to change your profile picture?",
+      "messageCover": "Are you sure you want to change your cover photo?"
+    },
+    "tabs": {
+      "about": "About",
+      "posts": "Posts",
+      "experience": "Experience",
+      "activity": "Activity"
+    },
+    "stats": {
+      "title": "Statistics",
+      "posts": "Posts",
+      "followers": "Followers",
+      "following": "Following"
+    }
+  },
+  "button": {
+    "edit": "Edit Profile",
+    "save": "Save",
+    "cancel": "Cancel",
+    "sendLink": "Send Reset Link",
+    "backToLogin": "Back to login"
+  },
+  "updateProfile": {
+    "title": "Edit Profile",
+    "description": "Update your information. Click \"Save\" when you're done."
+  },
+  "combobox": {
+    "selectCountry": "Select Country",
+    "selectState": "Select State",
+    "selectCity": "Select City",
+    "noResults": "No results found."
+  },
+  "header": {
+    "searchPlaceholder": "Search for friends , groups , pages...",
+    "addNewPost": "Add New Post"
+  },
+  "resetPassword": {
+    "title": "Reset Password",
+    "description": "Enter your email address and we'll send you a link to reset your password.",
+    "emailLabel": "Email address"
+  }
+}

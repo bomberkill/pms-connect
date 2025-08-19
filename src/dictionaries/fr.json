@@ -1,0 +1,250 @@
+{
+    "home": {
+      "title": "et voyez vos changements instantanément."
+    },
+    "login": {
+      "title": "Connectez-vous à votre compte",
+      "description": "Entrez votre email ci-dessous pour vous connecter",
+      "emailLabel": "Email",
+      "passwordLabel": "Mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "loginButton": "Se connecter",
+      "continueWith": "Ou continuer avec",
+      "googleButton": "Se connecter avec Google",
+      "noAccount": "Vous n'avez pas de compte ?",
+      "signUp": "S'inscrire"
+    },
+    "validation": {
+      "email": {
+        "invalid": "Format d'email invalide",
+        "required": "L'email est requis",
+        "alreadyInUse": "Cet email est déjà utilisé"
+      },
+      "password": {
+        "min": "Le mot de passe doit contenir au moins 6 caractères",
+        "required": "Le mot de passe est requis",
+        "weak": "Le mot de passe est trop faible, veuillez choisir un mot de passe plus fort"
+      },
+      "file": {
+        "required": "Un fichier est requis",
+        "tooLarge": "Le fichier est trop volumineux (max 2 Mo)",
+        "onlyPDF": "Seuls les fichiers PDF sont autorisés",
+        "onlyPng": "Seuls les fichiers PNG, JPG et JPEG sont autorisés",
+        "unsupported": "Format de fichier non pris en charge",
+        "min": "Au moins un fichier est requis",
+        "max": "Pas plus de 2 fichiers ne sont autorisés",
+        "atLeast": "Vous devez fournir au moins un fichier d’accréditation"
+      },
+      "websiteUrl": {
+        "invalidUrl": "Format d'URL invalide"
+      },
+      "country": {
+        "required": "Le pays est requis"
+      },
+      "state": {
+        "required": "L'état est requis"
+      },
+      "city": {
+        "required": "La ville est requise"
+      }
+    },
+    "notifications": {
+      "warning": "Attention",
+      "login": {
+        "success": {
+          "title": "Connexion réussie",
+          "message": "Content de vous revoir !"
+        },
+        "error": {
+          "title": "Échec de la connexion",
+          "messages": {
+            "default": "Une erreur s'est produite. Veuillez réessayer.",
+            "auth/invalid-credential": "Email ou mot de passe incorrect.",
+            "auth/user-disabled": "Ce compte a été désactivé.",
+            "auth/user-not-found": "Aucun utilisateur trouvé avec cet e-mail.",
+            "auth/network-request-failed": "Vérifiez votre connexion internet et réessayez",
+            "auth/too-many-requests": "Trop de tentatives. Veuillez réessayer plus tard."
+          }
+        }
+      },
+      "register": {
+        "success": {
+          "title": "Inscription réussie",
+          "message": "Votre compte a été créé avec succès !",
+          "googleAccount": {
+            "title": "Compte Google lié",
+            "message": "Votre compte Google a été lié avec succès, Veuillez compléter votre profil pour continuer."
+          }
+        },
+        "error": {
+          "title": "Échec de l'inscription",
+          "message": "Une erreur s'est produite lors de la création de votre compte. Veuillez réessayer."
+        }
+      },
+      "forgotPassword": {
+        "success": {
+          "title": "Lien envoyé",
+          "message": "Si un compte existe avec cet e-mail, un lien de réinitialisation a été envoyé."
+        },
+        "info": {
+          "title": "Connexion requise",
+          "message": "Cet email est associé à un compte créé sans mot de passe. Veuillez vous connecter via votre méthode d'inscription initiale."
+        },
+        "error": {
+          "title": "Échec de l’envoi",
+          "message": "Impossible d’envoyer le lien de réinitialisation. Veuillez réessayer."
+        }
+      },
+      "noChanges": {
+        "title": "Aucun changement",
+        "message": "Vous n'avez fait aucune modification."
+      },
+      "profileUpdated": {
+        "title": "Profil mis à jour",
+        "message": "Votre profil a été mis à jour avec succès."
+      },
+      "updateFailed": {
+        "title": "Échec de la mise à jour",
+        "defaultMessage": "Une erreur est survenue."
+      }
+    },
+    "register": {
+      "title": "Créer votre compte",
+      "description": "Commencez votre parcours avec nous !",
+      "step1Title": "Type de compte et identifiants",
+      "step1Description": "Choisissez votre type de compte et définissez vos identifiants.",
+      "userTypeLabel": "Type d'utilisateur",
+      "individual": "Personne physique",
+      "legalEntity": "Entité légale",
+      "individualDescription": "Pour les professionnels de santé, les chercheurs, les étudiants, etc.",
+      "legalEntityDescription": "Pour les entreprises, hôpitaux, associations, cliniques, établissements de recherche et autres entités de santé.",
+      "emailLabel": "Email",
+      "passwordLabel": "Mot de passe",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "step2Title": "Détails personnels",
+      "step2Description": "Fournissez quelques informations sur vous-même.",
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
+      "specialityLabel": "Spécialité",
+      "professionalTitleLabel": "Titre professionnel",
+      "entityNameLabel": "Nom de l'entité",
+      "entityTypeLabel": "Type d'entité",
+      "step3Title": "Détails du profil et localisation",
+      "step3Description": "Ajoutez des informations facultatives pour votre profil et votre adresse.",
+      "bioLabel": "Biographie",
+      "profilePicUrlLabel": "URL de la photo de profil",
+      "coverPicUrlLabel": "URL de la photo de couverture",
+      "websiteUrlLabel": "URL du site web",
+      "addressLine1Label": "Adresse Ligne 1",
+      "addressLine2Label": "Adresse Ligne 2",
+      "cityLabel": "Ville",
+      "stateOrProvinceLabel": "État/Province",
+      "postalCodeLabel": "Code postal",
+      "countryLabel": "Pays",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "registerButton": "S'inscrire",
+      "alreadyHaveAccount": "Vous avez déjà un compte ?",
+      "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
+      "uploadProfilePic": "Téléverser une photo de profil",
+      "uploadCoverPic": "Téléverser une photo de couverture",
+      "professionalAccreditations": "Accréditations professionnelles",
+      "accreditationType": "Type d'accréditation",
+      "document": "Document (PDF, JPG, PNG)",
+      "addAccreditation": "Ajouter une accréditation",
+      "remove": "Retirer"
+    },
+    "specialities": {
+    "MEDICAL_DOCTORS": "Médecins",
+    "DENTAL_SURGEONS": "Chirurgiens-dentistes",
+    "PHARMACISTS": "Pharmaciens",
+    "NURSES": "Infirmiers / Infirmières",
+    "SANITARY_ENGINEERING": "Génie sanitaire",
+    "MEDICO_SANITARY_TECHNICIANS": "Techniciens médico-sanitaires",
+    "PUBLIC_HEALTH_ADMINISTRATION": "Administration de la santé publique",
+    "MIDWIVES": "Sages-femmes",
+    "MEDICAL_REPRESENTATIVES": "Représentants médicaux",
+    "CAREGIVERS": "Aides-soignants",
+    "PHARMACY_ASSISTANTS": "Préparateurs en pharmacie",
+    "OTHER_HEALTH_AUXILIARY": "Autres auxiliaires de santé"
+  },
+  "entityTypes": {
+    "HOSPITAL": "Hôpital",
+    "CLINIC": "Clinique",
+    "LABORATORY": "Laboratoire",
+    "PHARMACEUTICAL_COMPANY": "Entreprise pharmaceutique",
+    "MEDICAL_ASSOCIATION": "Association médicale",
+    "HEALTH_TRAINING_INSTITUTION": "Établissement de formation en santé",
+    "COMPANY": "Entreprise",
+    "IMAGING_CENTER": "Centre d'imagerie",
+    "ASSOCIATION": "Association"
+  },
+  "appSideBar": {
+    "navMain": {
+      "feed": "Fil d'actualité",
+      "group": "Groupes",
+      "chat": "Discussions",
+      "job": "Emplois",
+      "profile": "Profile",
+      "settings": "Paramètres",
+      "marketplace": "Marketplace",
+      "library": "Bibliothèque",
+      "more": "Plus"
+    },
+    "navUser": {
+      "account": "Profile",
+      "billing": "Facturation",
+      "notifications": "Notifications",
+      "support": "Support",
+      "settings": "Paramètres",
+      "logout": "Se déconnecter"
+    }
+
+  },
+  "profile": {
+    "noBio": "Aucune biographie disponible.",
+    "confirmUpdate": {
+      "title": "Confirmer la mise à jour",
+      "messageProfile": "Voulez-vous vraiment changer votre photo de profil ?",
+      "messageCover": "Voulez-vous vraiment changer votre photo de couverture ?"
+    },
+    "tabs": {
+      "about": "À propos",
+      "posts": "Publications",
+      "experience": "Expérience",
+      "activity": "Activité"
+    },
+    "stats": {
+      "title": "Statistiques",
+      "posts": "Publications",
+      "followers": "Abonnés",
+      "following": "Abonnements"
+    }
+  },
+  "button": {
+    "edit": "Modifier le profil",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "sendLink": "Envoyer le lien de réinitialisation",
+    "backToLogin": "Retour à la connexion"
+  },
+  "updateProfile": {
+    "title": "Modifier le profil",
+    "description": "Mettez à jour vos informations. Cliquez sur \"Enregistrer\" lorsque vous avez terminé."
+  },
+  "combobox": {
+    "selectCountry": "Sélectionnez un pays",
+    "selectState": "Sélectionnez une région/état",
+    "selectCity": "Sélectionnez une ville",
+    "noResults": "Aucun résultat trouvé."
+  },
+  "header": {
+    "searchPlaceholder": "Rechercher vos amis, groupes et pages...",
+    "addNewPost": "nouvelle publication"
+  },
+  "resetPassword": {
+    "title": "Réinitialiser le mot de passe",
+    "description": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+    "emailLabel": "Adresse e-mail"
+  }
+}
