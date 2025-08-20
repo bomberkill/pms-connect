@@ -113,6 +113,9 @@ export const fetchUserByUid = createAsyncThunk(
             if (errors && errors.length > 0) {
                 return rejectWithValue(errors[0].message);
             }
+            if (!data.getUserByFirebaseUid) {
+                return rejectWithValue("getUserByFirebaseUid is null")
+            }
             // console.log("fetchUserByUid data", data);
             return data.getUserByFirebaseUid;
         } catch (error: unknown) {

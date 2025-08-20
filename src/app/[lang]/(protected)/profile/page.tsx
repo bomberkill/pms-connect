@@ -147,7 +147,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="relative bg-background shadow-sm m-5 pb-5 min-h-screen rounded-lg">
+    <div className="relative bg-background shadow-sm md:m-5 pb-5 min-h-screen md:rounded-lg">
       {isUploading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 opacity-40 transition-opacity z-50">
           <Loader2 className="h-12 w-12 animate-spin text-white" />
@@ -160,7 +160,7 @@ export default function ProfilePage() {
             src={user.coverPicUrl}
             alt="Cover"
             fill
-            className="object-cover rounded-t-lg"
+            className="object-cover md:rounded-t-lg"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent rounded-t-lg" />
           
@@ -183,25 +183,32 @@ export default function ProfilePage() {
       )}
 
       {/* Profile Info */}
-      <div className="max-w-5xl mx-auto px-8 -mt-16 relative">
-        <div className="flex row justify-between items-end ml-6 md:ml-6">
+      <div className="max-w-5xl mx-auto px-8 -mt-10 md:-mt-16 relative ">
+        <div className="flex row justify-between items-end md:ml-6">
           <div>
             {user.profilePicUrl && (
-              <div className="relative h-32 w-32 group">
-                <Avatar className="h-full w-full relative avatar rounded-full border-4 border-white shadow-lg">
+              <div className="relative h-20 w-20 md:h-24 md:w-24 lg:h-28 lg:w-28">
+                <Image src={user.profilePicUrl} alt="Profile" fill className="object-cover rounded-full border-2 border-white shadow-lg"/>
+                  {/* <label htmlFor="profilePicFile">
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
+                      <Camera className="h-7 w-7 text-white" />
+                    </div>
+                  </label> */}
+                {/* </Image> */}
+                {/* <Avatar className="h-full w-full relative avatar rounded-full border-4 border-white shadow-lg">
                   <AvatarImage
                     className="object-cover relative"
                     src={user.profilePicUrl}
                     alt={user.userType === UserTypeGQL.INDIVIDUAL ? user.firstName : user.entityName}
                   />
                   <AvatarFallback className="rounded-full">CN</AvatarFallback>
-                  {/* Hover overlay */}
-                  <label htmlFor="profilePicFile">
+
+                </Avatar> */}
+                  {/* <label htmlFor="profilePicFile">
                     <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                       <Camera className="h-7 w-7 text-white" />
                     </div>
-                  </label>
-                </Avatar>
+                  </label> */}
                 <Input 
                   id="profilePicFile"
                   name="profilePicFile"

@@ -80,7 +80,7 @@ export function RegisterForm({
   const dict = useDictionary()
   const client = useApolloClient();
   const { open } = useNotification()
-  const [currentStep, setCurrentStep] = useState(3)
+  const [currentStep, setCurrentStep] = useState(0)
     const [isLoading, setIsLoading] = useState(false)
   const [isGoogleSignIn, setIsGoogleSignIn] = useState(false)
   const [googleUser, setGoogleUser] = useState<User | null>(null); 

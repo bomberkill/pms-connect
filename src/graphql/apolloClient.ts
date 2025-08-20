@@ -14,7 +14,7 @@ import { getFirebaseToken } from "./firebaseAuth";
   // Fetch the GraphQL API URL from environment variables
   // Make sure to set this in your .env.local file (e.g., VITE_GRAPHQL_API_URL=http://localhost:4000/graphql)
   const GRAPHQL_API_URL =
-    process.env.GRAPHQL_API_URL || "http://localhost:8000/graphql";
+    process.env.GRAPHQL_API_URL || "https://pms-connect-api.onrender.com/graphql";
   
   const httpLink = createHttpLink({
     uri: GRAPHQL_API_URL,

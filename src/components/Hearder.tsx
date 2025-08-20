@@ -60,7 +60,8 @@ export default function Header() {
           {/* Block 2: Center Navigation */}
           <div className="flex items-center justify-center gap-8">
             {centerNavItems.map((item) => {
-              const isActive = (item.href === "/" && pathname === item.href) || (item.href !== "/" && pathname.startsWith(item.href));
+              const isActive = (item.href === "/" && pathname === item.href) || (item.href !== "/" && pathname.includes(item.href));
+              console.log("isActive", isActive, item.href, pathname);
               return (
                 <Link
                   href={item.href}
