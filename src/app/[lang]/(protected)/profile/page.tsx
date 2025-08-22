@@ -16,6 +16,7 @@ import { updateUser } from "@/redux/services/userService"
 import { useState } from "react"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import UpdateProfileDialog from "@/components/UpdateProfileDialog"
+import CustomLoader from "@/components/Loader"
 
 function extractFilePath(publicUrl: string, bucket: string): string {
   const marker = `/object/public/${bucket}/`;
@@ -148,11 +149,7 @@ export default function ProfilePage() {
 
   return (
     <div className="relative bg-background shadow-sm md:m-5 pb-5 min-h-screen md:rounded-lg">
-      {isUploading && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 opacity-40 transition-opacity z-50">
-          <Loader2 className="h-12 w-12 animate-spin text-white" />
-        </div>
-      )}
+      {isUploading && <CustomLoader />}
       {/* Cover Photo */}
       {user.coverPicUrl && (
         <div className="relative w-full h-48 md:h-60 lg:h-72">
