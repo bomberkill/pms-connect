@@ -1,5 +1,5 @@
 "use client"
-import { Trash2, Plus, File, Loader2 } from "lucide-react"
+import { Trash2, Plus, File } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
