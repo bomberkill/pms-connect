@@ -6,17 +6,18 @@ import { Label } from "@/components/ui/label"
 import { useAppDispatch, useDictionary, useNotification } from "@/lib/hooks"
 import * as yup from "yup"
 import { useFormik } from "formik"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { googleProvider, resetPassword, signInWithGoogle } from "@/graphql/firebaseAuth"
 import Link from "next/link"
 import { FirebaseError } from "firebase/app"
 import { loginAndFetchUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { signInWithRedirect } from "firebase/auth"
+// import { Loader2 } from "lucide-react"
+import { getRedirectResult, signInWithRedirect } from "firebase/auth"
 import { gql, useApolloClient } from "@apollo/client"
 import Image from "next/image"
 import { auth } from "@/lib/firebase"
+import CustomLoader from "./Loader"
 export function LoginForm({
   className,
   ...props
@@ -166,6 +167,29 @@ export function LoginForm({
       }
     },
   })
+  useEffect(() => {
+      const handleRedirectResult = async () => {
+        console.log("Handling redirect result...");
+        try {
+          const result = await getRedirectResult(auth);
+          if (result) {
+            open("info", "Google redirect result:");
+            router.push("/");
+            open("success", dict.notifications.login.success.title, { message: dict.notifications.login.success.message })
+            // Handle user data and token
+          } else {
+            console.log("No redirect result available.");
+            open("info", "No redirect result available:", { message: JSON.stringify(result) });
+          }
+        } catch (error) {
+          console.error("Error handling redirect result:", error);
+          open("error", "Error handling redirect result:", { message: JSON.stringify(error) });
+          // Handle errors (e.g., user cancelled sign-in)
+        }
+      };
+  
+      handleRedirectResult();
+    }, []);
   const handleGoogleSignIn = async () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsGoogleSignIn(true);
@@ -185,6 +209,34 @@ export function LoginForm({
       
     } catch (error) {
       console.error("Google sign-in error:", error);
+      let errorMessage: string = dict.notifications.register.error.message; // Message par défaut
+      if (error instanceof FirebaseError) { // Gestion spécifique des erreurs Firebase
+        switch (error.code) {
+          case "auth/invalid-credential":
+            errorMessage = dict.notifications.login.error.messages["auth/invalid-credential"];
+            break;
+          case "auth/user-disabled":
+            errorMessage = dict.notifications.login.error.messages["auth/user-disabled"];
+            break;
+          case "auth/user-not-found":
+            errorMessage = dict.notifications.login.error.messages["auth/user-not-found"];
+            break;
+          case "auth/network-request-failed":
+            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"] ;
+            break;
+          case "auth/too-many-requests":
+            errorMessage = dict.notifications.login.error.messages["auth/too-many-requests"];
+            break;
+          default:
+            errorMessage = dict.notifications.login.error.messages.default;
+        }
+      } else if (error instanceof Error) {
+        // Erreur provenant du thunk createUser ou d'une autre partie
+        errorMessage = error.message;
+      }
+      open("error", dict.notifications.register.error.title, {
+        message: errorMessage
+      })
     }finally {
       setIsGoogleSignIn(false);
     }
@@ -192,6 +244,7 @@ export function LoginForm({
 
   return (
     <>
+      {(isLoading || isGoogleSignIn) && <CustomLoader />}
       {!showResetForm ? (
         // ---------------- LOGIN FORM ----------------
         <form onSubmit={loginFormik.handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
@@ -213,7 +266,7 @@ export function LoginForm({
                 onChange={loginFormik.handleChange}
                 onBlur={loginFormik.handleBlur}
                 value={loginFormik.values.email}
-                disabled={isLoading}
+                // disabled={isLoading}
               />
               {loginFormik.touched.email && loginFormik.errors.email && (
                 <p className="text-red-500 text-xs">{loginFormik.errors.email}</p>
@@ -238,19 +291,20 @@ export function LoginForm({
                 onChange={loginFormik.handleChange}
                 onBlur={loginFormik.handleBlur}
                 value={loginFormik.values.password}
-                disabled={isLoading}
+                // disabled={isLoading}
               />
               {loginFormik.touched.password && loginFormik.errors.password && (
                 <p className="text-red-500 text-xs">{loginFormik.errors.password}</p>
               )}
             </div>
-            <Button type="submit" disabled={isLoading || isGoogleSignIn} className="cursor-pointer w-full">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : dict.login.loginButton}
+            <Button type="submit" className="cursor-pointer w-full">
+              {dict.login.loginButton}
+              {/* {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : dict.login.loginButton} */}
             </Button>
             <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t"> 
               <span className="bg-background text-muted-foreground relative z-10 px-2"> {dict.login.continueWith} </span> 
             </div> 
-            <Button type="button" onClick={() => handleGoogleSignIn()} disabled={isLoading || isGoogleSignIn} variant="outline" className="cursor-pointer w-full"> 
+            <Button type="button" onClick={() => handleGoogleSignIn()} variant="outline" className="cursor-pointer w-full"> 
               <Image src="/google-color.svg" alt="" width={4} height={4} className="h-4 w-4" />
               {dict.login.googleButton}
             </Button>
@@ -281,14 +335,14 @@ export function LoginForm({
                 onChange={resetFormik.handleChange}
                 onBlur={resetFormik.handleBlur}
                 value={resetFormik.values.email}
-                disabled={isLoading}
+                // disabled={isLoading}
               />
               {resetFormik.touched.email && resetFormik.errors.email && (
                 <p className="text-red-500 text-xs">{resetFormik.errors.email}</p>
               )}
             </div>
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : dict.button.sendLink}
+            <Button type="submit" className="w-full">
+              {dict.button.sendLink}
             </Button>
             <Button
               type="button"

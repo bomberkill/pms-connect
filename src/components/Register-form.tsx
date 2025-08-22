@@ -1,5 +1,5 @@
 "use client"
-import { Trash2, Plus, File, Loader2 } from "lucide-react"
+import { Trash2, Plus, File } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -25,7 +25,7 @@ import {
 } from "./ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "./ui/textarea"
-import { deleteUser, signInWithRedirect, User } from "firebase/auth"
+import { deleteUser, getRedirectResult, signInWithRedirect, User } from "firebase/auth"
 // import {CitySelect, CountrySelect, StateSelect} from "react-country-state-city";
 import "react-country-state-city/dist/react-country-state-city.css"
 // import { City, Country, State } from "react-country-state-city/dist/esm/types"
@@ -43,6 +43,7 @@ import { gql, useApolloClient } from "@apollo/client"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import CustomLoader from "./Loader"
 // import { setPersistence, browserLocalPersistence } from "firebase/auth";
 
 
@@ -436,82 +437,30 @@ export function RegisterForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [googleUser]);
 
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      console.log("Handling redirect result...");
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("Google redirect result success");
+          // User signed in successfully
+          // const credential = googleProvider.credentialFromResult(result);
+          // const token = credential.accessToken;
+          const user = result.user;
+          setGoogleUser(user);
+          // Handle user data and token
+        } else {
+          console.log("No redirect result available.");
+        }
+      } catch (error) {
+        console.error("Error handling redirect result:", error);
+        // Handle errors (e.g., user cancelled sign-in)
+      }
+    };
 
-  // useEffect(() => {
-  //   // First check for redirect result immediately
-  //   const handleRedirect = async () => {
-  //     try {
-  //       open("info", "Checking for redirect result...");
-        
-  //       // Important: Wait for auth to be ready
-  //       await auth.authStateReady();
-        
-  //       const result = await getRedirectResult(auth);
-  //       open("info", `Redirect result: ${JSON.stringify(result)}`);
-        
-  //       if (result) {
-  //         open("success", `User authenticated: ${result.user.email}`);
-  //         // handleUserAuth(result.user);
-  //         return;
-  //       }
-        
-  //       open("error", "No immediate redirect result found");
-  //     } catch (error) {
-  //       open("error", `Redirect error: ${error}`);
-  //       // console.error("Redirect error:", error);
-  //     }
-  //   };
-  
-  //   // Then set up the auth state listener
-  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
-  //     open("info", `Auth state changed: ${user ? user.email : "null"}`);
-      
-  //     if (user) {
-  //       open("success", `User authenticated via listener: ${user.email}`);
-  //       // handleUserAuth(user);
-  //     }
-  //   });
-  
-  //   // Initiate the redirect check
-  //   handleRedirect();
-  
-  //   return () => unsubscribe();
-  // }, []);
-
-  // useEffect(() => {
-  //   const checkRedirect = onAuthStateChanged(auth, async () => {
-  //     try {
-  //       // console.log("Checking Google sign-in redirect...");
-  //       // open("info", "Checking Google sign-in redirect...")
-  //       open("info", ` auth: ${JSON.stringify(auth)}`)
-  //       const result = await getRedirectResult(auth)
-  //       if (!result) {
-  //         open("error", `${JSON.stringify(result)}`)
-  //       }
-  //       // open("info", "Checking Google sign-in redirect...")
-  //       // open("info", "Checking Google sign-in redirect...")
-  //       if (result && result.user) {
-  //         open("success", `${JSON.stringify(result)}`, { message: "result found"})
-  //         setGoogleUser(result.user);
-  //         formik.setValues({
-  //           ...formik.values,
-  //           email: result.user.email ?? "",
-  //           profilePicUrl: result.user.photoURL || "",
-  //           firstName: result.user.displayName?.split(" ")[0] || "",
-  //           lastName: result.user.displayName?.split(" ")[1] || "",
-  //           // userType: UserTypeGQL.INDIVIDUAL, // Default to individual for Google sign-in
-  //         });
-          
-  //         // Move to next step after Google sign-in
-  //         open("success", "Signed in with Google!", { message: "Please complete your profile to continue." });
-  //         setCurrentStep(1);
-  //       }
-  //     } catch (error) {
-  //       console.error("Google sign-in error:", error);
-  //     }
-  //   })
-  //   return () => checkRedirect()
-  // }, [])
+    handleRedirectResult();
+  }, []);
   const handleGoogleSignIn = async () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsGoogleSignIn(true);
@@ -569,23 +518,23 @@ export function RegisterForm({
                     setGoogleUser(null);
                   }
                 }}
-                onBlur={formik.handleBlur} value={formik.values.email} disabled={isLoading}
+                onBlur={formik.handleBlur} value={formik.values.email}
               />
               {formik.touched.email && formik.errors.email && <p className="text-red-500 text-xs">{formik.errors.email}</p>}
             </div>
             <div className="grid gap-1">
               <Label htmlFor="password">{dict.register.passwordLabel}</Label>
-              <Input id="password" name="password" type="password" placeholder="password" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.password} disabled={isLoading || googleUser !== null} />
+              <Input id="password" name="password" type="password" placeholder="password" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.password} disabled={googleUser !== null} />
               {formik.touched.password && formik.errors.password && <p className="text-red-500 text-xs">{formik.errors.password}</p>}
             </div>
             <div className="grid gap-1">
               <Label htmlFor="confirmPassword">{dict.register.confirmPasswordLabel}</Label>
-              <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="confirm password" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.confirmPassword} disabled={isLoading || googleUser !== null} />
+              <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="confirm password" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.confirmPassword} disabled={googleUser !== null} />
               {formik.touched.confirmPassword && formik.errors.confirmPassword && <p className="text-red-500 text-xs">{formik.errors.confirmPassword}</p>}
             </div>
             <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
               <span className="bg-background relative z-10 px-3">
-                <Button type="button" size="icon" variant="outline" disabled={isGoogleSignIn} onClick={handleGoogleSignIn} className="rounded-full shadow-gray-200 border border-gray-200">
+                <Button type="button" size="icon" variant="outline" onClick={handleGoogleSignIn} className="rounded-full shadow-gray-200 border border-gray-200">
                   <Image src="/google-color.svg" alt="Google" width={4} height={4} className="h-4 w-4" />
                   <span className="sr-only">{dict.login.googleButton}</span>
                 {/* {dict.login.googleButton} */}
@@ -628,12 +577,12 @@ export function RegisterForm({
                 <div className="flex items-start gap-3">
                   <div className="grid gap-1 w-full">
                     <Label htmlFor="firstName">{dict.register.firstNameLabel}</Label>
-                    <Input id="firstName" name="firstName" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.firstName} disabled={isLoading} />
+                    <Input id="firstName" name="firstName" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.firstName} />
                     {formik.touched.firstName && formik.errors.firstName && <p className="text-red-500 text-xs">{formik.errors.firstName}</p>}
                   </div>
                   <div className="grid gap-1 w-full">
                     <Label htmlFor="lastName">{dict.register.lastNameLabel}</Label>
-                    <Input id="lastName" name="lastName" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.lastName} disabled={isLoading} />
+                    <Input id="lastName" name="lastName" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.lastName} />
                     {formik.touched.lastName && formik.errors.lastName && <p className="text-red-500 text-xs">{formik.errors.lastName}</p>}
                   </div>
                 </div>
@@ -655,14 +604,14 @@ export function RegisterForm({
                 </div>
                 <div className="grid gap-1">
                   <Label htmlFor="professionalTitle">{dict.register.professionalTitleLabel}</Label>
-                  <Input id="professionalTitle" name="professionalTitle" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.professionalTitle} disabled={isLoading} />
+                  <Input id="professionalTitle" name="professionalTitle" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.professionalTitle} />
                 </div>
               </div>
             ) : (
               <div className="max-w-full flex flex-col gap-6">
                 <div className="grid gap-1">
                   <Label htmlFor="entityName">{dict.register.entityNameLabel}</Label>
-                  <Input id="entityName" name="entityName" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.entityName} disabled={isLoading} />
+                  <Input id="entityName" name="entityName" type="text" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.entityName}/>
                   {formik.touched.entityName && formik.errors.entityName && <p className="text-red-500 text-xs">{formik.errors.entityName}</p>}
                 </div>
                 <div className="grid gap-1">
@@ -688,7 +637,7 @@ export function RegisterForm({
           <div className="w-full flex flex-col gap-6 xs:max-w-4/5 sm:max-w-3/5 md:max-w-5/10">
             <div className="grid gap-2">
               <Label htmlFor="bio">{dict.register.bioLabel}</Label>
-              <Textarea id="bio" name="bio" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.bio} disabled={isLoading} />
+              <Textarea id="bio" name="bio" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.bio}/>
             </div>
             <div className="grid gap-2">
               <Label>{dict.register.uploadProfilePic}</Label>
@@ -735,8 +684,7 @@ export function RegisterForm({
                   const file = event.currentTarget.files?.[0];
                   formik.setFieldValue("profilePicFile", file);
                   setProfilePicPreview(file ? URL.createObjectURL(file) : null);
-                }} 
-                disabled={isLoading} 
+                }}
               />
               {formik.touched.profilePicFile && formik.errors.profilePicFile && <p className="text-red-500 text-xs">{formik.errors.profilePicFile}</p>}
             </div>
@@ -779,12 +727,12 @@ export function RegisterForm({
                 const file = event.currentTarget.files?.[0] ;
                 formik.setFieldValue("coverPicFile", file);
                 setCoverPicPreview(file ? URL.createObjectURL(file) : null);
-              }} disabled={isLoading} />
+              }}/>
               {formik.touched.coverPicFile && formik.errors.coverPicFile && <p className="text-red-500 text-xs">{formik.errors.coverPicFile}</p>}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="websiteUrl">{dict.register.websiteUrlLabel}</Label>
-              <Input id="websiteUrl" name="websiteUrl" type="url" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.websiteUrl} disabled={isLoading} />
+              <Input id="websiteUrl" name="websiteUrl" type="url" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.websiteUrl} />
               {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-red-500 text-xs">{formik.errors.websiteUrl}</p>}
             </div>
             <div className="grid gap-2">
@@ -853,58 +801,9 @@ export function RegisterForm({
                       setAccreditationsPreview(prev => [...prev, ...newPreviews]);
                     }
                   }}
-                  disabled={isLoading || accreditationsPreview.length >= 2} // Disable if already 2 files
+                  disabled={accreditationsPreview.length >= 2} // Disable if already 2 files
                 />
               </div>
-              {/* <div className="flex justify-between items-start min-h-50 p-4 bg-gray-50 rounded-md">
-                <div className="flex row gap-3">
-                  { accreditationsPreview.map((item, index) => (
-                    <div key={index} className="relative w-42 h-42">
-                      <embed
-                        src={item.url}
-                        className="w-full h-full object-cover rounded"
-                      />
-                      <p className="text-sm text-muted-foreground absolute bottom-2 left- w-full overflow-hidden whitespace-nowrap text-ellipsis">{item.name}</p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 h-6 w-6 bg-background/80 rounded-full"
-                        onClick={() => {
-                          formik.setFieldValue('accreditationsFile', formik.values.accreditationsFile.filter((_, i) => i !== index))
-                          setAccreditationsPreview(prev => prev.filter((_, i) => i !== index))
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500"  />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                    <Label htmlFor="accreditations-input" className={cn("cursor-pointer w-full mt-2", buttonVariants({ variant: accreditationsPreview.length >= 2 ? 'ghost' : 'default' }))}>
-                      <Plus className="h-4 w-4" />
-                    </Label>
-                    <Input
-                      id="accreditations-input"
-                      name="accreditationsFile" 
-                      multiple
-                      type="file"
-                      className="hidden"
-                      accept="application/pdf"
-                      onChange={(event) => {
-                        const files = Array.from(event.currentTarget.files || []);
-                        console.log(formik.values.accreditationsFile, " :accreditationsFile");
-                        if (files.length > 0) {
-                          formik.setFieldValue('accreditationsFile', [...formik.values.accreditationsFile, ...files]);
-                          console.log(formik.values.accreditationsFile, "accreditationsFile: ", [...formik.values.accreditationsFile, ...files] );
-                          const newPreviews = files.map(file => ({ url: URL.createObjectURL(file), name: file.name, type: file.type }));
-                          setAccreditationsPreview(prev => [...prev, ...newPreviews]);
-                        }
-                      }}
-                      disabled={isLoading || accreditationsPreview.length >= 2} // Disable if already 2 files
-                    />
-                </div>
-              </div> */}
               {formik.touched.accreditationsFile && formik.errors.accreditationsFile && <p className="text-red-500 text-xs">{formik.errors.accreditationsFile.toString()}</p>}
             </div>
             {/* <h3 className="text-lg font-semibold">Location</h3> */}
@@ -926,7 +825,7 @@ export function RegisterForm({
                 }
                 } 
                 placeholder="Select Country"
-                disabled={isLoading} 
+                // disabled={isLoading} 
               />
               {/* {formik.touched.location?.country && formik.errors.location?.country && <p className="text-red-500 text-xs">{formik.errors.location.country}</p>} */}
               {countryTouched && countryError && (
@@ -944,7 +843,7 @@ export function RegisterForm({
                   name="location.stateOrProvince"
                   value={formik.values.location?.stateOrProvince}
                   onBlur={formik.handleBlur}
-                  disabled={isLoading}
+                  // disabled={isLoading}
                   onChange={(state) => {
                     setSelectedState(state)
                     console.log("selectedState: ", state)
@@ -970,7 +869,7 @@ export function RegisterForm({
                     formik.setFieldValue('location.city', city.name)
                   }} 
                   placeholder="Select City"
-                  disabled={isLoading}
+                  // disabled={isLoading}
                 />
                 {cityTouched && cityError && (
                   <p className="text-red-500 text-xs">{cityError}</p>
@@ -987,6 +886,7 @@ export function RegisterForm({
 
   return (
     <div className={cn("py-10", className)} {...props}>
+      {(isGoogleSignIn || isLoading) && <CustomLoader/>}
       <form onSubmit={formik.handleSubmit} className="w-full" >
         <div className="flex flex-col items-center mb-5 text-center">
           <h1 className="text-2xl font-bold">{dict.register.title}</h1>
@@ -996,12 +896,12 @@ export function RegisterForm({
           {renderStep()}
           <div className="flex items-center justify-between gap-4">
             {currentStep > 0 && (
-              <Button className="w-35" type="button" variant="outline" onClick={() => setCurrentStep(currentStep - 1)} disabled={isLoading}>
+              <Button className="w-35" type="button" variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>
                 {dict.register.previous}
               </Button>
             )}
-            <Button className="w-35" type="submit" disabled={isLoading || isGoogleSignIn}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (currentStep < validationSchemas.length - 1 ? dict.register.next : dict.register.registerButton)}
+            <Button className="w-35" type="submit">
+              {(currentStep < validationSchemas.length - 1 ? dict.register.next : dict.register.registerButton)}
             </Button>
           </div>
         </div>
