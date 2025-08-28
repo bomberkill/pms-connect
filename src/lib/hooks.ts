@@ -9,6 +9,7 @@ import { fetchUserByUid, logoutUser } from "@/redux/services/userService";
 import { DictionaryContext } from "@/components/DictionaryProvider";
 import { clearUser } from "@/redux/slices/userSlice";
 import { toast } from "sonner";
+import { usePathname } from "next/navigation";
 export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
 export const useAppStore = useStore.withTypes<AppStore>();
 export const useAppSelector = useSelector.withTypes<RootState>();
@@ -18,9 +19,11 @@ export const useAuthObserver = () => {
     const store = useAppStore();
     const dispatch = useAppDispatch();
     const { open } = useNotification();
-    const dict = useDictionary();
+    const pathname = usePathname();
+    // const dict = useDictionary();
     const [initialized, setInitialized] = useState(false);
     const [firebaseUid, setFirebaseUid] = useState<string | null>(null);
+
     useEffect(() => {
         const unsuscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -36,12 +39,20 @@ export const useAuthObserver = () => {
                 // On ne va chercher le profil que s'il n'est pas déjà dans le store
                 // ou si l'UID a changé (cas très rare, mais sécuritaire).
                 // Cela évite la requête redondante lors du login.
-                if (!existingUser || existingUser.firebaseUid !== user.uid) {
+                if ((!existingUser || existingUser.firebaseUid !== user.uid) && !pathname.includes("login")) {
                     dispatch(fetchUserByUid(user.uid)).unwrap().catch((err) => {
-                        console.error("Failed to fetch user profile on auth state change:", err);
-                        // Si le profil est introuvable, on déconnecte pour éviter un état incohérent.
-                        dispatch(logoutUser()).unwrap();
-                        open("error",dict.notifications.login.error.title, { message: dict.notifications.login.error.messages.default })
+                        // IMPORTANT: If the user is not found, it's part of the registration flow, not an error.
+                        // We check for a "not found" message. Adjust the string if your API returns something different.
+                        if (err as string === "getUserByFirebaseUid is null") {
+                            console.log("New user detected. Proceeding with registration.");
+                            // dispatch(logoutUser()).unwrap();
+                            // Do NOT log out. The user is authenticated and needs to complete their profile.
+                        } else {
+                            console.error("Failed to fetch user profile on auth state change:", err);
+                            // For other errors, it's safer to log out.
+                            open("error","Error fetching user profile on auth state change:", { message: err.message })
+                            dispatch(logoutUser()).unwrap();
+                        }
                     });
                 }
             } else {
@@ -57,7 +68,7 @@ export const useAuthObserver = () => {
         return () => {
             unsuscribe();
         }
-    }, [dispatch, store])
+    }, [dispatch, store, open, pathname])
     
     return {initialized, firebaseUid};
 }

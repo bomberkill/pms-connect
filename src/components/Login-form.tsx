@@ -6,17 +6,15 @@ import { Label } from "@/components/ui/label"
 import { useAppDispatch, useDictionary, useNotification } from "@/lib/hooks"
 import * as yup from "yup"
 import { useFormik } from "formik"
-import { useEffect, useState } from "react"
-import { googleProvider, resetPassword, signInWithGoogle } from "@/graphql/firebaseAuth"
+import { useState } from "react"
+import { resetPassword, signInWithGoogle } from "@/graphql/firebaseAuth"
 import Link from "next/link"
 import { FirebaseError } from "firebase/app"
-import { loginAndFetchUser } from "@/redux/services/userService"
+import { fetchUserByUid, loginAndFetchUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
 // import { Loader2 } from "lucide-react"
-import { getRedirectResult, signInWithRedirect } from "firebase/auth"
 import { gql, useApolloClient } from "@apollo/client"
 import Image from "next/image"
-import { auth } from "@/lib/firebase"
 import CustomLoader from "./Loader"
 export function LoginForm({
   className,
@@ -43,6 +41,7 @@ export function LoginForm({
   const dispatch = useAppDispatch()
   const router = useRouter()
   const client = useApolloClient()
+  // const currentUser = auth.currentUser;
   const loginFormik = useFormik({
     initialValues,
     validationSchema: loginSchema,
@@ -61,6 +60,13 @@ export function LoginForm({
       } catch (error: unknown) {
         console.error("Login error:", error);
         let errorMessage = dict.notifications.login.error.messages.default; // Message par défaut
+        if (error === "getUserByFirebaseUid is null") {
+          // Cas particulier où l'utilisateur n'existe pas dans notre base
+          // errorMessage = "New user detected. Proceeding with registration."
+          open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
+          router.push("/register");
+          return
+        }
         switch (error) {
           case "auth/invalid-credential":
             errorMessage = dict.notifications.login.error.messages["auth/invalid-credential"];
@@ -167,49 +173,34 @@ export function LoginForm({
       }
     },
   })
-  useEffect(() => {
-      const handleRedirectResult = async () => {
-        console.log("Handling redirect result...");
-        try {
-          const result = await getRedirectResult(auth);
-          if (result) {
-            open("info", "Google redirect result:");
-            router.push("/");
-            open("success", dict.notifications.login.success.title, { message: dict.notifications.login.success.message })
-            // Handle user data and token
-          } else {
-            console.log("No redirect result available.");
-            open("info", "No redirect result available:", { message: JSON.stringify(result) });
-          }
-        } catch (error) {
-          console.error("Error handling redirect result:", error);
-          open("error", "Error handling redirect result:", { message: JSON.stringify(error) });
-          // Handle errors (e.g., user cancelled sign-in)
-        }
-      };
-  
-      handleRedirectResult();
-    }, []);
   const handleGoogleSignIn = async () => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsGoogleSignIn(true);
     try {
-      if (isMobile) {
-        // await setPersistence(auth, browserLocalPersistence);
-        await signInWithRedirect(auth, googleProvider);
-      }else {
-        const result = await signInWithGoogle();
-        if (result) {
-          router.push("/")
-          open("success", dict.notifications.register.success.title, {
-            message: dict.notifications.register.success.message,
-          });
-        }
+      // if (!isMobile) {
+      //   console.log("Using redirect for mobile Google sign-in");
+      //   await signInWithRedirect(auth, googleProvider);
+      // }else {
+      // }
+      const result = await signInWithGoogle();
+      if (result) {
+        await dispatch(fetchUserByUid(result.uid)).unwrap()
+        router.push("/");
+        open("success", dict.notifications.register.success.title, {
+          message: dict.notifications.register.success.message,
+        });
       }
       
     } catch (error) {
       console.error("Google sign-in error:", error);
       let errorMessage: string = dict.notifications.register.error.message; // Message par défaut
+      if (error === "getUserByFirebaseUid is null") {
+        // Cas particulier où l'utilisateur n'existe pas dans notre base
+        // errorMessage = "New user detected. Proceeding with registration."
+        open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
+        router.push("/register");
+        return
+      }
       if (error instanceof FirebaseError) { // Gestion spécifique des erreurs Firebase
         switch (error.code) {
           case "auth/invalid-credential":

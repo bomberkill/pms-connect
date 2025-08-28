@@ -55,6 +55,10 @@
           "title": "Connexion réussie",
           "message": "Content de vous revoir !"
         },
+        "info": {
+          "title": "Aucun utilisateur trouvé",
+          "message": "Veuillez creer votre compte d'abord."
+        },
         "error": {
           "title": "Échec de la connexion",
           "messages": {

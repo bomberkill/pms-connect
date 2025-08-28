@@ -89,8 +89,8 @@ export default function ProfilePage() {
           // Update User dans Redux
           await dispatch(updateUser({ [fieldToUpdate]: uploadedFile.publicUrl })).unwrap();
 
-          open("success", dict.notifications.register.success.title, {
-            message: dict.notifications.register.success.message,
+          open("success", dict.notifications.profileUpdated.title, {
+            message: dict.notifications.profileUpdated.message,
           });
 
           // Supprimer l’ancienne image si elle existe
@@ -184,13 +184,8 @@ export default function ProfilePage() {
         <div className="flex row justify-between items-end md:ml-6">
           <div>
             {user.profilePicUrl && (
-              <div className="relative h-20 w-20 md:h-24 md:w-24 lg:h-28 lg:w-28">
+              <div className="relative group h-20 w-20 md:h-24 md:w-24 lg:h-28 lg:w-28">
                 <Image src={user.profilePicUrl} alt="Profile" fill className="object-cover rounded-full border-2 border-white shadow-lg"/>
-                  {/* <label htmlFor="profilePicFile">
-                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
-                      <Camera className="h-7 w-7 text-white" />
-                    </div>
-                  </label> */}
                 {/* </Image> */}
                 {/* <Avatar className="h-full w-full relative avatar rounded-full border-4 border-white shadow-lg">
                   <AvatarImage
@@ -201,11 +196,11 @@ export default function ProfilePage() {
                   <AvatarFallback className="rounded-full">CN</AvatarFallback>
 
                 </Avatar> */}
-                  {/* <label htmlFor="profilePicFile">
+                  <label htmlFor="profilePicFile">
                     <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
                       <Camera className="h-7 w-7 text-white" />
                     </div>
-                  </label> */}
+                  </label>
                 <Input 
                   id="profilePicFile"
                   name="profilePicFile"

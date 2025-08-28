@@ -50,6 +50,11 @@ const USER_FIELDS = `
   }
 `;
 
+const CHECK_USER_FIELDS = `
+  exists
+  hasPassword
+  providers
+  `
 
 export const buildGetAllUsersQuery = (meta?: { fields?: string }) => {
     const fields = meta?.fields || USER_FIELDS;
@@ -132,8 +137,6 @@ export const buildUpdateAccountStatusMutation = (meta?: { fields?: string }) => 
 };
   
 /**
- * Builds a GraphQL mutation for updating a user's account status (admin action).
- * Corresponds to 'updateAccountStatus' resolver in users.resolver.ts.
  * @param meta - Optional metadata.
  * @returns A gql object.
  */
@@ -142,6 +145,21 @@ export const buildGetUserByUidQuery = (meta?: { fields?: string }) => {
   return gql`
     query GetUserByFirebaseUid($firebaseUid: ID!) { # Argument name from resolver
       getUserByFirebaseUid(firebaseUid: $firebaseUid) { # 'updateAccountStatus' is the mutation name
+        ${fields}
+      }
+    }
+  `;
+};
+
+/**
+ * @param meta - Optional metadata.
+ * @returns A gql object.
+ */
+export const buildCheckUserExistsByEmailQuery = (meta?: { fields?: string }) => {
+  const fields = meta?.fields || CHECK_USER_FIELDS;
+  return gql`
+    query CheckUserExistsByEmail($email: String!) {
+      checkUserExistsByEmail(email: $email) {
         ${fields}
       }
     }

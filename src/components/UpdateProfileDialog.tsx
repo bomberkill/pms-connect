@@ -100,7 +100,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
 
       try {
         await dispatch(updateUser(changedValues)).unwrap()
-        openNotification("success", "Profil mis à jour", { message: "Votre profil a été mis à jour avec succès." })
+        openNotification("success", dict.notifications.profileUpdated.title, { message: dict.notifications.profileUpdated.message })
         setOpen(false)
       } catch (error: unknown) {
         const errorMessage =

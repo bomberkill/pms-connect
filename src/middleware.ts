@@ -43,5 +43,5 @@ export function middleware(request: NextRequest) {
     //   // Optional: only run on root (/) URL
     //   // '/'
     // ],
-    matcher: ['/((?!_next|favicon.ico|robots.txt|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|.*\\.txt).*)'],
+    matcher: ['/((?!_next|favicon.ico|robots.txt|__\\/auth(?:\\/.*)?|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|.*\\.txt).*)'],
   }

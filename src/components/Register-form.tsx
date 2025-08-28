@@ -1,6 +1,6 @@
 "use client"
 import { Trash2, Plus, File } from "lucide-react"
-
+import React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useEffect, useMemo, useState } from "react"
 import { getIn, useFormik } from "formik"
 import * as yup from "yup"
-import { useAppDispatch, useDictionary, useNotification } from "@/lib/hooks"
+import { useAppDispatch, useAppSelector, useDictionary, useNotification } from "@/lib/hooks"
 import { googleProvider, register, signInWithGoogle } from "@/graphql/firebaseAuth"
 import {
   CreateUserInput,
@@ -25,7 +25,7 @@ import {
 } from "./ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "./ui/textarea"
-import { deleteUser, getRedirectResult, signInWithRedirect, User } from "firebase/auth"
+import { deleteUser, signInWithRedirect, User } from "firebase/auth"
 // import {CitySelect, CountrySelect, StateSelect} from "react-country-state-city";
 import "react-country-state-city/dist/react-country-state-city.css"
 // import { City, Country, State } from "react-country-state-city/dist/esm/types"
@@ -39,11 +39,13 @@ import data from "../../public/countries.json"
 import { createUser } from "@/redux/services/userService"
 // import { createClient } from '@supabase/supabase-js'
 import { FirebaseError } from "firebase/app"
-import { gql, useApolloClient } from "@apollo/client"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import CustomLoader from "./Loader"
+import { apolloClient } from "@/graphql/apolloClient"
+import { buildCheckUserExistsByEmailQuery } from "@/graphql/queries"
+import Link from "next/link"
 // import { setPersistence, browserLocalPersistence } from "firebase/auth";
 
 
@@ -79,10 +81,10 @@ export function RegisterForm({
 }: React.ComponentProps<"div">) {
   const dispatch = useAppDispatch()
   const dict = useDictionary()
-  const client = useApolloClient();
   const { open } = useNotification()
   const [currentStep, setCurrentStep] = useState(0)
-    const [isLoading, setIsLoading] = useState(false)
+  const { firebaseUid } = useAppSelector((state) => state.auth);
+  const [isLoading, setIsLoading] = useState(false)
   const [isGoogleSignIn, setIsGoogleSignIn] = useState(false)
   const [googleUser, setGoogleUser] = useState<User | null>(null); 
   const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
@@ -254,18 +256,8 @@ export function RegisterForm({
       if (currentStep === 0) {
         setIsLoading(true);
         try {
-          const { data } = await client.query<{
-            checkUserExistsByEmail: { exists: boolean; hasPassword: boolean; providers: string[] };
-          }>({
-            query: gql`
-              query CheckUserExistsByEmail($email: String!) {
-                checkUserExistsByEmail(email: $email) {
-                  exists
-                  hasPassword
-                  providers
-                }
-              }
-            `,
+          const { data } = await apolloClient.query({
+            query: buildCheckUserExistsByEmailQuery(),
             variables: { email: values.email },
             fetchPolicy: "network-only",
           });
@@ -277,6 +269,29 @@ export function RegisterForm({
             // Email is available, proceed to next step
             setCurrentStep(currentStep + 1);
           }
+          // const { data } = await client.query<{
+          //   checkUserExistsByEmail: { exists: boolean; hasPassword: boolean; providers: string[] };
+          // }>({
+          //   query: gql`
+          //     query CheckUserExistsByEmail($email: String!) {
+          //       checkUserExistsByEmail(email: $email) {
+          //         exists
+          //         hasPassword
+          //         providers
+          //       }
+          //     }
+          //   `,
+          //   variables: { email: values.email },
+          //   fetchPolicy: "network-only",
+          // });
+          // if (data.checkUserExistsByEmail.exists) {
+          //   // Email already exists
+          //   formik.setFieldError('email', dict.validation.email.alreadyInUse);
+          //   // open("info", "Email déjà utilisé", { message: "Cet email est déjà associé à un compte. Veuillez vous connecter." });
+          // } else {
+          //   // Email is available, proceed to next step
+          //   setCurrentStep(currentStep + 1);
+          // }
         } catch (error: unknown) {
           console.error("Error checking email:", error);
           open("error", "Erreur de vérification", { message: error instanceof Error ? error.message : "Impossible de vérifier l'e-mail pour le moment." });
@@ -425,10 +440,19 @@ export function RegisterForm({
   //   setCities(City.getAllCities())
   // }, []);
   useEffect(() => {
-    if (!googleUser) {
+    if (googleUser) {
       formik.setValues({
         ...formik.values,
-          email: "",
+        email: googleUser.email ?? "",
+        profilePicUrl: googleUser.photoURL || "",
+        firstName: googleUser.displayName?.split(" ")[0] || "",
+        lastName: googleUser.displayName?.split(" ")[1] || "",
+      });
+      
+    }else if (!googleUser) {
+      formik.setValues({
+        ...formik.values,
+        email: "",
         profilePicUrl:"",
         firstName: "",
         lastName: "",
@@ -437,30 +461,27 @@ export function RegisterForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [googleUser]);
 
+  // This effect handles pre-filling the form after a successful Google Sign-In redirect.
+  // It listens for the firebaseUid from the global state.
   useEffect(() => {
-    const handleRedirectResult = async () => {
-      console.log("Handling redirect result...");
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log("Google redirect result success");
-          // User signed in successfully
-          // const credential = googleProvider.credentialFromResult(result);
-          // const token = credential.accessToken;
-          const user = result.user;
-          setGoogleUser(user);
-          // Handle user data and token
-        } else {
-          console.log("No redirect result available.");
-        }
-      } catch (error) {
-        console.error("Error handling redirect result:", error);
-        // Handle errors (e.g., user cancelled sign-in)
-      }
-    };
+    const currentUser = auth.currentUser;
+    // If a user is authenticated via Firebase but the form hasn't been populated yet
+    if (firebaseUid && currentUser) {
+      console.log("Pre-filling form with Google user data after redirect.");
+      setGoogleUser(currentUser); // Set local state to disable password fields etc.
+      formik.setValues({
+        ...formik.values,
+        email: currentUser.email ?? "",
+        profilePicUrl: currentUser.photoURL || "",
+        firstName: currentUser.displayName?.split(" ")[0] || "",
+        lastName: currentUser.displayName?.split(" ")[1] || "",
+      });
+      open("success", dict.notifications.register.success.googleAccount.title, { message: dict.notifications.register.success.googleAccount.message });
+    }
+    // We only want this to run when the auth state changes, not on every formik change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firebaseUid, googleUser]);
 
-    handleRedirectResult();
-  }, []);
   const handleGoogleSignIn = async () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsGoogleSignIn(true);
@@ -904,14 +925,14 @@ export function RegisterForm({
               {(currentStep < validationSchemas.length - 1 ? dict.register.next : dict.register.registerButton)}
             </Button>
           </div>
+          <div className="text-center text-sm">
+            {dict.register.alreadyHaveAccount}{" "}
+            <Link href="/login" className="underline underline-offset-4">
+              {dict.login.loginButton}
+            </Link>
+          </div>
         </div>
       </form>
-      {/* <div className="text-center text-sm">
-        {dict.register.alreadyHaveAccount}{" "}
-        <Link href="/login" className="underline underline-offset-4">
-          {dict.login.loginButton}
-        </Link>
-      </div> */}
     </div>
   )
 }
