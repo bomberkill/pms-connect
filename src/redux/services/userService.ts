@@ -66,25 +66,25 @@ export const loginAndFetchUser = createAsyncThunk(
     async ({ email, password }: {email: string, password: string}, { rejectWithValue }) => {
         try {
             // Étape 1: Connexion à Firebase
-            await login(email, password);
+            const firebaseUser = await login(email, password);
             // return firebaseUser;
-            // // Étape 2: Récupération du profil depuis notre API avec l'UID
-            // const { data, errors } = await apolloClient.query({
-            //     query: buildGetUserByUidQuery(),
-            //     variables: { firebaseUid: firebaseUser.uid },
-            //     fetchPolicy: 'network-only' // Toujours récupérer les données fraîches
-            // });
+            // Étape 2: Récupération du profil depuis notre API avec l'UID
+            const { data, errors } = await apolloClient.query({
+                query: buildGetUserByUidQuery(),
+                variables: { firebaseUid: firebaseUser.uid },
+                fetchPolicy: 'network-only' // Toujours récupérer les données fraîches
+            });
 
-            // if (errors && errors.length > 0) {
-            //     return rejectWithValue(errors[0].message);
-            // }
-            // // console.log("loginAndFetchUser data", data);
-            // if (!data.getUserByFirebaseUid) {
-            //     return rejectWithValue('errors.user.profileNotFound');
-            // }
-            // // Étape 3: Retourner le profil utilisateur
-            // // Cela sera le payload de l'action `fulfilled`
-            // return data.getUserByFirebaseUid;
+            if (errors && errors.length > 0) {
+                return rejectWithValue(errors[0].message);
+            }
+            // console.log("loginAndFetchUser data", data);
+            if (!data.getUserByFirebaseUid) {
+                return rejectWithValue('errors.user.profileNotFound');
+            }
+            // Étape 3: Retourner le profil utilisateur
+            // Cela sera le payload de l'action `fulfilled`
+            return data.getUserByFirebaseUid;
 
         } catch (error: unknown) {
             if (error instanceof FirebaseError) {

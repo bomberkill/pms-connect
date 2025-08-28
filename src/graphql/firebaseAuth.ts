@@ -1,4 +1,4 @@
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendEmailVerification, sendPasswordResetEmail, User, getAuth} from "firebase/auth"
+import {signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendEmailVerification, sendPasswordResetEmail, User} from "firebase/auth"
 import {auth} from "@/lib/firebase"
 
 export const googleProvider = new GoogleAuthProvider()
@@ -10,7 +10,8 @@ export async function register(email: string, password: string): Promise<User> {
 
 
 export const getFirebaseToken = async (): Promise<string | null> => {
-    const user = getAuth().currentUser;
+    // const user = getAuth().currentUser;
+    const user = auth.currentUser;
     if (!user) return null;
     return await user.getIdToken();
 };

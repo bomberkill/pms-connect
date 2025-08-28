@@ -55,6 +55,10 @@
         "title": "Login Successful",
         "message": "Welcome back!"
       },
+      "info": {
+        "title": "No user found",
+        "message": "Please create your account first."
+      },
       "error": {
         "title": "Login Failed",
         "messages": {
