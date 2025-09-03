@@ -39,6 +39,9 @@ export default async function RootLayout({
   const {lang} = await params
   return (
     <html lang={lang} suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body
         suppressHydrationWarning
         className={`${inter.variable} ${manrope.variable} antialiased`}

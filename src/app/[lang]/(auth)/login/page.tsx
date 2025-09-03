@@ -1,6 +1,12 @@
 
 import { LoginForm } from "@/components/Login-form"
 import Image from "next/image"
+import { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Login | Pms-Connect for Healthcare Professionals",
+  description: "Access your secure account on Pms-Connect, the professional network for healthcare providers.",
+}
 
 export default async function LoginPage() {
   
