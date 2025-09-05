@@ -21,6 +21,7 @@ const manrope = Manrope({
 
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   title: "Pms-Connect | Healthcare Professional Network",
   description:
     "Pms-Connect is the professional social network for healthcare providers. Connect, collaborate, and share insights with other professionals in the medical field.",
