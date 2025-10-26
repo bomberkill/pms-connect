@@ -89,6 +89,7 @@ export default async function RootLayout({
     <html lang={lang} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-title" content="PmsConnect" />
       </head>
       <body
         suppressHydrationWarning

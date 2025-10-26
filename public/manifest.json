@@ -2,7 +2,7 @@
   "name": "Pms-Connect",
   "short_name": "Pms-Connect",
   "description": "The professional social network for healthcare providers.",
-  "start_url": "/login",
+  "start_url": "/",
   "orientation": "portrait",
   "icons": [
     {

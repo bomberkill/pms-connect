@@ -23,6 +23,8 @@ import { useEffect, useMemo, useState } from "react"
 import { User, UserTypeGQL, UpdateUserInput } from "@/types/User"
 import { Loader2 } from "lucide-react"
 import { updateUser } from "@/redux/services/userService"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer"
 
 interface UpdateProfileDialogProps {
   children: React.ReactNode // Le bouton qui déclenche l'ouverture
@@ -35,6 +37,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
   const { open: openNotification } = useNotification()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const isMobile = useIsMobile()
 
   // États pour les listes déroulantes de localisation
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
@@ -139,18 +142,99 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
   const cityError = getIn(formik.errors, "location.city");
   const cityTouched = getIn(formik.touched, "location.city");
 
+  if(!isMobile) {
+    return (
+      <Dialog modal={false} open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent className="sm:max-w-lg">
+          <form onSubmit={formik.handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{dict.button.edit}</DialogTitle>
+              <DialogDescription>
+                {dict.updateProfile.description}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
+              {user.userType === UserTypeGQL.INDIVIDUAL ? (
+                <> 
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="firstName">{dict.register.firstNameLabel}</Label>
+                      <Input id="firstName" {...formik.getFieldProps("firstName")} />
+                      {formik.touched.firstName && formik.errors.firstName && <p className="text-red-500 text-xs">{formik.errors.firstName}</p>}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="lastName">{dict.register.lastNameLabel}</Label>
+                      <Input id="lastName" {...formik.getFieldProps("lastName")} />
+                      {formik.touched.lastName && formik.errors.lastName && <p className="text-red-500 text-xs">{formik.errors.lastName}</p>}
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="professionalTitle">{dict.register.professionalTitleLabel}</Label>
+                    <Input id="professionalTitle" {...formik.getFieldProps("professionalTitle")} />
+                  </div>
+                </>
+              ) : (
+                <div className="grid gap-2">
+                  <Label htmlFor="entityName">{dict.register.entityNameLabel}</Label>
+                  <Input id="entityName" {...formik.getFieldProps("entityName")} />
+                  {formik.touched.entityName && formik.errors.entityName && <p className="text-red-500 text-xs">{formik.errors.entityName}</p>}
+                </div>
+              )}
+              <div className="grid gap-2">
+                <Label htmlFor="bio">{dict.register.bioLabel}</Label>
+                <Textarea id="bio" {...formik.getFieldProps("bio")} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="websiteUrl">{dict.register.websiteUrlLabel}</Label>
+                <Input id="websiteUrl" type="url" {...formik.getFieldProps("websiteUrl")} />
+                {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-red-500 text-xs">{formik.errors.websiteUrl}</p>}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="country">{dict.register.countryLabel}</Label>
+                <Combobox<Country> id="country" name="location.country" data={data} error={countryError} touched={countryTouched} onBlur={formik.handleBlur} value={formik.values.location?.country} onChange={(country) => { setSelectedCountry(country); formik.setFieldValue('location.country', country?.name || '') }} placeholder={dict.combobox.selectCountry} />
+                {countryTouched && countryError && <p className="text-red-500 text-xs">{countryError}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="stateOrProvince">{dict.register.stateOrProvinceLabel}</Label>
+                    
+                    <Combobox<State> data={selectedCountry ? selectedCountry.states || [] : []} placeholder={dict.combobox.selectState} id="stateOrProvince" name="location.stateOrProvince" value={formik.values.location?.stateOrProvince} onBlur={formik.handleBlur} onChange={(state) => { setSelectedState(state); formik.setFieldValue("location.stateOrProvince", state?.name || '') }} />
+                    
+                    {stateTouched && stateError && <p className="text-red-500 text-xs">{stateError}</p>}
+                  </div>
+                  <div className="grid gap-2">
+                      <Label htmlFor="city">{dict.register.cityLabel}</Label>
+                      <Combobox<City> data={selectedState ? selectedState.cities || [] : []} onBlur={formik.handleBlur} id="city" name="location.city" value={formik.values.location?.city} onChange={(city) => { formik.setFieldValue('location.city', city.name) }} placeholder={dict.combobox.selectCity} />
+                      {cityTouched && cityError && <p className="text-red-500 text-xs">{cityError}</p>}
+                  </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>{dict.button.cancel}</Button>
+              <Button type="submit" disabled={isLoading || !formik.dirty}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {dict.button.save}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
-    <Dialog modal={false} open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+    <Drawer open={open} onOpenChange={setOpen}>
+      <DrawerTrigger asChild>{children}</DrawerTrigger>
+      <DrawerContent className="items-center px-4">
         <form onSubmit={formik.handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{dict.button.edit}</DialogTitle>
-            <DialogDescription>
+          <DrawerHeader>
+            <DrawerTitle>{dict.button.edit}</DrawerTitle>
+            <DrawerDescription>
               {dict.updateProfile.description}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             {user.userType === UserTypeGQL.INDIVIDUAL ? (
               <> 
                 <div className="grid grid-cols-2 gap-4">
@@ -206,15 +290,15 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
                 </div>
             </div>
           </div>
-          <DialogFooter>
+          <DrawerFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>{dict.button.cancel}</Button>
             <Button type="submit" disabled={isLoading || !formik.dirty}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {dict.button.save}
             </Button>
-          </DialogFooter>
+          </DrawerFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   )
 }

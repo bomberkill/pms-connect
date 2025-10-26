@@ -20,6 +20,10 @@
       "required": "Email is required",
       "alreadyInUse": "Email is already in use"
     },
+    "post": {
+      "contentRequired": "The post content cannot be empty.",
+      "contentMax": "The post content cannot exceed 2000 characters."
+    },
     "password": {
       "min": "Password must be at least 6 characters",
       "required": "Password is required",
@@ -99,6 +103,17 @@
         "message": "There was an error creating your account. Please try again."
       }
     },
+    "postCreated": {
+      "title": "Post Published",
+      "message": "Your post is now live."
+    },
+    "postCreationFailed": {
+      "title": "Error",
+      "message": {
+        "default": "Could not create the post.",
+        "uploadFailed": "Media upload failed."
+      }
+    },
     "noChanges": {
       "title": "No Changes",
       "message": "You haven't made any changes."
@@ -152,6 +167,7 @@
     "passwordsDoNotMatch": "Passwords do not match.",
     "uploadProfilePic": "Upload Profile Picture",
     "uploadCoverPic": "Upload Cover Picture",
+    "uploadAccreditations": "Upload Professional Accreditations (PDF, JPG, PNG)",
     "professionalAccreditations": "Professional Accreditations",
     "accreditationType": "Accreditation Type",
     "document": "Document (PDF, JPG, PNG)",
@@ -186,7 +202,7 @@
   "appSideBar": {
     "navMain": {
       "feed": "Feed",
-      "group": "Groups",
+      "friends": "Friends",
       "chat": "Chat",
       "job": "Jobs",
       "profile": "Profile",
@@ -215,7 +231,8 @@
       "about": "About",
       "posts": "Posts",
       "experience": "Experience",
-      "activity": "Activity"
+      "activity": "Activity",
+      "replies": "Replies"
     },
     "stats": {
       "title": "Statistics",
@@ -229,7 +246,8 @@
     "save": "Save",
     "cancel": "Cancel",
     "sendLink": "Send Reset Link",
-    "backToLogin": "Back to login"
+    "backToLogin": "Back to login",
+    "publish": "Publish"
   },
   "updateProfile": {
     "title": "Edit Profile",
@@ -243,11 +261,43 @@
   },
   "header": {
     "searchPlaceholder": "Search for friends , groups , pages...",
-    "addNewPost": "Add New Post"
+    "addNewPost": "Add New Post",
+    "search": "Search"
   },
   "resetPassword": {
     "title": "Reset Password",
     "description": "Enter your email address and we'll send you a link to reset your password.",
     "emailLabel": "Email address"
+  },
+  "post": {
+    "whatsOnYourMind": "What's on your mind",
+    "addToPost": "Add to your post",
+    "mediaPreviewAlt": "Media preview",
+    "postYourReply": "Post your reply",
+    "post": "Post",
+    "postNotFound": "Post not found.",
+    "noComments": "No comments yet.",
+    "pdfDocument": "PDF Document"
+  },
+  "friends": {
+    "connectionRequests": "My Connection Requests",
+    "suggestions": "Suggestions",
+    "noSuggestions": "No suggestions at the moment."
+  },
+  "actions": {
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "seeAll": "See all",
+    "mute": "Mute",
+    "report": "Report",
+    "share": "Share",
+    "save": "Save",
+    "cancelRequest": "Cancel Request",
+    "acceptRequest": "Accept Request",
+    "disconnect": "Disconnect",
+    "connect": "Connect",
+    "back": "Back",
+    "likes": "Likes",
+    "loadMore": "Load more"
   }
 }
