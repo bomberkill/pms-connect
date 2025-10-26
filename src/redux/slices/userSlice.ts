@@ -1,6 +1,6 @@
 import { User } from "@/types/User";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { createUser, fetchUserByUid, loginAndFetchUser, updateUser } from "../services/userService";
+import { createSlice, isAnyOf, PayloadAction } from "@reduxjs/toolkit";
+import { createUser, fetchMe, fetchUserByUid, followUser, loginAndFetchUser, removeConnection, unfollowUser, updateUser } from "../services/userService";
 
 interface UserState {
     user: User | null;
@@ -33,51 +33,51 @@ const userSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-        .addCase(createUser.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(loginAndFetchUser.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(fetchUserByUid.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        })
-        .addCase(createUser.fulfilled, (state, action: PayloadAction<User>) => {
+        .addCase(removeConnection.fulfilled, (state) => {
             state.loading = false;
-            state.user = action.payload;
+            // No state change needed here, as fetchMe is dispatched
         })
-        // .addCase(loginAndFetchUser.fulfilled, (state, action: PayloadAction<User>) => {
-        //     state.loading = false;
-        //     state.user = action.payload;
-        // })
-        .addCase(fetchUserByUid.fulfilled, (state, action: PayloadAction<User>) => {
+        .addCase(followUser.fulfilled, (state) => {
             state.loading = false;
-            state.user = action.payload;
+            // No state change needed here, as fetchMe is dispatched
         })
-        .addCase(createUser.rejected, (state, action) => {
+        .addCase(unfollowUser.fulfilled, (state) => {
             state.loading = false;
-            state.error = action.payload as string;
+            // No state change needed here, as fetchMe is dispatched
         })
-        .addCase(loginAndFetchUser.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        })
-        .addCase(fetchUserByUid.rejected, (state, action) => {
-            state.loading = false;
-            state.error = action.payload as string;
-        })
-        .addCase(updateUser.fulfilled, (state, action: PayloadAction<User>) => {
+        .addMatcher(isAnyOf(
+            createUser.fulfilled,
+            loginAndFetchUser.fulfilled,
+            fetchUserByUid.fulfilled,
+            updateUser.fulfilled,
+            fetchMe.fulfilled
+        ), (state, action: PayloadAction<User>) => {
             state.loading = false;
             state.user = action.payload; // met directement à jour le user dans le store
         })
-        .addCase(updateUser.pending, (state) => {
+        .addMatcher(isAnyOf(
+            createUser.pending,
+            loginAndFetchUser.pending,
+            fetchUserByUid.pending,
+            updateUser.pending,
+            removeConnection.pending,
+            fetchMe.pending,
+            followUser.pending,
+            unfollowUser.pending
+        ), (state) => {
             state.loading = true;
             state.error = null;
         })
-        .addCase(updateUser.rejected, (state, action) => {
+        .addMatcher(isAnyOf(
+            createUser.rejected,
+            loginAndFetchUser.rejected,
+            fetchUserByUid.rejected,
+            updateUser.rejected,
+            fetchMe.rejected,
+            removeConnection.rejected,
+            followUser.rejected,
+            unfollowUser.rejected
+        ), (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
         });

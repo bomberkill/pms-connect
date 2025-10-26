@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Pms-Connect",
     short_name: "Pms-Connect",
     description: "The professional social network for healthcare providers.",
-    start_url: "/login",
+    start_url: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#ffffff",

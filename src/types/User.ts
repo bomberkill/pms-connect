@@ -71,9 +71,10 @@ export enum UserTypeGQL {
    * We'll use a discriminated union for IndividualUser and LegalEntityUser
    */
   interface BaseUser {
-    _id: string; // MongoDB ObjectId
+    id: string; // MongoDB ObjectId
     firebaseUid: string;
     email: string;
+    slug: string;
     userType: UserTypeGQL;
     professionalAccreditation: ProfessionalAccreditation[];
     profilePicUrl?: string;
@@ -86,6 +87,8 @@ export enum UserTypeGQL {
     followers: string[];   // Array of user IDs
     following: string[];   // Array of user IDs
     blockedUsers: string[];// Array of user IDs
+    fcmTokens: string[];   // Array of FCM tokens
+    language: string;      // ISO 639-1 code
     createdAt: string;     // GraphQLISODateTime
     updatedAt: string;     // GraphQLISODateTime
     lastLoginAt?: string;  // GraphQLISODateTime
@@ -148,3 +151,22 @@ export enum UserTypeGQL {
   };
   
   // You can define other DTO types similarly (UpdateUserInput, etc.)
+
+/**
+ * Types related to Follow/Unfollow subscriptions
+ */
+
+export interface FollowerInfo {
+  userId: string;
+  followersCount: number;
+}
+
+export interface FollowingInfo {
+  userId: string;
+  followingCount: number;
+}
+
+export interface FollowsUpdated {
+  follower: FollowerInfo;
+  following: FollowingInfo;
+}

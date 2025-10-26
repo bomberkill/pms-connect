@@ -28,6 +28,7 @@ import { useRouter } from "next/navigation"
 import { useAppSelector, useDictionary } from "@/lib/hooks"
 import { Skeleton } from "@/components/ui/skeleton"
 import Image from "next/image"
+import { useCleanPathname } from "./Header"
 
 
 
@@ -35,13 +36,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const dict = useDictionary()
   const {user} = useAppSelector((state) => state.user)
   const router = useRouter()
+  const pathname = useCleanPathname()
   const data = React.useMemo(() => ({
     navMain: [
       {
         title: dict.appSideBar.navMain.feed,
-        url: "#",
+        url: "/",
         icon: Newspaper,
-        isActive: true,
+        isActive: pathname === "/",
         items: [
           // {
           //   title: "History",
@@ -51,41 +53,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: dict.appSideBar.navMain.chat,
-        url: "#",
+        url: "/chat",
         icon: MessageCircle,
+        isActive: pathname === "/chat",
       },
       {
         title: dict.appSideBar.navMain.job,
-        url: "#",
+        url: "/jobs",
         icon: BriefcaseBusiness,
+        isActive: pathname === "/jobs",
         items: [
         ],
       },
       {
-        title: dict.appSideBar.navMain.group,
-        url: "#",
+        title: dict.appSideBar.navMain.friends,
+        url: "/friends", // Note: "group" key is used for "friends" URL
         icon: Users,
+        isActive: pathname === "/friends",
         items: [
         ],
       },
       {
         title: dict.appSideBar.navMain.marketplace,
-        url: "#",
+        url: "/marketplace",
         icon: Store,
+        isActive: pathname === "/marketplace",
         items: [
         ],
       },
       {
         title: dict.appSideBar.navMain.library,
-        url: "#",
+        url: "/library",
         icon: LibraryBig,
+        isActive: pathname === "/library",
         items: [
         ],
       },
       {
         title: dict.appSideBar.navMain.settings,
-        url: "#",
+        url: "/settings",
         icon: Settings,
+        isActive: pathname === "/settings",
         items: [
         ],
       },
@@ -95,9 +103,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar className="bg-background" side="left" variant="sidebar" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="cursor-pointer" onClick={() => router.push('/')}>
             <SidebarMenuButton size="lg" asChild>
-              <a className="cursor-pointer" onClick={router.refresh}>
+              <a>
                   <Image src="/logo.png" alt="PMSCONNECT Logo" width={32} height={32} className="h-8 w-auto" />
                 {/* <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />

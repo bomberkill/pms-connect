@@ -1,7 +1,7 @@
 
 import { apolloClient } from "@/graphql/apolloClient";
 import { CreateUserInput, UpdateUserInput } from "@/types/User";
-import { buildCreateUserMutation, buildGetUserByUidQuery, buildUpdateMyProfileMutation } from "@/graphql/queries";
+import { buildCreateUserMutation, buildFollowMutation, buildGetMeQuery, buildGetUserByUidQuery, buildRemoveConnectionMutation, buildUnfollowMutation, buildUpdateMyProfileMutation } from "@/graphql/queries/index";
 import { clearAuth } from "../slices/authSlice";
 import { clearUser } from "../slices/userSlice";
 import { AppDispatch } from "../store";
@@ -33,6 +33,85 @@ export const createUser = createAsyncThunk(
         } catch (error: unknown) {
             // Pour les erreurs réseau ou autres exceptions
             console.error("Create user error:", error);
+            return rejectWithValue('errors.unknown');
+        }
+    }
+);
+
+/**
+ * Thunk to follow a user.
+ * On success, it returns the ID of the user that was followed.
+ */
+export const followUser = createAsyncThunk(
+    'user/follow',
+    async (userIdToFollow: string, {dispatch, rejectWithValue }) => {
+        try {
+            const { data, errors } = await apolloClient.mutate({
+                mutation: buildFollowMutation(),
+                variables: { userId: userIdToFollow }
+            });
+
+            if (errors || !data.follow) {
+                return rejectWithValue(errors ? errors[0].message : 'Failed to follow user.');
+            }
+            dispatch(fetchMe());
+
+            // Return the ID to be used in the reducer for an optimistic update
+            // return userIdToFollow;
+        } catch (error: unknown) {
+            console.error("Follow user error:", error);
+            return rejectWithValue('errors.unknown');
+        }
+    }
+);
+
+/**
+ * Thunk to unfollow a user.
+ * On success, it returns the ID of the user that was unfollowed.
+ */
+export const unfollowUser = createAsyncThunk(
+    'user/unfollow',
+    async (userIdToUnfollow: string, {dispatch, rejectWithValue }) => {
+        try {
+            const { data, errors } = await apolloClient.mutate({
+                mutation: buildUnfollowMutation(),
+                variables: { userId: userIdToUnfollow }
+            });
+
+            if (errors || !data.unfollow) {
+                return rejectWithValue(errors ? errors[0].message : 'Failed to unfollow user.');
+            }
+            dispatch(fetchMe());
+            // return userIdToUnfollow;
+        } catch (error: unknown) {
+            console.error("Unfollow user error:", error);
+            return rejectWithValue('errors.unknown');
+        }
+    }
+);
+
+/**
+ * Thunk to remove an existing connection.
+ */
+export const removeConnection = createAsyncThunk(
+    'user/removeConnection', // Note the prefix 'user/' now
+    async (userIdToRemove: string, {dispatch, rejectWithValue }) => {
+        try {
+            const { data, errors } = await apolloClient.mutate({
+                mutation: buildRemoveConnectionMutation(),
+                variables: { userIdB: userIdToRemove }
+            });
+            if (errors || !data.removeConnection) {
+                return rejectWithValue(errors ? errors[0].message : 'Failed to remove connection.');
+            }
+            // if (!data.removeConnection) {
+            //     return rejectWithValue("removeConnection is null or false")
+            // }
+            // if (data.removeConnection) {
+            // }
+            dispatch(fetchMe());
+        } catch (error: unknown) {
+            console.error("Remove connection error:", error);
             return rejectWithValue('errors.unknown');
         }
     }
@@ -120,6 +199,30 @@ export const fetchUserByUid = createAsyncThunk(
             return data.getUserByFirebaseUid;
         } catch (error: unknown) {
             console.error("Failed to fetch user profile by UID:", error);
+            return rejectWithValue('errors.user.fetchProfileFailed');
+        }
+    }
+);
+export const fetchMe = createAsyncThunk(
+    'user/fetchMe',
+    async (_, { rejectWithValue }) => {
+        try {
+            const { data, errors } = await apolloClient.query({
+                query: buildGetMeQuery(),
+                // variables: {},
+                fetchPolicy: 'network-only'
+            });
+
+            if (errors && errors.length > 0) {
+                return rejectWithValue(errors[0].message);
+            }
+            if (!data.me) {
+                return rejectWithValue("getMe is null")
+            }
+            // console.log("fetchMe data", data);
+            return data.me;
+        } catch (error: unknown) {
+            console.error("Failed to fetch user profile:", error);
             return rejectWithValue('errors.user.fetchProfileFailed');
         }
     }

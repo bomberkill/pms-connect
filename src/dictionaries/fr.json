@@ -20,6 +20,10 @@
         "required": "L'email est requis",
         "alreadyInUse": "Cet email est déjà utilisé"
       },
+      "post": {
+        "contentRequired": "Le contenu de la publication ne peut pas être vide.",
+        "contentMax": "Le contenu de la publication ne peut pas dépasser 2000 caractères."
+      },
       "password": {
         "min": "Le mot de passe doit contenir au moins 6 caractères",
         "required": "Le mot de passe est requis",
@@ -83,6 +87,17 @@
         "error": {
           "title": "Échec de l'inscription",
           "message": "Une erreur s'est produite lors de la création de votre compte. Veuillez réessayer."
+        }
+      },
+      "postCreated": {
+        "title": "Publication créée",
+        "message": "Votre publication est maintenant en ligne."
+      },
+      "postCreationFailed": {
+        "title": "Erreur",
+        "message": {
+          "default": "Impossible de créer la publication.",
+          "uploadFailed": "L'envoi du média a échoué."
         }
       },
       "forgotPassword": {
@@ -152,6 +167,7 @@
       "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
       "uploadProfilePic": "Téléverser une photo de profil",
       "uploadCoverPic": "Téléverser une photo de couverture",
+      "uploadAccreditations": "Téléverser des accréditations professionnelles (PDF, JPG, PNG)",
       "professionalAccreditations": "Accréditations professionnelles",
       "accreditationType": "Type d'accréditation",
       "document": "Document (PDF, JPG, PNG)",
@@ -186,7 +202,7 @@
   "appSideBar": {
     "navMain": {
       "feed": "Fil d'actualité",
-      "group": "Groupes",
+      "friends": "Amis",
       "chat": "Discussions",
       "job": "Emplois",
       "profile": "Profile",
@@ -216,7 +232,8 @@
       "about": "À propos",
       "posts": "Publications",
       "experience": "Expérience",
-      "activity": "Activité"
+      "activity": "Activité",
+      "replies": "Réponses"
     },
     "stats": {
       "title": "Statistiques",
@@ -230,7 +247,8 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "sendLink": "Envoyer le lien de réinitialisation",
-    "backToLogin": "Retour à la connexion"
+    "backToLogin": "Retour à la connexion",
+    "publish": "Publier"
   },
   "updateProfile": {
     "title": "Modifier le profil",
@@ -244,11 +262,43 @@
   },
   "header": {
     "searchPlaceholder": "Rechercher vos amis, groupes et pages...",
-    "addNewPost": "nouvelle publication"
+    "addNewPost": "nouvelle publication",
+    "search": "Recherche"
   },
   "resetPassword": {
     "title": "Réinitialiser le mot de passe",
     "description": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
     "emailLabel": "Adresse e-mail"
+  },
+  "post": {
+    "whatsOnYourMind": "Quoi de neuf",
+    "addToPost": "Ajouter à votre publication",
+    "mediaPreviewAlt": "Aperçu du média",
+    "postYourReply": "Postez votre réponse",
+    "post": "Publication",
+    "postNotFound": "Publication non trouvée.",
+    "noComments": "Aucun commentaire pour le moment.",
+    "pdfDocument": "Document PDF"
+  },
+  "friends": {
+    "connectionRequests": "Mes demandes de connexion",
+    "suggestions": "Suggestions",
+    "noSuggestions": "Aucune suggestion pour le moment."
+  },
+  "actions": {
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre",
+    "seeAll": "Voir tout",
+    "mute": "Masquer",
+    "report": "Signaler",
+    "share": "Partager",
+    "save": "Enregistrer",
+    "cancelRequest": "Annuler la demande",
+    "acceptRequest": "Accepter la demande",
+    "disconnect": "Se déconnecter",
+    "connect": "Se connecter",
+    "back": "Retour",
+    "likes": "J'aime",
+    "loadMore": "Charger plus"
   }
 }

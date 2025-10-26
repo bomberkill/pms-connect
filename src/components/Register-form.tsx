@@ -44,7 +44,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import CustomLoader from "./Loader"
 import { apolloClient } from "@/graphql/apolloClient"
-import { buildCheckUserExistsByEmailQuery } from "@/graphql/queries"
+import { buildCheckUserExistsByEmailQuery } from "@/graphql/queries/index"
 import Link from "next/link"
 // import { setPersistence, browserLocalPersistence } from "firebase/auth";
 
@@ -733,8 +733,8 @@ export function RegisterForm({
                 : (
                   <div className="flex flex-col justify-center items-center gap-5">
                     <div className="flex flex-col justify-center items-center gap-1">
-                      <Label className="text-sm font-medium">{dict.register.uploadProfilePic}</Label>
-                      <Label className="text-xs text-muted-foreground font-medium">{dict.register.uploadProfilePic}</Label>
+                      <Label className="text-sm font-medium">{dict.register.uploadCoverPic}</Label>
+                      <Label className="text-xs text-muted-foreground font-medium">{dict.register.uploadCoverPic}</Label>
                     </div>
                     <label htmlFor="coverPicFile">
                       <div className="rounded-sm bg-gray-200 py-1 px-3 cursor-pointer hover:bg-gray-300 transition-colors">
@@ -795,8 +795,8 @@ export function RegisterForm({
                 : (
                   <div className="flex flex-col justify-center items-center gap-5">
                     <div className="flex flex-col justify-center items-center gap-1">
-                      <Label className="text-sm font-medium">{dict.register.uploadProfilePic}</Label>
-                      <Label className="text-xs text-muted-foreground font-medium">{dict.register.uploadProfilePic}</Label>
+                      <Label className="text-sm font-medium">{dict.register.uploadAccreditations}</Label>
+                      <Label className="text-xs text-muted-foreground font-medium">{dict.register.uploadAccreditations}</Label>
                     </div>
                     <label htmlFor="accreditations-input">
                       <div className="rounded-sm bg-gray-200 py-1 px-3 cursor-pointer hover:bg-gray-300 transition-colors">

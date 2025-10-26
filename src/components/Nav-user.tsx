@@ -27,10 +27,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { User, UserTypeGQL } from "@/types/User"
+import { User } from "@/types/User"
 import { useAppDispatch, useDictionary } from "@/lib/hooks"
 import { logoutUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
+import { getUserDisplayName } from "@/lib/user-utils"
 
 export function NavUser(
   {user}: {user: User}) {
@@ -56,11 +57,11 @@ export function NavUser(
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-full">
-                <AvatarImage className="object-cover" src={user.profilePicUrl} alt={user.userType === UserTypeGQL.INDIVIDUAL ? user.firstName : user.entityName } />
+                <AvatarImage className="object-cover" src={user.profilePicUrl} alt={getUserDisplayName(user)} />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
-                <span className="truncate font-medium">{user.userType === UserTypeGQL.INDIVIDUAL ? `${user.firstName} ${user.lastName}` : user.entityName}</span>
+                <span className="truncate font-medium">{getUserDisplayName(user)}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4 group-data-[state=collapsed]:hidden" />
@@ -75,18 +76,18 @@ export function NavUser(
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.profilePicUrl} alt={user.userType === UserTypeGQL.INDIVIDUAL ? user.firstName : user.entityName } />
+                  <AvatarImage src={user.profilePicUrl} alt={getUserDisplayName(user)} />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.userType === UserTypeGQL.INDIVIDUAL ? user.firstName : user.entityName }</span>
+                  <span className="truncate font-medium">{getUserDisplayName(user)}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push("profile")}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.replace(`/profile/${user.slug}`)}>
                 <BadgeCheck />
                 {dict.appSideBar.navUser.account}
               </DropdownMenuItem>
