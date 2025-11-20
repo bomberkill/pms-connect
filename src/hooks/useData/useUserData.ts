@@ -1,12 +1,14 @@
-import { useQuery, useMutation, useSubscription } from '@apollo/client';
+import { useQuery, useMutation, useSubscription, useLazyQuery } from '@apollo/client';
 import {
   buildGetAllUsersQuery,
   buildGetMeQuery,
   buildFollowMutation,
   buildUnfollowMutation,
   buildFollowsUpdatedSubscription,
+  buildCheckUserExistsByEmailQuery,
+  buildCheckUserExistsByPhoneNumberQuery,
 } from '@/graphql/queries/index';
-import { FollowsUpdated, User } from '@/types/User';
+import { CheckUserExistsResponse, FollowsUpdated, User } from '@/types/User';
 import { useAppSelector, useAppDispatch } from '@/lib/hooks';
 import { setUser } from '@/redux/slices/userSlice';
 import { useEffect } from 'react';
@@ -79,3 +81,35 @@ export const useFollowsSubscription = (userId: string) => {
   })
   return {followsUpdated: data?.followsUpdated, loading, error}
 }
+
+
+// =============================================================================
+// == USER CHECKS
+// =============================================================================
+
+/**
+ * Hook to check if a user exists by email or phone number.
+ * Uses lazy queries to be triggered on demand (e.g., in a form).
+ */
+export const useCheckUserExists = () => {
+  const [checkByEmail, { loading: loadingEmail, error: errorEmail, data: dataEmail }] = useLazyQuery<
+    { checkUserExistsByEmail: CheckUserExistsResponse },
+    { email: string }
+  >(buildCheckUserExistsByEmailQuery());
+
+  const [checkByPhone, { loading: loadingPhone, error: errorPhone, data: dataPhone }] = useLazyQuery<
+    { checkUserExistsByPhoneNumber: CheckUserExistsResponse },
+    { phoneNumber: string }
+  >(buildCheckUserExistsByPhoneNumberQuery());
+
+  return {
+    checkByEmail,
+    loadingEmail,
+    errorEmail,
+    emailExistsResult: dataEmail?.checkUserExistsByEmail,
+    checkByPhone,
+    loadingPhone,
+    errorPhone,
+    phoneExistsResult: dataPhone?.checkUserExistsByPhoneNumber,
+  };
+};

@@ -6,7 +6,6 @@ import {
   Bookmark,
   Flag,
   Heart,
-  FileIcon,
   MessageCircle,
   MoreVertical,
   Share2,
@@ -21,16 +20,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {useFollowActions, useGetMe, useLikeCommentActions, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index";
+} from "@/components/ui/dropdown-menu"
+import { useBookmarkActions, useFollowActions, useGetMe, useLikeCommentActions, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDictionary } from "@/lib/hooks";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 import { Comment } from "@/types/Comment";
-import { MediaItem, MediaType, Post } from "@/types/Post";
+import { Post } from "@/types/Post";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { useRouter } from "next/navigation";
+import { PostMedia } from "./PostMedia";
 
 const formatTimeAgo = (isoDate: string) => {
   const date = new Date(isoDate);
@@ -45,61 +45,61 @@ const formatTimeAgo = (isoDate: string) => {
   return date.toLocaleDateString();
 };
 
-export function PostMedia({ media }: { media?: MediaItem[] }) {
-  const dict = useDictionary()
-  if (!media || media.length === 0) return null;
+// export function PostMedia({ media }: { media?: MediaItem[] }) {
+//   const dict = useDictionary()
+//   if (!media || media.length === 0) return null;
 
-  if (media.length === 1) {
-    const m = media[0];
-    return (
-      <div className="mt-3 overflow-hidden">
-        {m.type === MediaType.VIDEO ? (
-          <video src={m.url} className="w-full max-h-[520px] bg-black rounded-md object-contain" controls onClick={(e) => e.stopPropagation()} />
-        ) : m.type === MediaType.IMAGE ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={m.url} alt="Post media" className="w-full max-h-[520px] rounded-md object-cover" />
-        ) : (
-          <a href={m.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-3 p-4 bg-muted rounded-lg border hover:bg-muted/80">
-            <FileIcon className="h-8 w-8 text-muted-foreground" />
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground break-all">{m.url.split("/").pop()}</span>
-              <span className="text-xs text-muted-foreground">{dict.post.pdfDocument}</span>
-            </div>
-          </a>
-        )}
-      </div>
-    );
-  }
+//   if (media.length === 1) {
+//     const m = media[0];
+//     return (
+//       <div className="mt-3 overflow-hidden">
+//         {m.type === MediaType.VIDEO ? (
+//           <video src={m.url} className="w-full max-h-[520px] bg-black rounded-md object-contain" controls onClick={(e) => e.stopPropagation()} />
+//         ) : m.type === MediaType.IMAGE ? (
+//           // eslint-disable-next-line @next/next/no-img-element
+//           <img src={m.url} alt="Post media" className="w-full max-h-[520px] rounded-md object-cover" />
+//         ) : (
+//           <a href={m.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-3 p-4 bg-muted rounded-lg border hover:bg-muted/80">
+//             <FileIcon className="h-8 w-8 text-muted-foreground" />
+//             <div className="flex flex-col">
+//               <span className="text-sm font-medium text-foreground break-all">{m.url.split("/").pop()}</span>
+//               <span className="text-xs text-muted-foreground">{dict.post.pdfDocument}</span>
+//             </div>
+//           </a>
+//         )}
+//       </div>
+//     );
+//   }
 
-  // const containerClass = cn("mt-3 grid gap-1 rounded-lg overflow-hidden", {
-  //   "grid-cols-2": media.length > 1,
-  // });
+//   // const containerClass = cn("mt-3 grid gap-1 rounded-lg overflow-hidden", {
+//   //   "grid-cols-2": media.length > 1,
+//   // });
 
-  return (
-    <div className={cn("mt-3 grid gap-1 overflow-hidden", {
-      "grid-cols-2": media.length === 2,
-      "grid-cols-3": media.length === 3,
-      "grid-cols-4": media.length >= 4,
-    })}>
-      {media.map((m) => {
-        if (m.type === MediaType.VIDEO) {
-          return <video key={m.url} src={m.url} className="w-full h-full rounded-md object-cover" controls onClick={(e) => e.stopPropagation()} />;
-        }
-        if (m.type === MediaType.IMAGE) {
-          return <img key={m.url} src={m.url} alt="Post media" className="w-full h-full rounded-md object-cover" />;
-        }
-        // For documents in a grid
-        return (
-          <a key={m.url} href={m.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="w-full aspect-square bg-muted rounded-md flex flex-col items-center justify-center p-2 hover:bg-muted/80">
-            <FileIcon className="h-10 w-10 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground text-center break-all mt-2">{m.url.split('/').pop()}</span>
-          </a>
-        );
-      })}
-      {/* TODO: Implement a proper media grid for more than 2 items */}
-    </div>
-  );
-}
+//   return (
+//     <div className={cn("mt-3 grid gap-1 overflow-hidden", {
+//       "grid-cols-2": media.length === 2,
+//       "grid-cols-3": media.length === 3,
+//       "grid-cols-4": media.length >= 4,
+//     })}>
+//       {media.map((m) => {
+//         if (m.type === MediaType.VIDEO) {
+//           return <video key={m.url} src={m.url} className="w-full h-full rounded-md object-cover" controls onClick={(e) => e.stopPropagation()} />;
+//         }
+//         if (m.type === MediaType.IMAGE) {
+//           return <img key={m.url} src={m.url} alt="Post media" className="w-full h-full rounded-md object-cover" />;
+//         }
+//         // For documents in a grid
+//         return (
+//           <a key={m.url} href={m.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="w-full aspect-square bg-muted rounded-md flex flex-col items-center justify-center p-2 hover:bg-muted/80">
+//             <FileIcon className="h-10 w-10 text-muted-foreground" />
+//             <span className="text-xs text-muted-foreground text-center break-all mt-2">{m.url.split('/').pop()}</span>
+//           </a>
+//         );
+//       })}
+//       {/* TODO: Implement a proper media grid for more than 2 items */}
+//     </div>
+//   );
+// }
 
 interface FeedItemCardProps {
   item: Post | Comment;
@@ -115,8 +115,9 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
   const authorId = item.author?.id;
   const { likePost, unlikePost, liking, unliking } = useLikePostActions(item.id);
   const { likeComment, unlikeComment} = useLikeCommentActions(item.id);
-  const {likesUpdate} = useLikesSubscription(item.id, isComment ? 'Comment' : 'Post');
+  const { likesUpdate } = useLikesSubscription(item.id, isComment ? 'Comment' : 'Post');
   const { followUser, unfollowUser, following: followingReq, unfollowing } = useFollowActions();
+  const { addBookmark, removeBookmark, adding: addingBookmark, removing: removingBookmark } = useBookmarkActions(item.id, isComment ? 'Comment' : 'Post');
   
   const isLiked = 'isLiked' in item ? item.isLiked : false;
   const isFollowing = !!(authorId && me?.following?.includes(authorId));
@@ -156,6 +157,18 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
     }
   };
 
+  const handleBookmarkToggle = async () => {
+    if (!me) return;
+    try {
+      if (item.isBookmarked) {
+        await removeBookmark();
+      } else {
+        await addBookmark();
+      }
+    } catch (e) {
+      console.error("Bookmark toggle failed", e);
+    }
+  };
   const goToDetail = () => {
     const postPath = isComment ? `/post/${item.id}?isComment=true` : `/post/${item.id}`;
     router.push(postPath);
@@ -201,7 +214,7 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
         )}
       </div>
 
-      <div onClick={goToDetail} className="px-4 pb-2">
+      <div className="px-4 pb-2">
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{item.content}</p>
         {'media' in item && <PostMedia media={item.media} />}
       </div>
@@ -218,13 +231,19 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
           </button>
           {!isComment && (
             <button className="flex items-center justify-center gap-1.5 text-xs font-medium hover:bg-muted rounded-lg px-2 py-1">
-              <Share2 className="h-[18px] w-[18px]" /><span>{dict.actions.share}</span>
+              <Share2 className="h-[18px] w-[18px]" />
+              {/* <span>{dict.actions.share}</span> */}
             </button>
           )}
         </div>
         {!isComment && (
-          <button className="flex items-center justify-center gap-1.5 text-xs font-medium hover:bg-muted rounded-lg px-2 py-1"><Bookmark className="h-[18px] w-[18px]" />
-            <span>{dict.actions.save}</span>
+          <button
+            onClick={handleBookmarkToggle}
+            disabled={addingBookmark || removingBookmark}
+            className="flex items-center justify-center gap-1.5 text-xs font-medium hover:bg-muted rounded-lg px-2 py-1"
+          >
+            <Bookmark className={cn("h-[18px] w-[18px]", item.isBookmarked && "fill-primary text-primary")} />
+            {/* <span>{dict.actions.save}</span> */}
           </button>
         )}
       </div>

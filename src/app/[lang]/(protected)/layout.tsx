@@ -10,6 +10,8 @@ import {
 import { AppSidebar } from "@/components/App-sidebar";
 import { SuggestionsSidebar } from "@/components/Suggestions-sidebar";
 import Header from "@/components/Header";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function ProtectedLayout({
   children,
@@ -21,6 +23,7 @@ export default function ProtectedLayout({
   const { firebaseUid, loading: authLoading } = useAppSelector(
     (state) => state.auth
   );
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // console.log("start protected layout useEffect, authLoading: ", authLoading, "firebaseUid: ", firebaseUid, "initialized: ", initialized, "uid: ", uid);
@@ -68,7 +71,7 @@ export default function ProtectedLayout({
           </Breadcrumb>
         </header> */}
         <Header />
-        <main className="bg-sidebar">{children}</main>
+        <main className={cn("bg-sidebar", isMobile && "mt-[101px]")}>{children}</main>
       </SidebarInset>
       <SuggestionsSidebar/>
     </SidebarProvider>

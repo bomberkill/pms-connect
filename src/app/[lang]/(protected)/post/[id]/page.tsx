@@ -13,8 +13,9 @@ import { useAppSelector, useDictionary } from "@/lib/hooks";
 import CommentComposer from "../../../../../components/CommentComposer";
 import { uploadFileToSupabase } from "@/components/Register-form";
 import { MediaItem, MediaType } from "@/types/Post";
-import FeedItemCard, { PostMedia } from "@/components/FeedItemCard";
+import FeedItemCard from "@/components/FeedItemCard";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
+import { PostMedia } from "@/components/PostMedia";
 
 function formatDateTime(dateStr: string, locale: string) {
   try {

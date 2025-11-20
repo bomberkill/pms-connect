@@ -20,6 +20,16 @@
       "required": "Email is required",
       "alreadyInUse": "Email is already in use"
     },
+    "phoneNumber": {
+      "required": "Phone number is required",
+      "alreadyInUse": "Phone number is already in use",
+      "invalid": "Invalid phone number format"
+    },
+    "otp": {
+      "invalidLength": "OTP must be exactly 6 digits",
+      "required": "OTP is required",
+      "invalid": "Invalid verification code"
+    },
     "post": {
       "contentRequired": "The post content cannot be empty.",
       "contentMax": "The post content cannot exceed 2000 characters."
@@ -138,6 +148,7 @@
     "individualDescription": "For healthcare professionals, researchers, students, etc.",
     "legalEntityDescription": "For companies, hospitals, associations, clinics, research institutions and others healthcare entities.",
     "emailLabel": "Email",
+    "phoneNmmberLabel": "Phone Number",
     "passwordLabel": "Password",
     "confirmPasswordLabel": "Confirm Password",
     "step2Title": "Personal Details",
@@ -298,6 +309,7 @@
     "connect": "Connect",
     "back": "Back",
     "likes": "Likes",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "download": "Download"
   }
 }

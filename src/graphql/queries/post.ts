@@ -29,6 +29,7 @@ const POST_FIELDS = `
   createdAt
   updatedAt
   isLiked
+  isBookmarked
   status
 `;
 

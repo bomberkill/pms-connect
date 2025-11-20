@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import { useFeed, useNewFeedItemsCount } from "@/hooks/useData/index";
 import { Skeleton } from "./ui/skeleton";
 import FeedItemCard from "./FeedItemCard";
+import { Loader2 } from "lucide-react";
 
 const PostSkeleton = () => (
   <div className="border rounded-xl bg-white shadow-sm p-4 mb-6">
@@ -22,12 +23,58 @@ const PostSkeleton = () => (
 );
 
 export const Feed = () => {
+  const PULL_THRESHOLD = 70; // Distance en pixels à tirer pour déclencher le rafraîchissement
   const [lastPostDate, setLastPostDate] = useState<Date | undefined>(undefined);
   const { count, refreshCount } = useNewFeedItemsCount(lastPostDate);
   const { posts, loading, error, loadMore, refresh } = useFeed({ limit: 15 });
   const { ref, inView } = useInView({ threshold: 0.5 });
 
-   useEffect(() => {
+  // États pour le "Pull to Refresh"
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullPosition, setPullPosition] = useState(0);
+  const touchStartRef = useRef(0);
+  const isAtTopRef = useRef(true);
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    await refresh();
+    refreshCount(); // Réinitialise aussi le compteur de nouveaux posts
+    setIsRefreshing(false);
+    setPullPosition(0);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      isAtTopRef.current = true;
+      touchStartRef.current = e.touches[0].clientY;
+    } else {
+      isAtTopRef.current = false;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isAtTopRef.current) return;
+
+    const touchY = e.touches[0].clientY;
+    const pullDistance = touchY - touchStartRef.current;
+
+    if (pullDistance > 0) {
+      // Appliquer une résistance pour un effet plus naturel
+      setPullPosition(pullDistance / 2.5);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isAtTopRef.current) return;
+
+    if (pullPosition > PULL_THRESHOLD) {
+      handleRefresh();
+    }
+    setPullPosition(0); // Réinitialiser la position dans tous les cas
+  };
+
+  useEffect(() => {
     if (posts.length > 0) {
       // Take the latest post date (first in the feed)
       setLastPostDate(new Date(posts[0].createdAt));
@@ -48,7 +95,24 @@ export const Feed = () => {
   if (error) return <p>Error loading feed: {error.message}</p>;
 
   return (
-    <div>
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative"
+    >
+      {/* Indicateur de rafraîchissement */}
+      <div
+        className="absolute top-0 left-0 right-0 flex justify-center items-center overflow-hidden text-muted-foreground transition-all duration-300"
+        style={{
+          height: `${pullPosition}px`,
+          opacity: Math.min(pullPosition / PULL_THRESHOLD, 1),
+          transform: `translateY(-100%)`, // Positionné au-dessus du contenu
+        }}
+      >
+        <Loader2 className={`animate-spin ${isRefreshing ? 'opacity-100' : 'opacity-0'}`} />
+      </div>
+
       {count > 0 && (
         <div
           className="sticky top-0 z-10 bg-blue-600 text-white text-center py-2 cursor-pointer"

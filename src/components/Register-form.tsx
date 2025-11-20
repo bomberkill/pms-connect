@@ -43,12 +43,24 @@ import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import CustomLoader from "./Loader"
-import { apolloClient } from "@/graphql/apolloClient"
-import { buildCheckUserExistsByEmailQuery } from "@/graphql/queries/index"
 import Link from "next/link"
-// import { setPersistence, browserLocalPersistence } from "firebase/auth";
+import PhoneInput from "./PhoneInput"
+import parsePhoneNumberFromString from "libphonenumber-js"
+import { useCheckUserExists } from "@/hooks/useData/useUserData"
 
-
+// const setupRecaptcha = async () => {
+//   if (!window.recaptchaVerifier) {
+//     const recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+//       size: "invisible",
+//       callback: (response: string) => {
+//         console.log("reCAPTCHA resolved:", response);
+//       },
+//     });
+//     window.recaptchaVerifier = recaptchaVerifier;
+//     await recaptchaVerifier.render(); 
+//   }
+//   return window.recaptchaVerifier;
+// };
 export const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 interface AccreditationPreviewItem {
   url: string; // Object URL for preview (image data URL or object URL for PDF thumbnail)
@@ -92,17 +104,21 @@ export function RegisterForm({
   const [accreditationsPreview, setAccreditationsPreview] = useState<AccreditationPreviewItem[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [selectedState, setSelectedState] = useState<State | null>(null);
+  // const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult>();
+  const { checkByEmail, checkByPhone } = useCheckUserExists();
   const router = useRouter()
   // const [countries, setCountries] = useState<ICountry[]>([])
   // const [states, setStates] = useState<IState[]>([])
   // const [cities, setCities] = useState<ICity[]>([])
   
 
-  const initialValues: CreateUserInput & { password?: string; confirmPassword?: string; profilePicFile: File | null, coverPicFile: File | null, accreditationsFile: File[] } = {
+  const initialValues: CreateUserInput & { password?: string; confirmPassword?: string; verificationCode: string; profilePicFile: File | null, coverPicFile: File | null, accreditationsFile: File[] } = {
     email: "",
     userType: UserTypeGQL.INDIVIDUAL, // Default to individual
-      password: "",
+    password: "",
+    phoneNumber: "",
     confirmPassword: "",
+    verificationCode: "",
     firstName: "",
     lastName: "",
     professionalTitle: "",
@@ -133,6 +149,13 @@ export function RegisterForm({
       email: yup.string()
         .email(dict.validation.email.invalid)
         .required(dict.validation.email.required),
+      phoneNumber: yup.string()
+        .required(dict.validation.phoneNumber.required)
+        .test("is-valid", dict.validation.phoneNumber.invalid, (value) => {
+          if (!value) return false;
+          const parsed = parsePhoneNumberFromString(value);
+          return parsed ? parsed.isValid() : false;
+        }),
       password: yup.string().when([], {
         is: () => googleUser === null,
         then: schema => schema.min(6, dict.validation.password.min).required(dict.validation.password.required),
@@ -144,11 +167,18 @@ export function RegisterForm({
           otherwise: schema => schema.notRequired()
       })
     }),
-    // Step 1: Account Type
+    // Step 1: OTP Verification
+    // yup.object().shape({
+    //   verificationCode: yup
+    //     .string()
+    //     .length(6, dict.validation.otp.invalidLength)
+    //     .required(dict.validation.otp.required),
+    // }),
+    // Step 2: Account Type
     yup.object().shape({
       userType: yup.string().oneOf(Object.values(UserTypeGQL)).required(dict.register.userTypeLabel),
     }),
-    // Step 2: Personal/Entity Details
+    // Step 3: Personal/Entity Details
     yup.object().shape({
       firstName: yup.string().when('userType', {
         is: UserTypeGQL.INDIVIDUAL,
@@ -180,7 +210,7 @@ export function RegisterForm({
         otherwise: (schema) => schema.notRequired(),
       }),
     }),
-    // Step 3: Optional Profile & Location
+    // Step 4: Optional Profile & Location
     yup.object().shape({
       profilePicFile: yup
       .mixed()
@@ -216,10 +246,10 @@ export function RegisterForm({
         yup
           .mixed()
           .required(dict.validation.file.required)
-          .test("fileType", dict.validation.file.onlyPDF, (value) => {
+          .test("fileType", dict.validation.file.unsupported, (value) => {
             if (!value) return false; // Must exist here
             const file = value as File;
-            return file.type === "application/pdf";
+            return ["application/pdf", "image/jpeg", "image/png"].includes(file.type);
           })
           .test("fileSize", dict.validation.file.tooLarge, (value) => {
             if (!value) return false;
@@ -256,44 +286,34 @@ export function RegisterForm({
       if (currentStep === 0) {
         setIsLoading(true);
         try {
-          const { data } = await apolloClient.query({
-            query: buildCheckUserExistsByEmailQuery(),
-            variables: { email: values.email },
-            fetchPolicy: "network-only",
-          });
-          if (data.checkUserExistsByEmail.exists) {
-            // Email already exists
+          const [emailResult, phoneResult] = await Promise.all([
+            checkByEmail({ variables: { email: values.email } }),
+            checkByPhone({ variables: { phoneNumber: values.phoneNumber } }),
+          ]);
+
+          const emailExists = emailResult.data?.checkUserExistsByEmail.exists;
+          const phoneExists = phoneResult.data?.checkUserExistsByPhoneNumber.exists;
+
+          let canProceed = true;
+
+          if (emailExists) {
             formik.setFieldError('email', dict.validation.email.alreadyInUse);
-            // open("info", "Email déjà utilisé", { message: "Cet email est déjà associé à un compte. Veuillez vous connecter." });
-          } else {
-            // Email is available, proceed to next step
+            canProceed = false;
+          }
+          if (phoneExists) {
+            formik.setFieldError('phoneNumber', dict.validation.phoneNumber.alreadyInUse);
+            canProceed = false;
+          }
+
+          if (canProceed) {
+            // console.log("✅ Email and phone number are available. Sending OTP...");
+            // const appVerifier = await setupRecaptcha();
+            // const confirmation = await signInWithPhoneNumber(auth, values.phoneNumber, appVerifier);
+            // setConfirmationResult(confirmation);
             setCurrentStep(currentStep + 1);
           }
-          // const { data } = await client.query<{
-          //   checkUserExistsByEmail: { exists: boolean; hasPassword: boolean; providers: string[] };
-          // }>({
-          //   query: gql`
-          //     query CheckUserExistsByEmail($email: String!) {
-          //       checkUserExistsByEmail(email: $email) {
-          //         exists
-          //         hasPassword
-          //         providers
-          //       }
-          //     }
-          //   `,
-          //   variables: { email: values.email },
-          //   fetchPolicy: "network-only",
-          // });
-          // if (data.checkUserExistsByEmail.exists) {
-          //   // Email already exists
-          //   formik.setFieldError('email', dict.validation.email.alreadyInUse);
-          //   // open("info", "Email déjà utilisé", { message: "Cet email est déjà associé à un compte. Veuillez vous connecter." });
-          // } else {
-          //   // Email is available, proceed to next step
-          //   setCurrentStep(currentStep + 1);
-          // }
         } catch (error: unknown) {
-          console.error("Error checking email:", error);
+          console.error("Error during step 0:", error);
           open("error", "Erreur de vérification", { message: error instanceof Error ? error.message : "Impossible de vérifier l'e-mail pour le moment." });
         } finally {
           setIsLoading(false);
@@ -304,7 +324,7 @@ export function RegisterForm({
         // Final submission
         setIsLoading(true)
         try {
-          const { email, password, userType, firstName, lastName, speciality, entityName, entityType, bio, websiteUrl, location, profilePicFile, coverPicFile, accreditationsFile, professionalTitle } = values;
+          const { email, phoneNumber, password, userType, firstName, lastName, speciality, entityName, entityType, bio, websiteUrl, location, profilePicFile, coverPicFile, accreditationsFile, professionalTitle } = values;
 
           // Étape 1: S'assurer que l'utilisateur Firebase existe et récupérer ses données.
           if (googleUser) {
@@ -352,6 +372,7 @@ export function RegisterForm({
           // Étape 3: Préparation des données pour votre backend
           const userData: CreateUserInput = {
             email,
+            phoneNumber,
             userType,
             bio: bio || undefined,
             websiteUrl: websiteUrl || undefined,
@@ -510,7 +531,6 @@ export function RegisterForm({
           // Move to next step after Google sign-in
           open("success", dict.notifications.register.success.googleAccount.title, { message: dict.notifications.register.success.googleAccount.message });
           // setCurrentStep(1);
-          
         }
       }
       
@@ -544,6 +564,16 @@ export function RegisterForm({
               {formik.touched.email && formik.errors.email && <p className="text-red-500 text-xs">{formik.errors.email}</p>}
             </div>
             <div className="grid gap-1">
+              <PhoneInput
+                label={dict.register.phoneNmmberLabel}
+                value={formik.values.phoneNumber}
+                onChange={(val) => formik.setFieldValue("phoneNumber", val)}
+                onBlur={() => formik.setFieldTouched("phoneNumber", true)}
+                error={formik.errors.phoneNumber as string}
+                touched={formik.touched.phoneNumber}
+              />
+            </div>
+            <div className="grid gap-1">
               <Label htmlFor="password">{dict.register.passwordLabel}</Label>
               <Input id="password" name="password" type="password" placeholder="password" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.password} disabled={googleUser !== null} />
               {formik.touched.password && formik.errors.password && <p className="text-red-500 text-xs">{formik.errors.password}</p>}
@@ -564,6 +594,25 @@ export function RegisterForm({
             </div>
           </div>
         )
+      // case 1:
+      //   return (
+      //     <>
+      //       <PhoneVerificationStep
+      //         phoneNumber={formik.values.phoneNumber}
+      //         value={formik.values.verificationCode}
+      //         onChange={(code) => formik.setFieldValue('verificationCode', code)}
+      //         error={formik.errors.verificationCode}
+      //         isVerifying={isLoading}
+      //         onResend={async () => {
+      //           console.log("Resending OTP...");
+      //           const appVerifier = await setupRecaptcha();
+      //           const confirmation = await signInWithPhoneNumber(auth, formik.values.phoneNumber, appVerifier);
+      //           setConfirmationResult(confirmation);
+      //           open("success", "Code renvoyé", { message: "Un nouveau code a été envoyé." });
+      //         }}
+      //       />
+      //     </>
+      //   );
       case 1:
         return (
           <div className="flex flex-col gap-6 w-full sm:max-w-4/5 md:max-w-3/5 ">
@@ -811,7 +860,7 @@ export function RegisterForm({
                   multiple
                   type="file"
                   className="hidden"
-                  accept="application/pdf"
+                  accept="application/pdf, image/jpeg, image/png"
                   onChange={(event) => {
                     const files = Array.from(event.currentTarget.files || []);
                     console.log(formik.values.accreditationsFile, " :accreditationsFile");
@@ -903,6 +952,21 @@ export function RegisterForm({
         return null
     }
   }
+  // else if (currentStep === 1) {
+  //   // Step 1 -> 2: OTP Verification
+  //   if (!confirmationResult) return;
+  //   setIsLoading(true);
+  //   try {
+  //     await confirmationResult.confirm(values.verificationCode);
+  //     console.log("✅ OTP Verified successfully!");
+  //     setCurrentStep(currentStep + 1);
+  //   } catch (error) {
+  //     console.error("OTP Verification error:", error);
+  //     formik.setFieldError('verificationCode', dict.validation.otp.invalid);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
 
 
   return (
@@ -931,6 +995,8 @@ export function RegisterForm({
               {dict.login.loginButton}
             </Link>
           </div>
+          {/* Le conteneur reCAPTCHA */}
+          <div id="recaptcha-container"></div>
         </div>
       </form>
     </div>

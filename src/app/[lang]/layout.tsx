@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     title: "Pms-Connect | Healthcare Professional Network",
     description:
       "Join Pms-Connect, the professional social network for healthcare providers. Share knowledge, grow your network, and collaborate across the medical community.",
-    url: "https://pms-connect.com",
+    url: "https://pms-connect.vercel.app",
     siteName: "Pms-Connect",
     images: [
       {
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#000000',
+  themeColor: '#ffffff',
   colorScheme: 'light',
 };
 

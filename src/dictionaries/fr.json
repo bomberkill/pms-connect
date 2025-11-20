@@ -20,6 +20,16 @@
         "required": "L'email est requis",
         "alreadyInUse": "Cet email est déjà utilisé"
       },
+      "phoneNumber": {
+        "required": "Le numéro de téléphone est requis",
+        "alreadyInUse": "Ce numéro de téléphone est déjà utilisé",
+        "invalid": "Numéro de téléphone invalide"
+      },
+      "otp": {
+        "invalidLength": "Le code OTP doit contenir exactement 6 chiffres",
+        "required": "Le code OTP est requis",
+        "invalid": "Code de verification invalide"
+      },
       "post": {
         "contentRequired": "Le contenu de la publication ne peut pas être vide.",
         "contentMax": "Le contenu de la publication ne peut pas dépasser 2000 caractères."
@@ -138,6 +148,7 @@
       "individualDescription": "Pour les professionnels de santé, les chercheurs, les étudiants, etc.",
       "legalEntityDescription": "Pour les entreprises, hôpitaux, associations, cliniques, établissements de recherche et autres entités de santé.",
       "emailLabel": "Email",
+      "phoneNmmberLabel": "Numéro de téléphone",
       "passwordLabel": "Mot de passe",
       "confirmPasswordLabel": "Confirmer le mot de passe",
       "step2Title": "Détails personnels",
@@ -299,6 +310,7 @@
     "connect": "Se connecter",
     "back": "Retour",
     "likes": "J'aime",
-    "loadMore": "Charger plus"
+    "loadMore": "Charger plus",
+    "download": "Télécharger"
   }
 }

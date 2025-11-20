@@ -34,6 +34,7 @@ export interface Post {
   createdAt: string; // Dates are typically strings when serialized over JSON.
   updatedAt: string;
   isLiked?: boolean;
+  isBookmarked?: boolean;
   status: PostStatus;
 }
 

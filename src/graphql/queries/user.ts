@@ -9,6 +9,7 @@ const USER_FIELDS = `
   id
   firebaseUid
   email
+  phoneNumber
   slug
   userType
   profilePicUrl
@@ -243,6 +244,21 @@ export const buildCheckUserExistsByEmailQuery = (meta?: { fields?: string }) => 
   return gql`
     query CheckUserExistsByEmail($email: String!) {
       checkUserExistsByEmail(email: $email) {
+        ${fields}
+      }
+    }
+  `;
+};
+
+/**
+ * @param meta - Optional metadata.
+ * @returns A gql object.
+ */
+export const buildCheckUserExistsByPhoneNumberQuery = (meta?: { fields?: string }) => {
+  const fields = meta?.fields || CHECK_USER_FIELDS;
+  return gql`
+    query CheckUserExistsByPhoneNumber($phoneNumber: String!) {
+      checkUserExistsByPhoneNumber(phoneNumber: $phoneNumber) {
         ${fields}
       }
     }

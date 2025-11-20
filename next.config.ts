@@ -40,18 +40,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   skipWaiting: true,
   register: true,
   disable: process.env.NODE_ENV === "development",
+  // disable: false,
   workboxOptions: { disableDevLogs: true },
 });
-
-// on applique la config PWA par-dessus
-// export default withPWA({
-// const withPWA = withPWAInit({
-//   dest: "public",
-//   disable: process.env.NODE_ENV === "development",
-//   register: true,
-//   skipWaiting: true,
-// })(baseConfig);
-// });
 
 // on applique la config PWA par-dessus
 module.exports = withPWA(baseConfig);
