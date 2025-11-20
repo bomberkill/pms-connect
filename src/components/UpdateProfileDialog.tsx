@@ -227,14 +227,14 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
       <DrawerContent className="items-center px-4">
-        <form onSubmit={formik.handleSubmit}>
-          <DrawerHeader>
+        <form className="max-h-[80vh] overflow-y-auto" onSubmit={formik.handleSubmit}>
+          <DrawerHeader className="px-0">
             <DrawerTitle>{dict.button.edit}</DrawerTitle>
             <DrawerDescription>
               {dict.updateProfile.description}
             </DrawerDescription>
           </DrawerHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+          <div className="grid gap-4 py-4 ">
             {user.userType === UserTypeGQL.INDIVIDUAL ? (
               <> 
                 <div className="grid grid-cols-2 gap-4">
@@ -290,12 +290,14 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
                 </div>
             </div>
           </div>
-          <DrawerFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>{dict.button.cancel}</Button>
-            <Button type="submit" disabled={isLoading || !formik.dirty}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {dict.button.save}
-            </Button>
+          <DrawerFooter className="px-0">
+            <div className="flex gap-2 w-full">
+              <Button className="flex-1" type="button" variant="outline" onClick={() => setOpen(false)}>{dict.button.cancel}</Button>
+              <Button className="flex-1" type="submit" disabled={isLoading || !formik.dirty}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {dict.button.save}
+              </Button>
+            </div>
           </DrawerFooter>
         </form>
       </DrawerContent>

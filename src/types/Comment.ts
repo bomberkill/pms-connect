@@ -21,6 +21,7 @@ export interface Comment {
   commentsCount: number;
   media?: MediaItem[];
   isLiked?: boolean;
+  isBookmarked?: boolean;
   status: CommentStatus;
 }
 

@@ -19,6 +19,7 @@ import { getUserDisplayName } from "@/lib/user-utils";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import CreatePostComposer from "./CreatePostComposer";
 import CreatePostComposerMobile from "./CreatePostComposerMobile";
+import PWABanner from "./PWABanner";
 // import { locales } from "@/middleware";
 
 export function useCleanPathname() {
@@ -37,7 +38,7 @@ export default function Header() {
   const dict = useDictionary()
   const isMobile = useIsMobile();
   const pathname = useCleanPathname();
-  console.log("pathname",pathname)
+  // console.log("pathname",pathname)
   const { user } = useAppSelector((state) => state.user);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -67,9 +68,9 @@ export default function Header() {
     ];
 
     return (
-      <header className="sticky top-0 left-0 right-0 z-50 bg-background md:hidden">
-        <>
-          <header className="sticky top-0 left-0 right-0 z-50 bg-background md:hidden">
+      <div>
+        <PWABanner />
+        <header className="fixed top-0 left-0 right-0 z-50 bg-background md:hidden border-b border-border">
           <nav className="flex items-end justify-between mb-2">
           <div className="flex flex-col w-full">
             {/* Première ligne */}
@@ -171,20 +172,23 @@ export default function Header() {
           </nav>
         </header>
         {/* Floating Action Button pour ajouter un post */}
-        <div className="fixed bottom-20 right-4 z-40 md:hidden">
+        <div className="fixed bottom-20 right-5 z-40 md:hidden">
           <Drawer open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
             <DialogTitle></DialogTitle>
             <DrawerTrigger asChild>
-              <Button className="rounded-full w-10 h-10 shadow-lg">
+              <Button className="rounded-full w-14 h-14 shadow-lg bg-primary text-primary-foreground hover:scale-105 transition-transform duration-200 active:scale-95">
                 <Plus className="h-6 w-6" />
                 <span className="sr-only">{dict.header.addNewPost}</span>
               </Button>
             </DrawerTrigger>
-            <DrawerContent className="fixed inset-0 z-[60] w-full bg-background p-0 overflow-hidden"><CreatePostComposerMobile className="w-full overflow-y-auto" onCreated={() => setIsCreatePostOpen(false)} /></DrawerContent>
+            <DrawerContent>
+              <CreatePostComposerMobile className="w-full max-h-[80vh] overflow-y-auto" onCreated={() => setIsCreatePostOpen(false)} />
+            </DrawerContent>
           </Drawer>
         </div>
-        </>
-      </header>
+        {/* <>
+        </> */}
+      </div>
     );
   }
 

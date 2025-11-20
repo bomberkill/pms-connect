@@ -74,6 +74,7 @@ export enum UserTypeGQL {
     id: string; // MongoDB ObjectId
     firebaseUid: string;
     email: string;
+    phoneNumber: string;
     slug: string;
     userType: UserTypeGQL;
     professionalAccreditation: ProfessionalAccreditation[];
@@ -118,6 +119,7 @@ export enum UserTypeGQL {
   export interface CreateUserInput {
     email: string;
     userType: UserTypeGQL;
+    phoneNumber: string;
     profilePicUrl?: string;
     coverPicUrl?: string;
     bio?: string;
@@ -169,4 +171,10 @@ export interface FollowingInfo {
 export interface FollowsUpdated {
   follower: FollowerInfo;
   following: FollowingInfo;
+}
+
+export interface CheckUserExistsResponse {
+  exists: boolean;
+  hasPassword: boolean;
+  providers: string[];
 }

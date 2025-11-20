@@ -64,6 +64,7 @@ const COMMENT_FIELDS = `
   likesCount
   commentsCount
   isLiked
+  isBookmarked
   status
 `;
 
