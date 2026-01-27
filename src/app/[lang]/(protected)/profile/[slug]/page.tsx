@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Camera, MessageCircle, Link as LinkIcon, UserMinus, Check, MoreVertical, Ban, Flag } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { MAX_FILE_SIZE, uploadFileToSupabase } from "@/components/Register-form"
+import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/components/Register-form"
 import { supabase } from "@/lib/supabaseClient"
 import { fetchMe, updateUser } from "@/redux/services/userService"
 import React, { useEffect, useState } from "react"
@@ -143,7 +143,7 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
 
         try {
           // Upload dans Supabase
-          const uploadedFile = await uploadFileToSupabase(file, `public/${authUser?.firebaseUid}/${field}`);
+          const uploadedFile = await uploadFileToFirebase(file, `public/${authUser?.firebaseUid}/${field}`);
           if (!uploadedFile) return;
 
           uploadedPath = uploadedFile.uploadedPath;

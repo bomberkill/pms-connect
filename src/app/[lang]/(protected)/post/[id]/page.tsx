@@ -11,7 +11,7 @@ import {getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 import { useAppSelector, useDictionary } from "@/lib/hooks";
 import CommentComposer from "../../../../../components/CommentComposer";
-import { uploadFileToSupabase } from "@/components/Register-form";
+import { uploadFileToFirebase } from "@/components/Register-form";
 import { MediaItem, MediaType } from "@/types/Post";
 import FeedItemCard from "@/components/FeedItemCard";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
@@ -114,7 +114,7 @@ export default function PostDetailPage() {
       if (files && files.length > 0) {
         const uploadResults = await Promise.all(
           files.map((file) =>
-            uploadFileToSupabase(file, `public/${user.firebaseUid}/comments`)
+            uploadFileToFirebase(file, `public/${user.firebaseUid}/comments`)
           )
         );
   

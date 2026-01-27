@@ -15,6 +15,12 @@ const baseConfig: NextConfig = {
         hostname: "ruwtkjvwsoklwtzgalqq.supabase.co",
         pathname: "/storage/v1/object/public/pms-connect-bucket/**",
       },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        // pathname: "/v0/b/pms-connect-e5cb8.appspot.com/o/**",
+        pathname: "/v0/b/nobisoft-nextjs-website.appspot.com/o/**",
+      },
     ],
   },
   async rewrites() {

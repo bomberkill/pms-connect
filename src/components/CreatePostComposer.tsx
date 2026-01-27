@@ -9,8 +9,8 @@ import TextareaAutosize from "react-textarea-autosize";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Trash2, Video, FileIcon, X, Loader2 } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
-import { usePostMutations } from "@/hooks/useData/index"; // Assurez-vous que ce hook est bien `usePostMutations`
-import { MAX_FILE_SIZE, uploadFileToSupabase } from "@/components/Register-form";
+import { usePostMutations } from "@/hooks/useData/index";
+import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/components/Register-form";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MediaItem, MediaType } from "@/types/Post";
@@ -71,7 +71,7 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
       try {
         if (mediaFiles.length > 0) {
           const uploadResults = await Promise.all(
-            mediaFiles.map((file) => uploadFileToSupabase(file, `public/${user.firebaseUid}/posts`))
+            mediaFiles.map((file) => uploadFileToFirebase(file, `public/${user.firebaseUid}/posts`))
           );
 
           media = mediaFiles.reduce<MediaItem[]>((acc, file, idx) => {

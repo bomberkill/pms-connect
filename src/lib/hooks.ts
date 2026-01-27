@@ -50,7 +50,7 @@ export const useAuthObserver = () => {
                         } else {
                             console.error("Failed to fetch user profile on auth state change:", err);
                             // For other errors, it's safer to log out.
-                            open("error","Error fetching user profile on auth state change:", { message: err.message })
+                            // open("error","Error fetching user profile on auth state change:", { message: err.message })
                             dispatch(logoutUser()).unwrap();
                         }
                     });

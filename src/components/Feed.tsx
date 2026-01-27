@@ -5,7 +5,8 @@ import { useInView } from "react-intersection-observer";
 import { useFeed, useNewFeedItemsCount } from "@/hooks/useData/index";
 import { Skeleton } from "./ui/skeleton";
 import FeedItemCard from "./FeedItemCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, WifiOff } from "lucide-react";
+import { Button } from "./ui/button";
 
 const PostSkeleton = () => (
   <div className="border rounded-xl bg-white shadow-sm p-4 mb-6">
@@ -36,10 +37,14 @@ export const Feed = () => {
   const isAtTopRef = useRef(true);
 
   const handleRefresh = async () => {
+    console.log("Refreshing...");
     if (isRefreshing) return;
+    console.log("Refreshing2...");
     setIsRefreshing(true);
     await refresh();
+    console.log("Refreshing3...");
     refreshCount(); // Réinitialise aussi le compteur de nouveaux posts
+    console.log("Refreshing4...");
     setIsRefreshing(false);
     setPullPosition(0);
   };
@@ -92,7 +97,23 @@ export const Feed = () => {
     return <div>{[...Array(2)].map((_, i) => <PostSkeleton key={i} />)}</div>;
   }
 
-  if (error) return <p>Error loading feed: {error.message}</p>;
+  if (error) {
+    const isNetworkError = error.message.toLowerCase().includes('failed to fetch');
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[calc(100vh-20rem)] gap-4 text-center p-4">
+        <WifiOff className="w-16 h-16 text-destructive" />
+        <h2 className="text-xl font-bold">Impossible de charger le fil d'actualité</h2>
+        <p className="text-muted-foreground">
+          {isNetworkError
+            ? "Veuillez vérifier votre connexion internet et réessayer."
+            : "Une erreur s'est produite. Veuillez réessayer plus tard."}
+        </p>
+        <Button onClick={() => refresh()}>
+          Réessayer
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -115,20 +136,17 @@ export const Feed = () => {
 
       {count > 0 && (
         <div
-          className="sticky top-0 z-10 bg-blue-600 text-white text-center py-2 cursor-pointer"
-          onClick={async() => {
-            await refresh();   // recharge les posts
-            refreshCount();   // manually trigger reload of the feed
-          }}
+          className="sticky top-20 z-10 mx-auto w-fit bg-blue-600 text-white text-center text-sm truncate py-2 px-4 cursor-pointer rounded-3xl shadow-lg"
+          onClick={handleRefresh}
         >
-          {count} new post{count > 1 ? "s" : ""} available — click to refresh 🔄
+          {count} nouveau{count > 1 ? "x" : ""} post{count > 1 ? "s" : ""} disponible{count > 1 ? "s" : ""}
         </div>
       )}
+
       {posts.map((post) => (
         <FeedItemCard key={post.id} item={post} />
       ))}
       <div ref={ref} style={{ height: "10px" }} />
-      {loading && posts.length > 0 && <PostSkeleton />}
     </div>
   );
 };

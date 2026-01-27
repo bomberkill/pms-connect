@@ -18,7 +18,8 @@
     "email": {
       "invalid": "Invalid email format",
       "required": "Email is required",
-      "alreadyInUse": "Email is already in use"
+      "alreadyInUse": "Email is already in use",
+      "mustBeDifferent": "The new email must be different from the current one."
     },
     "phoneNumber": {
       "required": "Phone number is required",
@@ -64,6 +65,12 @@
   },
   "notifications": {
     "warning": "Warning",
+    "verification": {
+      "resentTitle": "Email Resent",
+      "resentMessage": "A new verification link has been sent to your email address.",
+      "successTitle": "Email Verified",
+      "successMessage": "Your email has been successfully verified. You can now proceed."
+    },
     "login": {
       "success": {
         "title": "Login Successful",
@@ -81,7 +88,11 @@
           "auth/user-disabled": "This account has been disabled.",
           "auth/user-not-found": "No user found with this email address.",
           "auth/network-request-failed": "Check your internet connection and try again.",
-          "auth/too-many-requests": "Too many attempts. Please try again later."
+          "auth/too-many-requests": "Too many attempts. Please try again later.",
+          "auth/email-not-verified": {
+            "title": "Email Not Verified",
+            "message": "You must verify your email address before logging in. Please check your inbox for the verification link."
+          }
         }
       }
     },
@@ -110,7 +121,8 @@
       },
       "error": {
         "title": "Registration Failed",
-        "message": "There was an error creating your account. Please try again."
+        "message": "There was an error creating your account. Please try again.",
+        "uploadFailed": "Échec du téléversement d'un fichier. Veuillez vérifier votre connexion"
       }
     },
     "postCreated": {
@@ -135,6 +147,11 @@
     "updateFailed": {
       "title": "Update Failed",
       "defaultMessage": "An error occurred."
+    },
+    "emailUpdated": {
+      "title": "Email Updated",
+      "message": "Your email has been updated. A new verification link has been sent.",
+      "pendingVerificationMessage": "A verification link has been sent to {newEmail}. Please check your inbox to finalize the email change."
     }
   },
   "register": {
@@ -183,7 +200,10 @@
     "accreditationType": "Accreditation Type",
     "document": "Document (PDF, JPG, PNG)",
     "addAccreditation": "Add Accreditation",
-    "remove": "Remove"
+    "remove": "Remove",
+    "verifyEmailTitle": "Verify Your Email",
+    "verifyEmailMessage": "We've sent a verification link to {email}. Please check your inbox to continue.",
+    "verifyEmailSpam": "Can't find the email? Check your spam folder."
   },
   "specialities": {
     "MEDICAL_DOCTORS": "Medical Doctors",
@@ -258,7 +278,11 @@
     "cancel": "Cancel",
     "sendLink": "Send Reset Link",
     "backToLogin": "Back to login",
-    "publish": "Publish"
+    "publish": "Publish",
+    "back": "Back",
+    "sending": "Sending...",
+    "resend": "Resend Email",
+    "changeEmail": "Change email address"
   },
   "updateProfile": {
     "title": "Edit Profile",
@@ -311,5 +335,10 @@
     "likes": "Likes",
     "loadMore": "Load more",
     "download": "Download"
+  },
+  "changeEmail": {
+    "title": "Change your email address",
+    "description": "Enter your new email and current password.",
+    "newEmail": "New Email Address"
   }
 }

@@ -20,6 +20,7 @@ const USER_FIELDS = `
   connections
   followers
   following
+  providers
   blockedUsers
   fcmTokens
   language
@@ -148,6 +149,22 @@ export const buildUpdateMyProfileMutation = (meta?: { fields?: string }) => {
   `;
 };
 
+/**
+ * Builds a GraphQL mutation for updating the current user's email.
+ * Corresponds to 'updateMyEmail' resolver in users.resolver.ts.
+ * @param meta - Optional metadata.
+ * @returns A gql object.
+ */
+export const buildUpdateMyEmailMutation = (meta?: { fields?: string }) => {
+  const fields = meta?.fields || USER_FIELDS;
+  return gql`
+    mutation UpdateMyEmail($newEmail: String!) {
+      updateMyEmail(newEmail: $newEmail) {
+        ${fields}
+      }
+    }
+  `;
+};
 // =============================================================================
 // == FOLLOW QUERIES & MUTATIONS
 // =============================================================================

@@ -13,9 +13,10 @@ import { FirebaseError } from "firebase/app"
 import { fetchUserByUid, loginAndFetchUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
 // import { Loader2 } from "lucide-react"
-import { gql, useApolloClient } from "@apollo/client"
+import { useCheckUserExists } from "@/hooks/useData/useUserData"
 import Image from "next/image"
 import CustomLoader from "./Loader"
+import { User } from "firebase/auth"
 export function LoginForm({
   className,
   ...props
@@ -40,7 +41,6 @@ export function LoginForm({
   // }
   const dispatch = useAppDispatch()
   const router = useRouter()
-  const client = useApolloClient()
   // const currentUser = auth.currentUser;
   const loginFormik = useFormik({
     initialValues,
@@ -66,6 +66,11 @@ export function LoginForm({
           open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
           router.push("/register");
           return
+        }
+        if (error === "auth/email-not-verified") {
+          open("info", dict.notifications.login.error.messages["auth/email-not-verified"].title, { message: dict.notifications.login.error.messages["auth/email-not-verified"].message });
+          router.push(`/verify-email?email=${values.email}`);
+          return;
         }
         switch (error) {
           case "auth/invalid-credential":
@@ -105,29 +110,19 @@ export function LoginForm({
     email: yup.string().email(dict.validation.email.invalid).required(dict.validation.email.required),
   })
 
+  const { checkByEmail } = useCheckUserExists();
+
   const resetFormik = useFormik({
     initialValues: { email: "" },
     validationSchema: resetSchema,
     onSubmit: async (values) => {
       setIsLoading(true)
       try {
-        const { data } = await client.query<{
-          checkUserExistsByEmail: { exists: boolean; hasPassword: boolean; providers: string[] };
-        }>({
-          query: gql`
-            query CheckUserExistsByEmail($email: String!) {
-              checkUserExistsByEmail(email: $email) {
-                exists
-                hasPassword
-                providers
-              }
-            }
-          `,
-          variables: { email: values.email },
-          fetchPolicy: "network-only",
-        });
-        // console.log("check email data", data)
-        if (data.checkUserExistsByEmail.exists && !data.checkUserExistsByEmail.hasPassword) {
+        const { data } = await checkByEmail({ variables: { email: values.email } });
+
+        const result = data?.checkUserExistsByEmail;
+
+        if (result?.exists && !result.hasPassword) {
           // Email already exists
           // resetFormik.setFieldError('email', dict.validation.email.alreadyInUse);
           open("info", dict.notifications.forgotPassword.info.title, { message: dict.notifications.forgotPassword.info.message });
@@ -176,31 +171,33 @@ export function LoginForm({
   const handleGoogleSignIn = async () => {
     // const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsGoogleSignIn(true);
+    let result: User | null = null;
     try {
       // if (!isMobile) {
       //   console.log("Using redirect for mobile Google sign-in");
       //   await signInWithRedirect(auth, googleProvider);
       // }else {
       // }
-      const result = await signInWithGoogle();
+      result = await signInWithGoogle();
       if (result) {
-        await dispatch(fetchUserByUid(result.uid)).unwrap()
-        router.push("/");
-        open("success", dict.notifications.register.success.title, {
-          message: dict.notifications.register.success.message,
-        });
+        try {
+          // On essaie de récupérer l'utilisateur depuis notre DB
+          await dispatch(fetchUserByUid(result.uid)).unwrap();
+          // Si ça réussit, l'utilisateur existe, on le connecte
+          router.push("/");
+          open("success", dict.notifications.login.success.title, {
+            message: dict.notifications.login.success.message,
+          });
+        } catch (fetchError) {
+          // Si fetchUserByUid échoue (l'utilisateur n'est pas dans notre DB)
+          open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
+          router.push("/register");
+        }
       }
       
     } catch (error) {
       console.error("Google sign-in error:", error);
-      let errorMessage: string = dict.notifications.register.error.message; // Message par défaut
-      if (error === "getUserByFirebaseUid is null") {
-        // Cas particulier où l'utilisateur n'existe pas dans notre base
-        // errorMessage = "New user detected. Proceeding with registration."
-        open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
-        router.push("/register");
-        return
-      }
+      let errorMessage: string = dict.notifications.login.error.messages.default;
       if (error instanceof FirebaseError) { // Gestion spécifique des erreurs Firebase
         switch (error.code) {
           case "auth/invalid-credential":
@@ -225,7 +222,7 @@ export function LoginForm({
         // Erreur provenant du thunk createUser ou d'une autre partie
         errorMessage = error.message;
       }
-      open("error", dict.notifications.register.error.title, {
+      open("error", dict.notifications.login.error.title, {
         message: errorMessage
       })
     }finally {

@@ -18,7 +18,8 @@
       "email": {
         "invalid": "Format d'email invalide",
         "required": "L'email est requis",
-        "alreadyInUse": "Cet email est déjà utilisé"
+        "alreadyInUse": "Cet email est déjà utilisé",
+        "mustBeDifferent": "Le nouvel e-mail doit être différent de l'actuel."
       },
       "phoneNumber": {
         "required": "Le numéro de téléphone est requis",
@@ -64,6 +65,12 @@
     },
     "notifications": {
       "warning": "Attention",
+      "verification": {
+        "resentTitle": "E-mail renvoyé",
+        "resentMessage": "Un nouveau lien de vérification a été envoyé à votre adresse e-mail.",
+        "successTitle": "E-mail vérifié",
+        "successMessage": "Votre e-mail a été vérifié avec succès. Vous pouvez maintenant continuer."
+      },
       "login": {
         "success": {
           "title": "Connexion réussie",
@@ -81,7 +88,11 @@
             "auth/user-disabled": "Ce compte a été désactivé.",
             "auth/user-not-found": "Aucun utilisateur trouvé avec cet e-mail.",
             "auth/network-request-failed": "Vérifiez votre connexion internet et réessayez",
-            "auth/too-many-requests": "Trop de tentatives. Veuillez réessayer plus tard."
+            "auth/too-many-requests": "Trop de tentatives. Veuillez réessayer plus tard.",
+            "auth/email-not-verified": {
+              "title": "E-mail non vérifié",
+              "message": "Vous devez vérifier votre adresse e-mail avant de vous connecter. Veuillez consulter votre boîte de réception pour le lien de vérification."
+            }
           }
         }
       },
@@ -96,7 +107,8 @@
         },
         "error": {
           "title": "Échec de l'inscription",
-          "message": "Une erreur s'est produite lors de la création de votre compte. Veuillez réessayer."
+          "message": "Une erreur s'est produite lors de la création de votre compte. Veuillez réessayer.",
+          "uploadFailed": "File upload failed. Please check your internet connection"
         }
       },
       "postCreated": {
@@ -135,6 +147,11 @@
       "updateFailed": {
         "title": "Échec de la mise à jour",
         "defaultMessage": "Une erreur est survenue."
+      },
+      "emailUpdated": {
+        "title": "E-mail mis à jour",
+        "message": "Votre e-mail a été mis à jour. Un nouveau lien de vérification a été envoyé.",
+        "pendingVerificationMessage": "Un lien de vérification a été envoyé à {newEmail}. Veuillez consulter votre boîte de réception pour finaliser le changement d'e-mail."
       }
     },
     "register": {
@@ -183,7 +200,10 @@
       "accreditationType": "Type d'accréditation",
       "document": "Document (PDF, JPG, PNG)",
       "addAccreditation": "Ajouter une accréditation",
-      "remove": "Retirer"
+    "remove": "Retirer",
+    "verifyEmailTitle": "Vérifiez votre e-mail",
+    "verifyEmailMessage": "Nous avons envoyé un lien de vérification à {email}. Veuillez consulter votre boîte de réception pour continuer.",
+    "verifyEmailSpam": "Vous ne trouvez pas l'e-mail ? Vérifiez votre dossier de spam."
     },
     "specialities": {
     "MEDICAL_DOCTORS": "Médecins",
@@ -259,7 +279,11 @@
     "cancel": "Annuler",
     "sendLink": "Envoyer le lien de réinitialisation",
     "backToLogin": "Retour à la connexion",
-    "publish": "Publier"
+    "publish": "Publier",
+    "back": "Retour",
+    "sending": "Envoi en cours...",
+    "resend": "Renvoyer l'e-mail",
+    "changeEmail": "Changer l'adresse e-mail"
   },
   "updateProfile": {
     "title": "Modifier le profil",
@@ -312,5 +336,10 @@
     "likes": "J'aime",
     "loadMore": "Charger plus",
     "download": "Télécharger"
+  },
+  "changeEmail": {
+    "title": "Changer votre adresse e-mail",
+    "description": "Entrez votre nouvel e-mail et votre mot de passe actuel.",
+    "newEmail": "Nouvelle adresse e-mail"
   }
 }

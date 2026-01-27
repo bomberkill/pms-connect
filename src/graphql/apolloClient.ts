@@ -13,13 +13,14 @@ import { getFirebaseToken } from "./firebaseAuth";
 import { createClient } from "graphql-ws";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
+import { auth } from "@/lib/firebase";
   // import { TOKEN_KEY } from "../authProvider"; // We'll use this to get the auth token
   
   // Fetch the GraphQL API URL from environment variables
   // Make sure to set this in your .env.local file (e.g., VITE_GRAPHQL_API_URL=http://localhost:4000/graphql)
   const GRAPHQL_API_URL =
-    process.env.GRAPHQL_API_URL || "https://pms-connect-api.onrender.com/graphql";
-    // process.env.GRAPHQL_API_URL || "http://localhost:8000/graphql";
+    // process.env.GRAPHQL_API_URL || "https://pms-connect-api.onrender.com/graphql";
+    process.env.GRAPHQL_API_URL || "http://localhost:8000/graphql";
 
   const WEBSOCKET_URL = GRAPHQL_API_URL.replace(/^http/, 'ws');
   

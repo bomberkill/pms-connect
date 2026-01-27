@@ -26,7 +26,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "./ui/textarea"
 import { deleteUser, signInWithRedirect, User } from "firebase/auth"
-// import {CitySelect, CountrySelect, StateSelect} from "react-country-state-city";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import "react-country-state-city/dist/react-country-state-city.css"
 // import { City, Country, State } from "react-country-state-city/dist/esm/types"
 import { auth } from "@/lib/firebase"
@@ -34,12 +34,12 @@ import { auth } from "@/lib/firebase"
 // import { Country, State, City }  from 'country-state-city';
 import { Combobox } from "./Combobox"
 import { City, Country, State } from "@/types/Location"
-import data from "../../public/countries.json"
 // import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { createUser } from "@/redux/services/userService"
+import { createUser, deleteCurrentUser, registerAndSendVerification } from "@/redux/services/userService"
 // import { createClient } from '@supabase/supabase-js'
 import { FirebaseError } from "firebase/app"
-import { supabase } from "@/lib/supabaseClient"
+import { StorageError } from "@supabase/storage-js"
+import { supabase } from "@/lib/supabaseClient" 
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import CustomLoader from "./Loader"
@@ -47,6 +47,8 @@ import Link from "next/link"
 import PhoneInput from "./PhoneInput"
 import parsePhoneNumberFromString from "libphonenumber-js"
 import { useCheckUserExists } from "@/hooks/useData/useUserData"
+import { EmailVerificationStep } from "./EmailVerificationStep"
+import data from "../../public/countries.json"
 
 // const setupRecaptcha = async () => {
 //   if (!window.recaptchaVerifier) {
@@ -67,25 +69,60 @@ interface AccreditationPreviewItem {
   name?: string; // File name
   type?: string; // File type (e.g., 'application/pdf', 'image/png')
 }
-export const uploadFileToSupabase = async (
+
+/**
+ * Uploads a file to Firebase Storage and returns its public URL and path.
+ * @param file The file to upload.
+ * @param path The path in the bucket (e.g., 'public/userId/profile').
+ * @returns An object with the public URL and the uploaded path for rollbacks.
+ */
+export const uploadFileToFirebase = async (
   file: File,
-  path: string,
-  bucket = "pms-connect-bucket" // default bucket name
-): Promise<{ publicUrl: string, uploadedPath: string } | null> => {
+  path: string
+): Promise<{ publicUrl: string, uploadedPath: string }> => {
+  const storage = getStorage();
   const fileName = `${Date.now()}_${file.name}`;
   const filePath = `${path}/${fileName}`;
+  const storageRef = ref(storage, filePath);
 
-  const { error } = await supabase.storage.from(bucket).upload(filePath, file);
-  if (error) {
-    console.error("Upload failed:", error.message);
-    return null;
-  }
-
-  // uploadedPaths.push(filePath);
-  const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
-  return {publicUrl: publicUrlData.publicUrl, uploadedPath: filePath};
+  const snapshot = await uploadBytes(storageRef, file);
+  const publicUrl = await getDownloadURL(snapshot.ref);
+  
+  return { publicUrl, uploadedPath: snapshot.ref.fullPath };
 };
 
+// LOGIQUE SUPABASE CONSERVÉE EN COMMENTAIRE
+// export const uploadFileToSupabase = async (
+//   file: File,
+//   path: string,
+//   bucket = "pms-connect-bucket" // default bucket name
+// ): Promise<{ publicUrl: string, uploadedPath: string }> => {
+//   const fileName = `${Date.now()}_${file.name}`;
+//   const filePath = `${path}/${fileName}`;
+//   const { error } = await supabase.storage.from(bucket).upload(filePath, file);
+//   if (error) { throw error; }
+//   const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+//   return {publicUrl: publicUrlData.publicUrl, uploadedPath: filePath};
+// };
+
+const REGISTRATION_STATE_KEY = "pms-connect-registration-state";
+
+const getInitialStep = (): number => {
+  // Cette fonction s'exécute côté client uniquement
+  if (typeof window === "undefined") {
+    return 0;
+  }
+  try {
+    const savedStateJSON = localStorage.getItem(REGISTRATION_STATE_KEY);
+    if (savedStateJSON) {
+      const savedState = JSON.parse(savedStateJSON);
+      return savedState.currentStep || 0;
+    }
+  } catch (error) {
+    // Ignorer les erreurs de parsing et retourner 0
+  }
+  return 0;
+};
 
 export function RegisterForm({
     className,
@@ -94,8 +131,9 @@ export function RegisterForm({
   const dispatch = useAppDispatch()
   const dict = useDictionary()
   const { open } = useNotification()
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState(getInitialStep());
   const { firebaseUid } = useAppSelector((state) => state.auth);
+  const [isRestored, setIsRestored] = useState(false); // Pour éviter la sauvegarde initiale
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleSignIn, setIsGoogleSignIn] = useState(false)
   const [googleUser, setGoogleUser] = useState<User | null>(null); 
@@ -110,7 +148,9 @@ export function RegisterForm({
   // const [countries, setCountries] = useState<ICountry[]>([])
   // const [states, setStates] = useState<IState[]>([])
   // const [cities, setCities] = useState<ICity[]>([])
-  
+  // useEffect(() => {
+  //   localStorage.removeItem(REGISTRATION_STATE_KEY);
+  // }, []);
 
   const initialValues: CreateUserInput & { password?: string; confirmPassword?: string; verificationCode: string; profilePicFile: File | null, coverPicFile: File | null, accreditationsFile: File[] } = {
     email: "",
@@ -137,6 +177,7 @@ export function RegisterForm({
       postalCode: "",
       country: "",
     },
+    providers: [],
     professionalAccreditation: [],
     accreditationsFile: [],
     profilePicFile: null,
@@ -167,13 +208,9 @@ export function RegisterForm({
           otherwise: schema => schema.notRequired()
       })
     }),
-    // Step 1: OTP Verification
-    // yup.object().shape({
-    //   verificationCode: yup
-    //     .string()
-    //     .length(6, dict.validation.otp.invalidLength)
-    //     .required(dict.validation.otp.required),
-    // }),
+    // Step 1: Email Verification (no validation schema needed, it's a dynamic step)
+    // On ajoute un schéma vide pour maintenir l'alignement des index.
+    yup.object().shape({}),
     // Step 2: Account Type
     yup.object().shape({
       userType: yup.string().oneOf(Object.values(UserTypeGQL)).required(dict.register.userTypeLabel),
@@ -274,7 +311,7 @@ export function RegisterForm({
 
   const uploadedPaths: string[] = [];
 
-  let firebaseUser: User;
+  // let firebaseUser: User; // On va déplacer cette logique
   const formik = useFormik({
     initialValues,
     validationSchema: validationSchemas[currentStep],
@@ -282,6 +319,38 @@ export function RegisterForm({
     validateOnChange: true,
     validateOnBlur: false,
     onSubmit: async (values) => {
+      // Helper function for rollback logic
+      const rollbackRegistration = async (firebaseUserToDelete: User | null, pathsToDelete: string[], isGoogleAuth: boolean) => {
+        const storage = getStorage();
+        if (pathsToDelete.length) {
+          console.log("Rolling back Firebase Storage uploads...");
+          try {
+            // LOGIQUE SUPABASE CONSERVÉE EN COMMENTAIRE
+            // const { error: removeErr } = await supabase.storage.from("pms-connect-bucket").remove(pathsToDelete);
+            // if (removeErr) console.error("Error during Supabase file deletion:", removeErr.message);
+            // else console.log("Supabase files deleted successfully.");
+
+            // NOUVELLE LOGIQUE FIREBASE
+            const deletePromises = pathsToDelete.map(path => {
+              const fileRef = ref(storage, path);
+              return deleteObject(fileRef);
+            });
+            await Promise.all(deletePromises);
+            console.log("Firebase Storage files deleted successfully.");
+          } catch (err) {
+            console.error("Firebase Storage rollback failed:", err);
+          }
+        }
+        if (firebaseUserToDelete && !isGoogleAuth) {
+          console.log("Rolling back Firebase user creation...");
+          try {
+            await deleteUser(firebaseUserToDelete);
+            console.log("Firebase user deleted successfully.");
+          } catch (err) {
+            console.error("Failed to delete Firebase user:", err);
+          }
+        }
+      };
       // Step 0 -> 1: Email and Password step
       if (currentStep === 0) {
         setIsLoading(true);
@@ -306,11 +375,37 @@ export function RegisterForm({
           }
 
           if (canProceed) {
-            // console.log("✅ Email and phone number are available. Sending OTP...");
-            // const appVerifier = await setupRecaptcha();
-            // const confirmation = await signInWithPhoneNumber(auth, values.phoneNumber, appVerifier);
-            // setConfirmationResult(confirmation);
-            setCurrentStep(currentStep + 1);
+            // Si l'utilisateur actuel de Firebase correspond à l'e-mail et est déjà vérifié,
+            // on saute l'étape de vérification.
+            if (auth.currentUser && auth.currentUser.email === values.email && auth.currentUser.emailVerified) {
+              setCurrentStep(2); // Aller directement à l'étape du type de compte
+            } else {
+              // Sinon, procéder à l'inscription et à la vérification.
+              try {
+                await dispatch(registerAndSendVerification({ email: values.email, password: values.password })).unwrap();
+                setCurrentStep(currentStep + 1); // Aller à l'étape de vérification (step 1)
+              } catch (error: unknown) {
+                let errorMessage = "Une erreur est survenue lors de l'inscription.";
+                if (typeof error === 'string') {
+                    switch (error) {
+                        case 'auth/email-already-in-use':
+                            // Si l'e-mail est déjà utilisé, c'est peut-être le même utilisateur qui est revenu.
+                            // On recharge pour être sûr de l'état de vérification.
+                            await auth.currentUser?.reload();
+                            if (auth.currentUser?.emailVerified) {
+                              setCurrentStep(2); // Il est vérifié, on continue.
+                              return;
+                            }
+                            errorMessage = dict.validation.email.alreadyInUse;
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = dict.validation.password.weak;
+                            break;
+                    }
+                }
+                open("error", "Erreur d'inscription", { message: errorMessage });
+              }
+            }
           }
         } catch (error: unknown) {
           console.error("Error during step 0:", error);
@@ -319,23 +414,28 @@ export function RegisterForm({
           setIsLoading(false);
         }
       } else if (currentStep < validationSchemas.length - 1) {
-        setCurrentStep(currentStep + 1);
+        setCurrentStep(currentStep + 1); // L'effet de sauvegarde se déclenchera automatiquement
       } else {
         // Final submission
         setIsLoading(true)
+        let firebaseUser: User | null = null;
+
         try {
           const { email, phoneNumber, password, userType, firstName, lastName, speciality, entityName, entityType, bio, websiteUrl, location, profilePicFile, coverPicFile, accreditationsFile, professionalTitle } = values;
 
           // Étape 1: S'assurer que l'utilisateur Firebase existe et récupérer ses données.
           if (googleUser) {
-            // L'utilisateur s'est déjà connecté avec Google.
+            console.log("Using Google authenticated user for registration.", googleUser.email);
             firebaseUser = googleUser;
-          } else if (password) {
-            // Nouvel utilisateur s'inscrivant avec email et mot de passe.
-            firebaseUser = await register(email, password);
+          } else if (auth.currentUser) {
+            // For email/password flow, the user is already created and verified.
+            firebaseUser = auth.currentUser;
           } else {
-            // Ce cas ne devrait pas se produire si la validation est correcte.
             throw new Error("Aucun mot de passe fourni et non connecté avec Google.");
+          }
+
+          if (!firebaseUser) {
+            throw new Error("La création de l'utilisateur Firebase a échoué.");
           }
           
           const uid = firebaseUser.uid;
@@ -345,14 +445,14 @@ export function RegisterForm({
               uploadedAccreditations
           ] = await Promise.all([
             profilePicFile
-              ? uploadFileToSupabase(profilePicFile, `public/${uid}/profile`).then(url => {
+              ? uploadFileToFirebase(profilePicFile, `public/${uid}/profile`).then(url => {
                   if (url?.uploadedPath) uploadedPaths.push(url.uploadedPath);
                   return { publicUrl: url?.publicUrl ?? "" };
                 })
               : Promise.resolve(undefined),
 
             coverPicFile
-              ? uploadFileToSupabase(coverPicFile, `public/${uid}/cover`).then(url => {
+              ? uploadFileToFirebase(coverPicFile, `public/${uid}/cover`).then(url => {
                   if (url?.uploadedPath) uploadedPaths.push(url.uploadedPath);
                   return { publicUrl: url?.publicUrl ?? "" };
                 })
@@ -361,7 +461,7 @@ export function RegisterForm({
             accreditationsFile?.length > 0
               ? Promise.all(
                   accreditationsFile.map(file =>
-                    uploadFileToSupabase(file, `private/${uid}/accreditations`).then(url => {
+                    uploadFileToFirebase(file, `private/${uid}/accreditations`).then(url => {
                       if (url?.uploadedPath) uploadedPaths.push(url.uploadedPath);
                       return { documentUrl: url?.publicUrl ?? "" };
                     })
@@ -379,6 +479,7 @@ export function RegisterForm({
             location,
             profilePicUrl: uploadedProfilePicUrl?.publicUrl ?? "",
             coverPicUrl: uploadedCoverPicUrl?.publicUrl ?? "",
+            providers: googleUser ? ['google.com'] : ['password'],
             professionalAccreditation: uploadedAccreditations as { documentUrl: string }[],
             ...(userType === UserTypeGQL.INDIVIDUAL && {
               firstName,
@@ -399,6 +500,8 @@ export function RegisterForm({
           open("success", dict.notifications.register.success.title, {
             message: dict.notifications.register.success.message,
           });
+          // Étape finale : Nettoyer la sauvegarde après une inscription réussie
+          localStorage.removeItem(REGISTRATION_STATE_KEY); // Nettoyer l'état sauvegardé
 
           router.push('/login'); // Rediriger vers la page de connexion après l'inscription réussie 
 
@@ -417,29 +520,14 @@ export function RegisterForm({
               default:
                 errorMessage = error.message;
             }
+          } else if (error instanceof StorageError) { // Cette ligne fonctionnera maintenant
+            // Erreur spécifique de Supabase Storage
+            errorMessage = dict.notifications.register.error.uploadFailed;
           } else if (error instanceof Error) {
             // Erreur provenant du thunk createUser ou d'une autre partie
             errorMessage = error.message;
           }
-          if (uploadedPaths.length) {
-            // console.log("Suppression des fichiers Supabase...");
-            try {
-              const { error: removeErr } = await supabase.storage.from("pms-connect-bucket").remove(uploadedPaths);
-              if (removeErr) console.error("Erreur lors de la suppression Supabase:", removeErr.message);
-              else console.log("Fichiers Supabase supprimés");
-            } catch (err) {
-              console.error("Rollback Supabase failed:", err);
-            }
-          }
-          if (firebaseUser) {
-            console.log("Suppression de l'utilisateur Firebase...");
-            try {
-              await deleteUser(firebaseUser);
-              console.log("Utilisateur Firebase supprimé");
-            } catch (err) {
-              console.error("Impossible de supprimer l'utilisateur Firebase:", err);
-            }
-          }
+          await rollbackRegistration(firebaseUser, uploadedPaths, !!googleUser); // firebaseUser est maintenant accessible ici
           open("error", dict.notifications.register.error.title, { message: errorMessage });
         } finally {
           setIsLoading(false);
@@ -448,60 +536,90 @@ export function RegisterForm({
     },
   })
 
+  const handlePrevious = () => {
+    // Si on est à l'étape 2 (juste après la vérification) et que l'utilisateur est vérifié,
+    // on saute l'étape 1 pour revenir directement à l'étape 0.
+    if (currentStep === 2 && auth.currentUser?.emailVerified) {
+      setCurrentStep(0);
+    } else {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Effet pour synchroniser l'état de Firebase avec l'état local `googleUser` au montage
+  // C'est la méthode la plus fiable pour récupérer l'utilisateur après une redirection.
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      // Si un utilisateur est authentifié via Firebase ET que ce n'est pas déjà notre `googleUser` local.
+      // Cela évite de ré-exécuter si l'état local change mais que l'utilisateur Firebase reste le même.
+      if (user && user.uid !== googleUser?.uid) {
+        console.log("Firebase user detected on mount, setting up form for Google registration.");
+        setGoogleUser(user);
+        // Pré-remplir le formulaire avec les données Google
+        formik.setValues({
+          ...formik.values,
+          email: user.email ?? "",
+          // Ne pas pré-remplir profilePicUrl car c'est pour le fichier, pas l'URL
+          firstName: user.displayName?.split(" ")[0] || "",
+          lastName: user.displayName?.split(" ")[1] || "",
+        });
+        open("success", dict.notifications.register.success.googleAccount.title, { 
+          message: dict.notifications.register.success.googleAccount.message 
+        });
+      }
+    });
+
+    // Nettoyage de l'écouteur lorsque le composant est démonté
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Ne s'exécute qu'une fois au montage pour mettre en place l'observateur.
+
+  // Approche Réactive : Effet pour sauvegarder l'état du formulaire dans le localStorage
+  useEffect(() => {
+    // Ne pas sauvegarder pendant la restauration initiale ou si une soumission est en cours
+    if (!isRestored || isLoading) return;
+
+    // Créer une version sérialisable des valeurs (sans les objets File)
+    const {
+      profilePicFile,
+      coverPicFile,
+      accreditationsFile,
+      // On exclut aussi les previews qui dépendent des fichiers
+      ...serializableValues
+    } = formik.values;
+
+    const stateToSave = {
+      values: serializableValues,
+      currentStep,
+    };
+
+    localStorage.setItem(REGISTRATION_STATE_KEY, JSON.stringify(stateToSave));
+  }, [formik.values, currentStep, googleUser, profilePicPreview, coverPicPreview, accreditationsPreview, isLoading, isRestored]);
+
+  // Effet pour restaurer l'état au chargement initial (ne s'exécute qu'une fois)
+  useEffect(() => {
+    const savedStateJSON = localStorage.getItem(REGISTRATION_STATE_KEY);
+    if (savedStateJSON) {
+      try {
+        const savedState = JSON.parse(savedStateJSON);
+        // On ne restaure plus le currentStep ici, car il est déjà initialisé.
+        formik.setValues({ ...initialValues, ...savedState.values });
+      } catch (error) {
+        console.error("Failed to restore registration state:", error);
+        localStorage.removeItem(REGISTRATION_STATE_KEY);
+      }
+    }
+    // Une fois la restauration (ou la tentative) terminée, on autorise les sauvegardes futures.
+    setIsRestored(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const countryError = getIn(formik.errors, "location.country");
   const countryTouched = getIn(formik.touched, "location.country");
   const stateError = getIn(formik.errors, "location.stateOrProvince");
   const stateTouched = getIn(formik.touched, "location.stateOrProvince");
   const cityError = getIn(formik.errors, "location.city");
   const cityTouched = getIn(formik.touched, "location.city");
-
-  // useEffect(() => {
-  //   setCountries(Country.getAllCountries())
-  //   setStates(State.getAllStates())
-  //   setCities(City.getAllCities())
-  // }, []);
-  useEffect(() => {
-    if (googleUser) {
-      formik.setValues({
-        ...formik.values,
-        email: googleUser.email ?? "",
-        profilePicUrl: googleUser.photoURL || "",
-        firstName: googleUser.displayName?.split(" ")[0] || "",
-        lastName: googleUser.displayName?.split(" ")[1] || "",
-      });
-      
-    }else if (!googleUser) {
-      formik.setValues({
-        ...formik.values,
-        email: "",
-        profilePicUrl:"",
-        firstName: "",
-        lastName: "",
-      }); 
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [googleUser]);
-
-  // This effect handles pre-filling the form after a successful Google Sign-In redirect.
-  // It listens for the firebaseUid from the global state.
-  useEffect(() => {
-    const currentUser = auth.currentUser;
-    // If a user is authenticated via Firebase but the form hasn't been populated yet
-    if (firebaseUid && currentUser) {
-      console.log("Pre-filling form with Google user data after redirect.");
-      setGoogleUser(currentUser); // Set local state to disable password fields etc.
-      formik.setValues({
-        ...formik.values,
-        email: currentUser.email ?? "",
-        profilePicUrl: currentUser.photoURL || "",
-        firstName: currentUser.displayName?.split(" ")[0] || "",
-        lastName: currentUser.displayName?.split(" ")[1] || "",
-      });
-      open("success", dict.notifications.register.success.googleAccount.title, { message: dict.notifications.register.success.googleAccount.message });
-    }
-    // We only want this to run when the auth state changes, not on every formik change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firebaseUid, googleUser]);
 
   const handleGoogleSignIn = async () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -512,10 +630,9 @@ export function RegisterForm({
         await signInWithRedirect(auth, googleProvider);
       }else {
         const result = await signInWithGoogle();
-        // open("success", "Signed in with Google!", { message: "Please complete your profile to continue." });
-        // setCurrentStep(1);
         if (result) {
-          // Populate formik values with Google user data
+          // Forcer la mise à jour du formulaire avec les données Google,
+          // même si l'utilisateur avait commencé à taper.
           setGoogleUser(result);
           formik.setValues({
             ...formik.values,
@@ -526,11 +643,8 @@ export function RegisterForm({
             firstName: result.displayName?.split(" ")[0] || "",
             lastName: result.displayName?.split(" ")[1] || "",
             // userType: UserTypeGQL.INDIVIDUAL, // Default to individual for Google sign-in
-          });
-          
-          // Move to next step after Google sign-in
+          }, true); // Le `true` force la validation
           open("success", dict.notifications.register.success.googleAccount.title, { message: dict.notifications.register.success.googleAccount.message });
-          // setCurrentStep(1);
         }
       }
       
@@ -554,7 +668,7 @@ export function RegisterForm({
                 type="email"
                 placeholder="email@example.com"
                 onChange={(event) => {
-                  formik.handleChange(event);
+                  formik.handleChange(event); // On laisse Formik gérer le changement
                   if(googleUser) {
                     setGoogleUser(null);
                   }
@@ -594,26 +708,22 @@ export function RegisterForm({
             </div>
           </div>
         )
-      // case 1:
-      //   return (
-      //     <>
-      //       <PhoneVerificationStep
-      //         phoneNumber={formik.values.phoneNumber}
-      //         value={formik.values.verificationCode}
-      //         onChange={(code) => formik.setFieldValue('verificationCode', code)}
-      //         error={formik.errors.verificationCode}
-      //         isVerifying={isLoading}
-      //         onResend={async () => {
-      //           console.log("Resending OTP...");
-      //           const appVerifier = await setupRecaptcha();
-      //           const confirmation = await signInWithPhoneNumber(auth, formik.values.phoneNumber, appVerifier);
-      //           setConfirmationResult(confirmation);
-      //           open("success", "Code renvoyé", { message: "Un nouveau code a été envoyé." });
-      //         }}
-      //       />
-      //     </>
-      //   );
       case 1:
+        // This is our new Email Verification Step
+        return (
+          <EmailVerificationStep
+            email={formik.values.email}
+            onVerified={() => {
+              open("success", dict.notifications.verification.successTitle, { message: dict.notifications.verification.successMessage });
+              setCurrentStep(currentStep + 1);
+            }}
+            onBack={async () => {
+              await dispatch(deleteCurrentUser());
+              setCurrentStep(currentStep - 1);
+            }}
+          />
+        );
+      case 2:
         return (
           <div className="flex flex-col gap-6 w-full sm:max-w-4/5 md:max-w-3/5 ">
             {/* <Label className="mb-2" htmlFor="userType">{dict.register.userTypeLabel}</Label> */}
@@ -635,7 +745,7 @@ export function RegisterForm({
             </RadioGroup>
           </div>
         )
-      case 2:
+      case 3:
         return (
           <div className="w-full xs:max-w-4/5 sm:max-w-3/5 md:max-w-2/5">
             {/* <div>
@@ -702,7 +812,7 @@ export function RegisterForm({
             )}
           </div>
         )
-      case 3:
+      case 4:
         return (
           <div className="w-full flex flex-col gap-6 xs:max-w-4/5 sm:max-w-3/5 md:max-w-5/10">
             <div className="grid gap-2">
@@ -979,14 +1089,14 @@ export function RegisterForm({
         </div>
         <div className="flex flex-col min-h-100 items-center justify-start gap-8">
           {renderStep()}
-          <div className="flex items-center justify-between gap-4">
-            {currentStep > 0 && (
-              <Button className="w-35" type="button" variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>
+          <div className={cn("flex items-center justify-between gap-4", currentStep === 1 && "hidden")}>
+            {currentStep > 0 && currentStep !== 1 && (
+              <Button className="w-35" type="button" variant="outline" onClick={handlePrevious}>
                 {dict.register.previous}
               </Button>
             )}
-            <Button className="w-35" type="submit">
-              {(currentStep < validationSchemas.length - 1 ? dict.register.next : dict.register.registerButton)}
+            <Button className="w-35" type="submit" disabled={currentStep === 1 || isLoading}>
+              {(currentStep < validationSchemas.length ? dict.register.next : dict.register.registerButton)}
             </Button>
           </div>
           <div className="text-center text-sm">
