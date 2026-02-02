@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import { setAuth, clearAuth } from "@/redux/slices/authSlice";
 
 export const useAuthObserver = () => {
-    // console.log("useAuthObserver");
     const store = useAppStore();
     const dispatch = useAppDispatch();
     const { open } = useNotification();
@@ -16,9 +15,8 @@ export const useAuthObserver = () => {
     const [firebaseUid, setFirebaseUid] = useState<string | null>(null);
 
     useEffect(() => {
-        const unsuscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                // console.log("User logged in:", user.uid);
                 setFirebaseUid(user.uid);
                 // Sync Firebase Auth with Redux Auth
                 const state = store.getState();
@@ -28,15 +26,14 @@ export const useAuthObserver = () => {
                     dispatch(setAuth(user.uid));
                 }
             } else {
-                // L'utilisateur est déconnecté, on nettoie
-                // console.log("User logged out, clearing state.");
+                // User is logged out, clear state
                 setFirebaseUid(null);
                 dispatch(clearAuth());
             }
             setInitialized(true);
         })
         return () => {
-            unsuscribe();
+            unsubscribe();
         }
     }, [dispatch, store, open, pathname])
 

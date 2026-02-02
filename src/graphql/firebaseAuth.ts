@@ -1,5 +1,5 @@
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendEmailVerification, sendPasswordResetEmail, User, updateEmail, deleteUser} from "firebase/auth"
-import {auth} from "@/lib/firebase"
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendEmailVerification, sendPasswordResetEmail, User, updateEmail, deleteUser } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 
 export const googleProvider = new GoogleAuthProvider()
 
@@ -9,9 +9,22 @@ export async function register(email: string, password: string): Promise<User> {
 }
 
 
+// Helper to wait for auth state
+const waitForAuth = (): Promise<User | null> => {
+    return new Promise((resolve) => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            unsubscribe();
+            resolve(user);
+        });
+    });
+};
+
 export const getFirebaseToken = async (): Promise<string | null> => {
-    // const user = getAuth().currentUser;
-    const user = auth.currentUser;
+    let user = auth.currentUser;
+    if (!user) {
+        // If no user is synchronously available, wait for the initial auth state resolution
+        user = await waitForAuth();
+    }
     if (!user) return null;
     return await user.getIdToken();
 };
@@ -28,7 +41,7 @@ export async function logout(): Promise<void> {
 export async function signInWithGoogle(): Promise<User> {
     const userCredential = await signInWithPopup(auth, googleProvider)
     return userCredential.user
-}   
+}
 
 export async function sendVerificationEmail(user?: User): Promise<void> {
     const targetUser = user || auth.currentUser;
