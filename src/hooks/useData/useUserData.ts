@@ -16,7 +16,7 @@ import {
     buildRegisterFcmTokenMutation,
     buildUnregisterFcmTokenMutation,
 } from '@/graphql/queries/index';
-import { CheckUserExistsResponse, FollowsUpdated, User, CreateUserInput, UpdateUserInput } from '@/types/User';
+import { CheckUserExistsResponse, FollowsUpdated, User, UpdateUserInput } from '@/types/User';
 // import { useAppSelector, useAppDispatch } from '@/lib/hooks';
 // import { setUser } from '@/redux/slices/userSlice';
 import { useEffect } from 'react';
