@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
-import { useAppSelector, useAuthObserver } from "@/lib/hooks";
+import { useAuthObserver } from "@/hooks/use-auth";
+import { useAppSelector } from "@/hooks/use-redux";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import {
@@ -19,7 +20,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const {initialized, firebaseUid: uid} = useAuthObserver();
+  const { initialized, firebaseUid: uid } = useAuthObserver();
   const { firebaseUid, loading: authLoading } = useAppSelector(
     (state) => state.auth
   );
@@ -56,9 +57,9 @@ export default function ProtectedLayout({
       <AppSidebar />
       <SidebarInset className="relative overflow-hidden">
         <Header />
-        <main className={cn("bg-sidebar", isMobile && "mt-[101px]")}>{children}</main>
+        <main className={cn("bg-sidebar", isMobile && "pt-14")}>{children}</main>
       </SidebarInset>
-      <SuggestionsSidebar/>
+      <SuggestionsSidebar />
     </SidebarProvider>
   );
 }

@@ -3,7 +3,9 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAppDispatch, useDictionary, useNotification } from "@/lib/hooks"
+import { useAppDispatch } from "@/hooks/use-redux"
+import { useDictionary } from "@/hooks/use-dictionary"
+import { useNotification } from "@/hooks/use-notification"
 import * as yup from "yup"
 import { useFormik } from "formik"
 import { useState } from "react"
@@ -13,7 +15,7 @@ import { FirebaseError } from "firebase/app"
 import { fetchUserByUid, loginAndFetchUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
 // import { Loader2 } from "lucide-react"
-import { useCheckUserExists } from "@/hooks/useData/useUserData"
+import { useCheckUserExists } from "../hooks/useData/index"
 import Image from "next/image"
 import CustomLoader from "./Loader"
 import { User } from "firebase/auth"
@@ -83,7 +85,7 @@ export function LoginForm({
             errorMessage = dict.notifications.login.error.messages["auth/user-not-found"];
             break;
           case "auth/network-request-failed":
-            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"] ;
+            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"];
             break;
           case "auth/too-many-requests":
             errorMessage = dict.notifications.login.error.messages["auth/too-many-requests"];
@@ -94,11 +96,11 @@ export function LoginForm({
         // if (error instanceof FirebaseError) {
         // } else 
         if (error instanceof Error) {
-        // Erreur provenant du thunk createUser ou d'une autre partie
+          // Erreur provenant du thunk createUser ou d'une autre partie
           errorMessage = error.message;
         }
-        open("error", dict.notifications.login.error.title, { 
-            message: errorMessage 
+        open("error", dict.notifications.login.error.title, {
+          message: errorMessage
         });
       } finally {
         setIsLoading(false)
@@ -148,7 +150,7 @@ export function LoginForm({
               errorMessage = dict.notifications.login.error.messages["auth/user-not-found"];
               break;
             case "auth/network-request-failed":
-              errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"] ;
+              errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"];
               break;
             case "auth/too-many-requests":
               errorMessage = dict.notifications.login.error.messages["auth/too-many-requests"];
@@ -158,7 +160,7 @@ export function LoginForm({
           }
         }
         if (error instanceof Error) {
-        errorMessage = error.message;
+          errorMessage = error.message;
         }
         open("error", dict.notifications.forgotPassword.error.title, {
           message: errorMessage
@@ -188,14 +190,18 @@ export function LoginForm({
           open("success", dict.notifications.login.success.title, {
             message: dict.notifications.login.success.message,
           });
-        } catch (fetchError) {
+        } catch {
           // Si fetchUserByUid échoue (l'utilisateur n'est pas dans notre DB)
           open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
           router.push("/register");
         }
       }
-      
-    } catch (error) {
+
+    } catch (error: unknown) {
+      if ((error as any)?.code === "auth/popup-closed-by-user") { // eslint-disable-line @typescript-eslint/no-explicit-any
+        console.warn("Google Sign-in popup closed by user.");
+        return;
+      }
       console.error("Google sign-in error:", error);
       let errorMessage: string = dict.notifications.login.error.messages.default;
       if (error instanceof FirebaseError) { // Gestion spécifique des erreurs Firebase
@@ -210,7 +216,7 @@ export function LoginForm({
             errorMessage = dict.notifications.login.error.messages["auth/user-not-found"];
             break;
           case "auth/network-request-failed":
-            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"] ;
+            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"];
             break;
           case "auth/too-many-requests":
             errorMessage = dict.notifications.login.error.messages["auth/too-many-requests"];
@@ -225,7 +231,7 @@ export function LoginForm({
       open("error", dict.notifications.login.error.title, {
         message: errorMessage
       })
-    }finally {
+    } finally {
       setIsGoogleSignIn(false);
     }
   }
@@ -254,7 +260,7 @@ export function LoginForm({
                 onChange={loginFormik.handleChange}
                 onBlur={loginFormik.handleBlur}
                 value={loginFormik.values.email}
-                // disabled={isLoading}
+              // disabled={isLoading}
               />
               {loginFormik.touched.email && loginFormik.errors.email && (
                 <p className="text-red-500 text-xs">{loginFormik.errors.email}</p>
@@ -279,7 +285,7 @@ export function LoginForm({
                 onChange={loginFormik.handleChange}
                 onBlur={loginFormik.handleBlur}
                 value={loginFormik.values.password}
-                // disabled={isLoading}
+              // disabled={isLoading}
               />
               {loginFormik.touched.password && loginFormik.errors.password && (
                 <p className="text-red-500 text-xs">{loginFormik.errors.password}</p>
@@ -289,19 +295,19 @@ export function LoginForm({
               {dict.login.loginButton}
               {/* {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : dict.login.loginButton} */}
             </Button>
-            <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t"> 
-              <span className="bg-background text-muted-foreground relative z-10 px-2"> {dict.login.continueWith} </span> 
-            </div> 
-            <Button type="button" onClick={() => handleGoogleSignIn()} variant="outline" className="cursor-pointer w-full"> 
+            <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+              <span className="bg-background text-muted-foreground relative z-10 px-2"> {dict.login.continueWith} </span>
+            </div>
+            <Button type="button" onClick={() => handleGoogleSignIn()} variant="outline" className="cursor-pointer w-full">
               <Image src="/google-color.svg" alt="" width={4} height={4} className="h-4 w-4" />
               {dict.login.googleButton}
             </Button>
-            </div>
-            <div className="text-center text-sm">
-              {dict.login.noAccount}{" "}
-              <Link href="/register" className="underline underline-offset-4"> {dict.login.signUp} </Link>
-            </div>
-            {/* </div> */}
+          </div>
+          <div className="text-center text-sm">
+            {dict.login.noAccount}{" "}
+            <Link href="/register" className="underline underline-offset-4"> {dict.login.signUp} </Link>
+          </div>
+          {/* </div> */}
         </form>
       ) : (
         // ---------------- RESET PASSWORD FORM ----------------
@@ -323,7 +329,7 @@ export function LoginForm({
                 onChange={resetFormik.handleChange}
                 onBlur={resetFormik.handleBlur}
                 value={resetFormik.values.email}
-                // disabled={isLoading}
+              // disabled={isLoading}
               />
               {resetFormik.touched.email && resetFormik.errors.email && (
                 <p className="text-red-500 text-xs">{resetFormik.errors.email}</p>

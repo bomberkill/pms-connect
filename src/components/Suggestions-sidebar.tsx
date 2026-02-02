@@ -6,12 +6,11 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 import { ArrowUpRight, Bell, MessageCircle, Plus, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { useAppSelector } from "@/lib/hooks";
 import { Skeleton } from "./ui/skeleton";
 import { User, UserTypeGQL } from "@/types/User";
 import Link from "next/link";
-import { useDictionary } from "@/lib/hooks";
-import { useFollowActions, useUsers } from "@/hooks/useData/index";
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useFollowActions, useUsers, useMe } from "@/hooks/useData/index";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { useIsTablet } from "@/hooks/use-mobile";
 
@@ -43,12 +42,13 @@ export function SuggestionsSidebar({ ...props }: React.ComponentProps<typeof Sid
   // Données factices pour l'exemple
   const router = useRouter()
   const isTablet = useIsTablet();
-  const { user, loading: userLoading } = useAppSelector((state) => state.user);
+  // const { user, loading: userLoading } = useAppSelector((state) => state.user);
+  const { me: user, loading: userLoading } = useMe();
   const dict = useDictionary();
 
   // On utilise notre hook personnalisé. La logique est encapsulée et réutilisable.
   const { suggestions: suggestedFriends, loading: loadingSuggestions, error } = useUsers({ limit: 5 });
-  const {followUser} = useFollowActions()
+  const { followUser } = useFollowActions()
 
   if (error) {
     console.error("Error fetching suggestions:", error);
@@ -57,23 +57,23 @@ export function SuggestionsSidebar({ ...props }: React.ComponentProps<typeof Sid
 
   const headerButtons = [
     {
-        icon: MessageCircle,
-        onClick: () => {
-            router.push("/messages")
-        }
+      icon: MessageCircle,
+      onClick: () => {
+        router.push("/messages")
+      }
     },
     {
-        icon: Bell,
-        onClick: () => {
-            router.push("/notifications")
-        }
-    
+      icon: Bell,
+      onClick: () => {
+        router.push("/notifications")
+      }
+
     },
     {
-        icon: Settings,
-        onClick: () => {
-            router.push("/settings")
-        }
+      icon: Settings,
+      onClick: () => {
+        router.push("/settings")
+      }
     }
   ]
 
@@ -85,21 +85,21 @@ export function SuggestionsSidebar({ ...props }: React.ComponentProps<typeof Sid
           <SidebarMenu>
             <SidebarMenuItem>
               <div className="flex items-center justify-between p-2">
-                  {!user || userLoading ? (
-                      <Skeleton className="h-8 w-8 rounded-lg"/>
-                  ) : (
-                      <Avatar className="h-8 w-8 rounded-full">
-                          <AvatarImage className="object-cover" src={user.profilePicUrl} alt={getUserDisplayName(user)} />
-                          <AvatarFallback className="rounded-md">CN</AvatarFallback>
-                      </Avatar>
-                  )}
-                  <div className="flex items-center gap-2 justify-center">
-                      {headerButtons.map((button, index) => (
-                          <SidebarMenuButton className="border-muted rounded-full border-1" key={index} onClick={button.onClick}>
-                              <button.icon />
-                          </SidebarMenuButton>
-                      ))}
-                  </div>
+                {!user || userLoading ? (
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                ) : (
+                  <Avatar className="h-8 w-8 rounded-full">
+                    <AvatarImage className="object-cover" src={user.profilePicUrl} alt={getUserDisplayName(user)} />
+                    <AvatarFallback className="rounded-md">CN</AvatarFallback>
+                  </Avatar>
+                )}
+                <div className="flex items-center gap-1 justify-center">
+                  {headerButtons.map((button, index) => (
+                    <SidebarMenuButton className="border-border rounded-full border shadow-sm hover:bg-muted/80 transition-colors h-8 w-8 p-0 flex items-center justify-center" key={index} onClick={button.onClick}>
+                      <button.icon className="size-4" />
+                    </SidebarMenuButton>
+                  ))}
+                </div>
               </div>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -125,26 +125,26 @@ export function SuggestionsSidebar({ ...props }: React.ComponentProps<typeof Sid
               {dict.friends.noSuggestions}
             </div>
           ) :
-          <>
-            <SidebarGroup className="py-0 px-4">
-              <div className="flex items-center justify-between py-2">
+            <>
+              <SidebarGroup className="py-0 px-4">
+                <div className="flex items-center justify-between py-2">
                   <SidebarGroupLabel>{dict.friends.suggestions}</SidebarGroupLabel>
-                  <SidebarGroupLabel className="text-primary cursor-pointer">{dict.actions.seeAll} <ArrowUpRight className="pl-1"/></SidebarGroupLabel>
-              </div>
-              <Separator />
-              <SidebarGroupContent className="py-0">
+                  <SidebarGroupLabel className="text-primary cursor-pointer">{dict.actions.seeAll} <ArrowUpRight className="pl-1" /></SidebarGroupLabel>
+                </div>
+                <Separator />
+                <SidebarGroupContent className="py-0">
                   {suggestedFriends.filter((item) => item.id !== user?.id).map((friend) => (
                     <div key={friend.id}>
                       <div className="flex items-center">
                         <SuggestionItem friend={friend} />
-                        <Plus onClick={() => followUser({variables: {userId: friend.id}})} className=" cursor-pointer ml-auto size-4 text-muted-foreground" />
+                        <Plus onClick={() => followUser({ variables: { userId: friend.id } })} className=" cursor-pointer ml-auto size-4 text-muted-foreground" />
                       </div>
                       <Separator />
                     </div>
                   ))}
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </>
           }
         </SidebarContent>
       </Sidebar>

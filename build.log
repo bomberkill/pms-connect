@@ -1,0 +1,119 @@
+
+> pms-connect@0.1.0 build
+> next build
+
+   ▲ Next.js 15.3.3
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ (pwa) Compiling for server...
+ ✓ (pwa) Compiling for server...
+ ✓ (pwa) Compiling for client (static)...
+ ○ (pwa) Service worker: /home/ronald/Pms project/pms-connect/public/sw.js
+ ○ (pwa)   URL: /sw.js
+ ○ (pwa)   Scope: /
+ ✓ Compiled successfully in 15.0s
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./src/app/Providers.tsx
+25:15  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/[lang]/(auth)/verify-email/page.tsx
+30:11  Error: 'handleEmailChanged' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/app/[lang]/(protected)/friends/page.tsx
+26:6  Warning: React Hook useEffect has a missing dependency: 'refetchRequests'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/[lang]/(protected)/groups/[slug]/page.tsx
+10:39  Error: 'Shield' is defined but never used.  @typescript-eslint/no-unused-vars
+11:10  Error: 'MemberCardSkeletonList' is defined but never used.  @typescript-eslint/no-unused-vars
+29:29  Error: 'error' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+74:25  Error: 'leaving' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+102:64  Error: React Hook "useGroupMembers" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+104:95  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+105:11  Error: 'isAdmin' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+105:75  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+112:18  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+122:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+184:144  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/[lang]/(protected)/groups/page.tsx
+5:10  Error: 'useGroup' is defined but never used.  @typescript-eslint/no-unused-vars
+5:20  Error: 'useGroupMutations' is defined but never used.  @typescript-eslint/no-unused-vars
+9:10  Error: 'Skeleton' is defined but never used.  @typescript-eslint/no-unused-vars
+63:41  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/[lang]/(protected)/profile/[slug]/page.tsx
+63:58  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+63:100  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+224:6  Warning: React Hook useEffect has missing dependencies: 'authUser?.id' and 'refetchMe'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+533:66  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+534:27  Error: 'error' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/App-sidebar.tsx
+28:10  Error: 'useAppSelector' is defined but never used.  @typescript-eslint/no-unused-vars
+112:7  Warning: React Hook React.useMemo has a missing dependency: 'pathname'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/CreatePostComposer.tsx
+6:10  Error: 'useAppSelector' is defined but never used.  @typescript-eslint/no-unused-vars
+127:6  Warning: React Hook React.useEffect has a missing dependency: 'formik'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/CreatePostComposerMobile.tsx
+6:10  Error: 'useAppSelector' is defined but never used.  @typescript-eslint/no-unused-vars
+126:6  Warning: React Hook React.useEffect has a missing dependency: 'formik'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/FeedItemCard.tsx
+35:47  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/components/Header.tsx
+4:26  Error: 'useAppSelector' is defined but never used.  @typescript-eslint/no-unused-vars
+9:10  Error: 'BriefcaseBusiness' is defined but never used.  @typescript-eslint/no-unused-vars
+9:29  Error: 'LibraryBig' is defined but never used.  @typescript-eslint/no-unused-vars
+9:49  Error: 'Store' is defined but never used.  @typescript-eslint/no-unused-vars
+9:86  Error: 'Home' is defined but never used.  @typescript-eslint/no-unused-vars
+9:92  Error: 'MessagesSquare' is defined but never used.  @typescript-eslint/no-unused-vars
+9:108  Error: 'UsersRound' is defined but never used.  @typescript-eslint/no-unused-vars
+13:10  Error: 'cn' is defined but never used.  @typescript-eslint/no-unused-vars
+22:8  Error: 'PWABanner' is defined but never used.  @typescript-eslint/no-unused-vars
+42:9  Error: 'pathname' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/Login-form.tsx
+193:18  Error: 'fetchError' is defined but never used.  @typescript-eslint/no-unused-vars
+200:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/components/PostMedia.tsx
+27:3  Error: 'DropdownMenuSubTrigger' is defined but never used.  @typescript-eslint/no-unused-vars
+177:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+398:7  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/PwaInstallPrompt.tsx
+11:58  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+17:89  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+87:138  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+87:160  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./src/components/Register-form.tsx
+14:10  Error: 'auth' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/Suggestions-sidebar.tsx
+9:10  Error: 'useAppSelector' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/UserListItem.tsx
+5:10  Error: 'Button' is defined but never used.  @typescript-eslint/no-unused-vars
+8:10  Error: 'UserPlus' is defined but never used.  @typescript-eslint/no-unused-vars
+8:20  Error: 'UserMinus' is defined but never used.  @typescript-eslint/no-unused-vars
+8:31  Error: 'Loader2' is defined but never used.  @typescript-eslint/no-unused-vars
+8:40  Error: 'Check' is defined but never used.  @typescript-eslint/no-unused-vars
+8:47  Error: 'X' is defined but never used.  @typescript-eslint/no-unused-vars
+8:50  Error: 'UserCheck' is defined but never used.  @typescript-eslint/no-unused-vars
+10:10  Error: 'useDictionary' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/components/auth/hooks/useRegisterForm.ts
+430:8  Warning: React Hook useEffect has missing dependencies: 'dict.notifications.register.success.googleAccount.message', 'dict.notifications.register.success.googleAccount.title', 'formik', 'googleUser?.uid', and 'open'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/ui/empty-state.tsx
+27:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

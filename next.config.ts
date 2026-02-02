@@ -46,6 +46,7 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   skipWaiting: true,
   register: true,
   disable: process.env.NODE_ENV === "development",
+  // disable: false, // ENAbled for testing
   // disable: false,
   workboxOptions: { disableDevLogs: true },
 });

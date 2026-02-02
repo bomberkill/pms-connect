@@ -3,14 +3,15 @@
 import React, { useMemo, useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import { useAppSelector, useDictionary, useNotification } from "@/lib/hooks";
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import TextareaAutosize from "react-textarea-autosize"; 
+import TextareaAutosize from "react-textarea-autosize";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Trash2, Video, FileIcon, X, Loader2 } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
-import { usePostMutations } from "@/hooks/useData/index"; 
-import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/components/Register-form";
+import { usePostMutations } from "@/hooks/useData/index";
+import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/utils/fileUpload";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -18,10 +19,12 @@ import { MediaItem, MediaType } from "@/types/Post";
 import { cn } from "@/lib/utils";
 import { useMediaHandler } from "@/hooks/use-media-handler";
 import { CreatePostComposerProps } from "./CreatePostComposer";
+import { useMe } from "@/hooks/useData/useUserData";
 
-export default function CreatePostComposerMobile({ onCreated, onClose, placeholder, className }: CreatePostComposerProps) {
+export default function CreatePostComposerMobile({ onCreated, onClose, placeholder, className, groupId }: CreatePostComposerProps & { groupId?: string }) {
   const dict = useDictionary();
-  const { user } = useAppSelector((state) => state.user);
+  // const { user } = useAppSelector((state) => state.user);
+  const { me: user } = useMe();
   const { createPost, creating } = usePostMutations();
   const [isCreating, setIsCreating] = useState(false)
   const { open } = useNotification();
@@ -49,7 +52,7 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
             return value.size <= MAX_FILE_SIZE * 5; // 10MB
           })
       )
-      .max(4, "You can upload a maximum of 4 files."),
+      .max(4, dict.validation.file.maxFour),
   });
 
   const formik = useFormik({
@@ -74,10 +77,10 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
           media = mediaFiles.reduce<MediaItem[]>((acc, file, idx) => {
             const result = uploadResults[idx];
             if (result?.publicUrl) {
-              acc.push({ 
+              acc.push({
                 url: result.publicUrl,
-                type: file.type.startsWith("video/") ? MediaType.VIDEO 
-                    : file.type.startsWith("image/") ? MediaType.IMAGE 
+                type: file.type.startsWith("video/") ? MediaType.VIDEO
+                  : file.type.startsWith("image/") ? MediaType.IMAGE
                     : MediaType.DOCUMENT,
               });
             }
@@ -92,6 +95,7 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
             createPostInput: {
               content: values.content,
               media: media.length > 0 ? media : undefined,
+              groupId,
             },
           },
         });
@@ -132,7 +136,7 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
       )}
     >
       <div className="p-4 text-center relative">
-        <h2 className="text-sm font-bold">Créer une publication</h2>
+        <h2 className="text-sm font-bold">{dict.post.createPostTitle}</h2>
         {onClose && (
           <Button variant="ghost" size="icon" className="absolute top-2 right-2 rounded-full" onClick={onClose}>
             <X className="h-5 w-5" />
@@ -197,19 +201,19 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
 
       <div className="p-4 mt-auto border-t">
         <div className="flex items-center justify-around gap-2">
-            <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary">
-              <ImageIcon className="h-7 w-7 text-green-500" />
-              {/* <span className="text-xs">Photo</span> */}
-            </label>
-            <input id="media-upload-mobile" type="file" multiple className="hidden" accept="image/*,video/mp4,video/quicktime,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
-            <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary">
-              <Video className="h-7 w-7 text-blue-500" />
-              {/* <span className="text-sm">Vidéo</span> */}
-            </label>
-            <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary">
-              <FileIcon className="h-7 w-7 text-amber-500" />
-              {/* <span className="text-sm">Document</span> */}
-            </label>
+          <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <ImageIcon className="h-7 w-7 text-green-600 dark:text-green-400" />
+            {/* <span className="text-xs">Photo</span> */}
+          </label>
+          <input id="media-upload-mobile" type="file" multiple className="hidden" accept="image/*,video/mp4,video/quicktime,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
+          <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <Video className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+            {/* <span className="text-sm">Vidéo</span> */}
+          </label>
+          <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <FileIcon className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+            {/* <span className="text-sm">Document</span> */}
+          </label>
         </div>
       </div>
       <div className="p-4">

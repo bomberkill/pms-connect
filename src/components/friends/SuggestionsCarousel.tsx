@@ -3,7 +3,7 @@
 import React from "react";
 import { User } from "@/types/User";
 import { useRouter } from "next/navigation";
-import { useDictionary } from "@/lib/hooks";
+import { useDictionary } from "@/hooks/use-dictionary";
 import UserCard from "../UserCard";
 
 interface Props {

@@ -5,7 +5,7 @@ import { gql } from "@apollo/client";
  * This helps avoid repeating field lists everywhere.
  * Corresponds to users.model.ts User InterfaceType and its implementations.
  */
-const USER_FIELDS = `
+export const USER_FIELDS = `
   id
   firebaseUid
   email
@@ -18,8 +18,6 @@ const USER_FIELDS = `
   websiteUrl
   accountStatus
   connections
-  followers
-  following
   providers
   blockedUsers
   fcmTokens
@@ -87,7 +85,7 @@ export const buildGetUserByIdQuery = (meta?: { fields?: string }) => {
   const fields = meta?.fields || USER_FIELDS;
   return gql`
     query GetUserById($id: ID!) {
-      getUserById(id: $id) { # 'user' is the query name
+      getUserById(id: $id) {
         ${fields}
       }
     }
@@ -98,7 +96,7 @@ export const buildGetMeQuery = (meta?: { fields?: string }) => {
   const fields = meta?.fields || USER_FIELDS;
   return gql`
     query GetMe {
-      me{ # 'user' is the query name
+      me {
         ${fields}
       }
     }
@@ -109,7 +107,7 @@ export const buildGetUserBySlugQuery = (meta?: { fields?: string }) => {
   const fields = meta?.fields || USER_FIELDS;
   return gql`
     query GetUserBySlug($slug: String!) {
-      getUserBySlug(slug: $slug) { # 'user' is the query name
+      getUserBySlug(slug: $slug) {
         ${fields}
       }
     }
@@ -122,10 +120,10 @@ export const buildGetUserBySlugQuery = (meta?: { fields?: string }) => {
 * @returns A gql object.
 */
 export const buildCreateUserMutation = (meta?: { fields?: string }) => {
- const fields = meta?.fields || USER_FIELDS;
- return gql`
+  const fields = meta?.fields || USER_FIELDS;
+  return gql`
    mutation CreateUser($createUserInput: CreateUserInput!) { # Argument name from resolver
-     createUser(createUserInput: $createUserInput) { # 'createUser' is the mutation name
+     createUser(createUserInput: $createUserInput) {
        ${fields}
      }
    }
@@ -142,7 +140,7 @@ export const buildUpdateMyProfileMutation = (meta?: { fields?: string }) => {
   const fields = meta?.fields || USER_FIELDS;
   return gql`
     mutation UpdateMyProfile($updateUserInput: UpdateUserInput!) { # Argument name from resolver
-      updateMyProfile(updateUserInput: $updateUserInput) { # 'updateMyProfile' is the mutation name
+      updateMyProfile(updateUserInput: $updateUserInput) {
         ${fields}
       }
     }
@@ -195,6 +193,40 @@ export const buildUnfollowMutation = () => {
   `;
 };
 
+/**
+ * Builds a GraphQL query for fetching a user's followers.
+ * Corresponds to 'getFollowers' resolver in users.resolver.ts.
+ * @param meta - Optional metadata, can include 'fields'.
+ * @returns A gql object.
+ */
+export const buildGetFollowersQuery = (meta?: { fields?: string }) => {
+  const fields = meta?.fields || USER_FIELDS;
+  return gql`
+    query GetFollowers($userId: ID!) {
+      getFollowers(userId: $userId) {
+        ${fields}
+      }
+    }
+  `;
+};
+
+/**
+ * Builds a GraphQL query for fetching users that a user is following.
+ * Corresponds to 'getFollowing' resolver in users.resolver.ts.
+ * @param meta - Optional metadata, can include 'fields'.
+ * @returns A gql object.
+ */
+export const buildGetFollowingQuery = (meta?: { fields?: string }) => {
+  const fields = meta?.fields || USER_FIELDS;
+  return gql`
+    query GetFollowing($userId: ID!) {
+      getFollowing(userId: $userId) {
+        ${fields}
+      }
+    }
+  `;
+};
+
 const FOLLOWS_UPDATE_FIELDS = `
   follower {
     userId
@@ -230,7 +262,7 @@ export const buildUpdateAccountStatusMutation = (meta?: { fields?: string }) => 
   const fields = meta?.fields || USER_FIELDS;
   return gql`
     mutation UpdateAccountStatus($updateAccountStatusInput: UpdateAccountStatusInput!) { # Argument name from resolver
-      updateAccountStatus(updateAccountStatusInput: $updateAccountStatusInput) { # 'updateAccountStatus' is the mutation name
+      updateAccountStatus(updateAccountStatusInput: $updateAccountStatusInput) {
         ${fields}
       }
     }
@@ -245,7 +277,7 @@ export const buildGetUserByUidQuery = (meta?: { fields?: string }) => {
   const fields = meta?.fields || USER_FIELDS;
   return gql`
     query GetUserByFirebaseUid($firebaseUid: ID!) { # Argument name from resolver
-      getUserByFirebaseUid(firebaseUid: $firebaseUid) { # 'updateAccountStatus' is the mutation name
+      getUserByFirebaseUid(firebaseUid: $firebaseUid) {
         ${fields}
       }
     }
@@ -311,3 +343,29 @@ export const buildUnregisterFcmTokenMutation = () => {
     }
   `;
 };
+
+/**
+ * Builds a GraphQL query for getting followers count.
+ * @returns A gql object.
+ */
+export const buildGetFollowersCountQuery = () => {
+  return gql`
+    query GetFollowersCount($userId: ID!) {
+      getFollowersCount(userId: $userId)
+    }
+  `;
+};
+
+/**
+ * Builds a GraphQL query for getting following count.
+ * @returns A gql object.
+ */
+export const buildGetFollowingCountQuery = () => {
+  return gql`
+    query GetFollowingCount($userId: ID!) {
+      getFollowingCount(userId: $userId)
+    }
+  `;
+};
+
+

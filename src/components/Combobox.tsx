@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { City, Country, State } from "@/types/Location"
-import { useDictionary } from "@/lib/hooks"
+import { useDictionary } from "@/hooks/use-dictionary"
 // import { ICountry, IState, ICity } from 'country-state-city'
 
 type ComboboxProps<T> = {
@@ -47,8 +47,8 @@ export function Combobox<T extends Country | State | City>({
 }: ComboboxProps<T>) {
   const [open, setOpen] = React.useState(false)
   const dict = useDictionary()
-  // const [selectedItem, setSelectedItem] = React.useState<string | undefined>(undefined)
-  // const selectedItem = data.find((item) => item.name === value)
+  const displayPlaceholder = placeholder === "Select..." ? dict.common.select : placeholder
+
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -63,8 +63,8 @@ export function Combobox<T extends Country | State | City>({
           onBlur={onBlur}
           disabled={disabled}
         >
-          {value || placeholder}
-          {/* {selectedItem ?? placeholder} */}
+          {value || displayPlaceholder}
+          {/* {selectedItem ?? displayPlaceholder} */}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
         {/* {touched && error && (
@@ -73,7 +73,7 @@ export function Combobox<T extends Country | State | City>({
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder={placeholder} />
+          <CommandInput placeholder={displayPlaceholder} />
           <CommandList>
             <CommandEmpty>{dict.combobox.noResults}</CommandEmpty>
             <CommandGroup>
@@ -94,7 +94,7 @@ export function Combobox<T extends Country | State | City>({
                     )}
                   />
                   <div className="flex gap-3">
-                    {"emoji" in item && 
+                    {"emoji" in item &&
                       // <img
                       //   src={item.flag}
                       //   alt={item.name}

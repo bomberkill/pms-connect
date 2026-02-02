@@ -14,7 +14,7 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { City, Country, State } from "@/types/Location"
-import { useDictionary } from "@/lib/hooks"
+import { useDictionary } from "@/hooks/use-dictionary"
 
 type ComboboxProps<T> = {
   data: T[]
@@ -46,6 +46,7 @@ export function InlineCombobox<T extends Country | State | City>({
 }: ComboboxProps<T>) {
   const [open, setOpen] = React.useState(false)
   const dict = useDictionary()
+  const displayPlaceholder = placeholder === "Select..." ? dict.common.select : placeholder
   const [search, setSearch] = React.useState("")
   const containerRef = React.useRef<HTMLDivElement>(null)
 
@@ -80,7 +81,7 @@ export function InlineCombobox<T extends Country | State | City>({
         onBlur={onBlur}
         disabled={disabled}
       >
-        {value || placeholder}
+        {value || displayPlaceholder}
         <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
 
@@ -92,7 +93,7 @@ export function InlineCombobox<T extends Country | State | City>({
         >
           <Command shouldFilter={false}>
             <CommandInput
-              placeholder={placeholder}
+              placeholder={displayPlaceholder}
               value={search}
               onValueChange={setSearch}
             />

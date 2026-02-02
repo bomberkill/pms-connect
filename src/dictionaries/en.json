@@ -14,6 +14,14 @@
     "noAccount": "Don't have an account?",
     "signUp": "Sign up"
   },
+  "auth": {
+    "otp": {
+      "sentTo": "A verification code has been sent to",
+      "resendError": "Unable to resend code. Please try again.",
+      "resendIn": "Resend in",
+      "resend": "Resend code"
+    }
+  },
   "validation": {
     "email": {
       "invalid": "Invalid email format",
@@ -48,7 +56,9 @@
       "unsupported": "Unsupported File Format",
       "min": "At least one file is required",
       "max": "No more than 2 files are allowed",
-      "atLeast": "You must provide at least one accreditation file"
+      "atLeast": "You must provide at least one accreditation file",
+      "maxFour": "No more than 4 files are allowed",
+      "tooLargePost": "File is too large (max 10MB)"
     },
     "websiteUrl": {
       "invalidUrl": "Invalid URL format"
@@ -63,7 +73,18 @@
       "required": "City is required"
     }
   },
+  "feed": {
+    "errorTitle": "Unable to load feed",
+    "networkError": "Please check your internet connection and try again.",
+    "genericError": "An error occurred. Please try again later.",
+    "retry": "Retry",
+    "newPosts": "New posts"
+  },
   "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications yet",
+    "error": "Error loading notifications.",
     "warning": "Warning",
     "verification": {
       "resentTitle": "Email Resent",
@@ -99,7 +120,7 @@
     "forgotPassword": {
       "success": {
         "title": "Reset Link Sent",
-        "message":  "If an account exists with this email, a reset link has been sent."
+        "message": "If an account exists with this email, a reset link has been sent."
       },
       "info": {
         "title": "Sign-in Required",
@@ -203,7 +224,9 @@
     "remove": "Remove",
     "verifyEmailTitle": "Verify Your Email",
     "verifyEmailMessage": "We've sent a verification link to {email}. Please check your inbox to continue.",
-    "verifyEmailSpam": "Can't find the email? Check your spam folder."
+    "verifyEmailSpam": "Can't find the email? Check your spam folder.",
+    "googleAccountLinked": "Google Account Linked",
+    "noPasswordNeeded": "No password needed for Google sign-up."
   },
   "specialities": {
     "MEDICAL_DOCTORS": "Medical Doctors",
@@ -240,7 +263,8 @@
       "settings": "Settings",
       "marketplace": "Marketplace",
       "library": "Library",
-      "more": "More"
+      "more": "More",
+      "groups": "Groups"
     },
     "navUser": {
       "account": "Profile",
@@ -265,6 +289,10 @@
       "activity": "Activity",
       "replies": "Replies"
     },
+    "posts": {
+      "emptyTitle": "No posts yet",
+      "emptyDesc": "This user hasn't posted anything yet."
+    },
     "stats": {
       "title": "Statistics",
       "posts": "Posts",
@@ -282,7 +310,8 @@
     "back": "Back",
     "sending": "Sending...",
     "resend": "Resend Email",
-    "changeEmail": "Change email address"
+    "changeEmail": "Change email address",
+    "continue": "Continue"
   },
   "updateProfile": {
     "title": "Edit Profile",
@@ -292,7 +321,9 @@
     "selectCountry": "Select Country",
     "selectState": "Select State",
     "selectCity": "Select City",
-    "noResults": "No results found."
+    "noResults": "No results found.",
+    "searchCountry": "Search for a country...",
+    "noCountryFound": "No country found."
   },
   "header": {
     "searchPlaceholder": "Search for friends , groups , pages...",
@@ -304,20 +335,36 @@
     "description": "Enter your email address and we'll send you a link to reset your password.",
     "emailLabel": "Email address"
   },
-  "post": {
-    "whatsOnYourMind": "What's on your mind",
-    "addToPost": "Add to your post",
-    "mediaPreviewAlt": "Media preview",
-    "postYourReply": "Post your reply",
-    "post": "Post",
-    "postNotFound": "Post not found.",
-    "noComments": "No comments yet.",
-    "pdfDocument": "PDF Document"
-  },
   "friends": {
     "connectionRequests": "My Connection Requests",
     "suggestions": "Suggestions",
-    "noSuggestions": "No suggestions at the moment."
+    "noSuggestions": "No suggestions at the moment.",
+    "title": "Connections",
+    "subtitle": "Manage your professional network.",
+    "searchPlaceholder": "Search for a connection...",
+    "tabs": {
+      "connections": "My Connections",
+      "requests": "Invitations",
+      "suggestions": "Suggestions"
+    },
+    "sections": {
+      "received": "Received",
+      "sent": "Sent"
+    },
+    "empty": {
+      "connections": {
+        "title": "No active connections",
+        "description": "Search for friends or colleagues to grow your network."
+      },
+      "requests": {
+        "title": "No invitations received",
+        "description": "You have no pending connection requests."
+      },
+      "suggestions": {
+        "title": "No suggestions yet",
+        "description": "Check back later for new people to discover."
+      }
+    }
   },
   "actions": {
     "follow": "Follow",
@@ -328,17 +375,128 @@
     "share": "Share",
     "save": "Save",
     "cancelRequest": "Cancel Request",
+    "declineRequest": "Decline Request",
     "acceptRequest": "Accept Request",
     "disconnect": "Disconnect",
     "connect": "Connect",
     "back": "Back",
     "likes": "Likes",
     "loadMore": "Load more",
-    "download": "Download"
+    "download": "Download",
+    "like": "Like",
+    "unlike": "Unlike",
+    "comment": "Comment",
+    "bookmark": "Bookmark",
+    "removeBookmark": "Remove Bookmark"
   },
   "changeEmail": {
     "title": "Change your email address",
     "description": "Enter your new email and current password.",
     "newEmail": "New Email Address"
+  },
+  "globalErrors": {
+    "default": "An error occurred",
+    "defaultDescription": "Unknown server error.",
+    "network": "Network Error",
+    "networkDescription": "Unable to reach the server. Check your connection."
+  },
+  "groups": {
+    "title": "Groups",
+    "subtitle": "Discover and join communities.",
+    "create": "Create Group",
+    "notFound": "Group not found",
+    "noGroups": "No groups found",
+    "noGroupsDesc": "Be the first to create a community!",
+    "noPosts": "No posts yet.",
+    "beFirst": "Be the first to share something!",
+    "about": "About",
+    "createdBy": "Created by",
+    "join": "Join Group",
+    "leave": "Leave Group",
+    "leftSuccess": "You have left the group.",
+    "leftError": "Failed to leave group.",
+    "members": "Group members",
+    "privacy": "Group"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "account": "Account",
+      "security": "Security",
+      "preferences": "Preferences"
+    },
+    "sections": {
+      "profileInfo": "Profile Information",
+      "profileDesc": "Update your personal details.",
+      "contactInfo": "Contact Info",
+      "contactDesc": "Manage your email address.",
+      "password": "Password",
+      "passwordDesc": "Manage your password securely.",
+      "language": "Language",
+      "languageDesc": "Choose your preferred language.",
+      "theme": "Theme",
+      "themeDesc": "Customize the look and feel.",
+      "appearance": "Appearance (Coming Soon)",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "labels": {
+      "displayName": "Display Name",
+      "managedVia": "Managed via \"Edit Profile\" on your profile page.",
+      "emailAddress": "Email Address",
+      "changePassword": "Change Password",
+      "resetEmailSent": "We'll send you an email to reset it."
+    }
+  },
+  "post": {
+    "createPostTitle": "Create Post",
+    "whatsOnYourMind": "What's on your mind",
+    "addToPost": "Add to your post",
+    "mediaPreviewAlt": "Media preview",
+    "postYourReply": "Post your reply",
+    "post": "Post",
+    "postNotFound": "Post not found.",
+    "noComments": "No comments yet.",
+    "pdfDocument": "PDF Document",
+    "deleted": "This post may have been deleted or you don't have permission to view it.",
+    "replyingTo": "Replying to",
+    "clickToView": "Click to view",
+    "speed": "Speed"
+  },
+  "common": {
+    "loading": "Loading...",
+    "actions": "Actions",
+    "relations": "Relations",
+    "choose": "Choose",
+    "noResult": "No results found",
+    "back": "Back",
+    "phoneNumber": "Phone number",
+    "menu": "Menu",
+    "select": "Select...",
+    "cancel": "Cancel",
+    "toggle": "Toggle",
+    "install": "Install",
+    "notNow": "Not now",
+    "preview": "Preview",
+    "pdf": "PDF",
+    "photo": "Photo",
+    "video": "Video",
+    "document": "Document"
+  },
+  "timeAgo": {
+    "justNow": "just now",
+    "m": "m",
+    "h": "h",
+    "d": "d"
+  },
+  "pwa": {
+    "installTitle": "Install App",
+    "installDesc": "Install this application on your home screen for a better experience.",
+    "installBanner": "Install the app on your home screen",
+    "browserInstruction": "Use your browser menu to install the app.",
+    "iosTapShare": "Tap the share button",
+    "iosAndSelect": "and select",
+    "iosAddHome": "Add to Home Screen"
   }
 }

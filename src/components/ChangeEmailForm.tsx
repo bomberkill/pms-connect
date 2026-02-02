@@ -2,13 +2,14 @@
 
 import { useFormik } from "formik";
 import * as yup from "yup";
-import { useDictionary, useNotification } from "@/lib/hooks";
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useAppDispatch } from "@/lib/hooks";
+import { useAppDispatch } from "@/hooks/use-redux";
 import { updateUnverifiedEmail } from "@/redux/services/userService";
 import { FirebaseError } from "firebase/app";
 
@@ -55,18 +56,18 @@ export function ChangeEmailForm({ currentEmail, onSuccess, onCancel }: ChangeEma
       } catch (error: unknown) {
         let errorMessage = dict.notifications.updateFailed.defaultMessage;
         if (error instanceof FirebaseError) {
-            switch (error.code) {
-                case 'auth/invalid-credential':
-                    errorMessage = dict.notifications.login.error.messages["auth/invalid-credential"];
-                    break;
-                case 'auth/email-already-in-use':
-                    errorMessage = dict.validation.email.alreadyInUse;
-                    break;
-                default:
-                    errorMessage = error.message;
-            }
+          switch (error.code) {
+            case 'auth/invalid-credential':
+              errorMessage = dict.notifications.login.error.messages["auth/invalid-credential"];
+              break;
+            case 'auth/email-already-in-use':
+              errorMessage = dict.validation.email.alreadyInUse;
+              break;
+            default:
+              errorMessage = error.message;
+          }
         } else if (typeof error === 'string') {
-            errorMessage = error;
+          errorMessage = error;
         }
         open("error", dict.notifications.updateFailed.title, { message: errorMessage });
       } finally {

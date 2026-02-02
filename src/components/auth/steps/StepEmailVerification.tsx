@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from './ui/button';
-import { useDictionary, useNotification } from '@/lib/hooks';
+import { Button } from '@/components/ui/button';
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import { MailCheck, Pencil } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { sendVerificationEmail } from '@/graphql/firebaseAuth';
@@ -12,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ChangeEmailForm } from './ChangeEmailForm';
+import { ChangeEmailForm } from '../../ChangeEmailForm';
 
 interface EmailVerificationStepProps {
   email: string;
@@ -68,10 +69,10 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
   };
 
   return (
-    <div className="flex flex-col items-center text-center gap-6 w-full sm:max-w-md">
-      <MailCheck className="w-16 h-16 text-blue-500" />
+    <div className="flex flex-col items-center text-center gap-6 w-full max-w-full px-4 sm:px-0 sm:max-w-md mx-auto">
+      <MailCheck className="w-16 h-16 text-primary" />
       <h2 className="text-2xl font-bold">{dict.register.verifyEmailTitle}</h2>
-      <p className="text-muted-foreground" dangerouslySetInnerHTML={{
+      <p className="text-muted-foreground break-words max-w-full" dangerouslySetInnerHTML={{
         __html: dict.register.verifyEmailMessage.replace('{email}', `<strong>${currentEmail}</strong>`)
       }} />
 
@@ -99,8 +100,8 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
           {isResending
             ? dict.button.sending
             : resendCooldown > 0
-            ? `${dict.button.resend} (${resendCooldown}s)`
-            : dict.button.resend}
+              ? `${dict.button.resend} (${resendCooldown}s)`
+              : dict.button.resend}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground mt-4">{dict.register.verifyEmailSpam}</p>

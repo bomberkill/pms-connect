@@ -1,6 +1,8 @@
 "use client"
 
-import { useAppDispatch, useDictionary, useNotification } from "@/lib/hooks"
+import { useAppDispatch } from "@/hooks/use-redux"
+import { useDictionary } from "@/hooks/use-dictionary"
+import { useNotification } from "@/hooks/use-notification"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -95,7 +97,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
       }
 
       if (Object.keys(changedValues).length === 0) {
-        openNotification("info", "Aucun changement", { message: "Vous n'avez fait aucune modification." })
+        openNotification("info", dict.notifications.noChanges.title, { message: dict.notifications.noChanges.message })
         setIsLoading(false)
         setOpen(false)
         return
@@ -109,8 +111,8 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
         const errorMessage =
           error instanceof Error
             ? error.message
-            : "Une erreur est survenue.";
-        openNotification("error", "Échec de la mise à jour", { message: errorMessage })
+            : dict.notifications.updateFailed.defaultMessage;
+        openNotification("error", dict.notifications.updateFailed.title, { message: errorMessage })
       } finally {
         setIsLoading(false)
       }
@@ -135,14 +137,14 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
 
 
 
-  const countryError = getIn(formik.errors, "location.country"); 
+  const countryError = getIn(formik.errors, "location.country");
   const countryTouched = getIn(formik.touched, "location.country");
   const stateError = getIn(formik.errors, "location.stateOrProvince");
   const stateTouched = getIn(formik.touched, "location.stateOrProvince");
   const cityError = getIn(formik.errors, "location.city");
   const cityTouched = getIn(formik.touched, "location.city");
 
-  if(!isMobile) {
+  if (!isMobile) {
     return (
       <Dialog modal={false} open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{children}</DialogTrigger>
@@ -156,17 +158,17 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
               {user.userType === UserTypeGQL.INDIVIDUAL ? (
-                <> 
+                <>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="firstName">{dict.register.firstNameLabel}</Label>
                       <Input id="firstName" {...formik.getFieldProps("firstName")} />
-                      {formik.touched.firstName && formik.errors.firstName && <p className="text-red-500 text-xs">{formik.errors.firstName}</p>}
+                      {formik.touched.firstName && formik.errors.firstName && <p className="text-destructive text-xs">{formik.errors.firstName}</p>}
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="lastName">{dict.register.lastNameLabel}</Label>
                       <Input id="lastName" {...formik.getFieldProps("lastName")} />
-                      {formik.touched.lastName && formik.errors.lastName && <p className="text-red-500 text-xs">{formik.errors.lastName}</p>}
+                      {formik.touched.lastName && formik.errors.lastName && <p className="text-destructive text-xs">{formik.errors.lastName}</p>}
                     </div>
                   </div>
                   <div className="grid gap-2">
@@ -178,7 +180,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
                 <div className="grid gap-2">
                   <Label htmlFor="entityName">{dict.register.entityNameLabel}</Label>
                   <Input id="entityName" {...formik.getFieldProps("entityName")} />
-                  {formik.touched.entityName && formik.errors.entityName && <p className="text-red-500 text-xs">{formik.errors.entityName}</p>}
+                  {formik.touched.entityName && formik.errors.entityName && <p className="text-destructive text-xs">{formik.errors.entityName}</p>}
                 </div>
               )}
               <div className="grid gap-2">
@@ -188,26 +190,26 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
               <div className="grid gap-2">
                 <Label htmlFor="websiteUrl">{dict.register.websiteUrlLabel}</Label>
                 <Input id="websiteUrl" type="url" {...formik.getFieldProps("websiteUrl")} />
-                {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-red-500 text-xs">{formik.errors.websiteUrl}</p>}
+                {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-destructive text-xs">{formik.errors.websiteUrl}</p>}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="country">{dict.register.countryLabel}</Label>
                 <Combobox<Country> id="country" name="location.country" data={data} error={countryError} touched={countryTouched} onBlur={formik.handleBlur} value={formik.values.location?.country} onChange={(country) => { setSelectedCountry(country); formik.setFieldValue('location.country', country?.name || '') }} placeholder={dict.combobox.selectCountry} />
-                {countryTouched && countryError && <p className="text-red-500 text-xs">{countryError}</p>}
+                {countryTouched && countryError && <p className="text-destructive text-xs">{countryError}</p>}
               </div>
               <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="stateOrProvince">{dict.register.stateOrProvinceLabel}</Label>
-                    
-                    <Combobox<State> data={selectedCountry ? selectedCountry.states || [] : []} placeholder={dict.combobox.selectState} id="stateOrProvince" name="location.stateOrProvince" value={formik.values.location?.stateOrProvince} onBlur={formik.handleBlur} onChange={(state) => { setSelectedState(state); formik.setFieldValue("location.stateOrProvince", state?.name || '') }} />
-                    
-                    {stateTouched && stateError && <p className="text-red-500 text-xs">{stateError}</p>}
-                  </div>
-                  <div className="grid gap-2">
-                      <Label htmlFor="city">{dict.register.cityLabel}</Label>
-                      <Combobox<City> data={selectedState ? selectedState.cities || [] : []} onBlur={formik.handleBlur} id="city" name="location.city" value={formik.values.location?.city} onChange={(city) => { formik.setFieldValue('location.city', city.name) }} placeholder={dict.combobox.selectCity} />
-                      {cityTouched && cityError && <p className="text-red-500 text-xs">{cityError}</p>}
-                  </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="stateOrProvince">{dict.register.stateOrProvinceLabel}</Label>
+
+                  <Combobox<State> data={selectedCountry ? selectedCountry.states || [] : []} placeholder={dict.combobox.selectState} id="stateOrProvince" name="location.stateOrProvince" value={formik.values.location?.stateOrProvince} onBlur={formik.handleBlur} onChange={(state) => { setSelectedState(state); formik.setFieldValue("location.stateOrProvince", state?.name || '') }} />
+
+                  {stateTouched && stateError && <p className="text-destructive text-xs">{stateError}</p>}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="city">{dict.register.cityLabel}</Label>
+                  <Combobox<City> data={selectedState ? selectedState.cities || [] : []} onBlur={formik.handleBlur} id="city" name="location.city" value={formik.values.location?.city} onChange={(city) => { formik.setFieldValue('location.city', city.name) }} placeholder={dict.combobox.selectCity} />
+                  {cityTouched && cityError && <p className="text-destructive text-xs">{cityError}</p>}
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -236,17 +238,17 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
           </DrawerHeader>
           <div className="grid gap-4 py-4 ">
             {user.userType === UserTypeGQL.INDIVIDUAL ? (
-              <> 
+              <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="firstName">{dict.register.firstNameLabel}</Label>
                     <Input id="firstName" {...formik.getFieldProps("firstName")} />
-                    {formik.touched.firstName && formik.errors.firstName && <p className="text-red-500 text-xs">{formik.errors.firstName}</p>}
+                    {formik.touched.firstName && formik.errors.firstName && <p className="text-destructive text-xs">{formik.errors.firstName}</p>}
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="lastName">{dict.register.lastNameLabel}</Label>
                     <Input id="lastName" {...formik.getFieldProps("lastName")} />
-                    {formik.touched.lastName && formik.errors.lastName && <p className="text-red-500 text-xs">{formik.errors.lastName}</p>}
+                    {formik.touched.lastName && formik.errors.lastName && <p className="text-destructive text-xs">{formik.errors.lastName}</p>}
                   </div>
                 </div>
                 <div className="grid gap-2">
@@ -258,7 +260,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
               <div className="grid gap-2">
                 <Label htmlFor="entityName">{dict.register.entityNameLabel}</Label>
                 <Input id="entityName" {...formik.getFieldProps("entityName")} />
-                {formik.touched.entityName && formik.errors.entityName && <p className="text-red-500 text-xs">{formik.errors.entityName}</p>}
+                {formik.touched.entityName && formik.errors.entityName && <p className="text-destructive text-xs">{formik.errors.entityName}</p>}
               </div>
             )}
             <div className="grid gap-2">
@@ -268,26 +270,26 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
             <div className="grid gap-2">
               <Label htmlFor="websiteUrl">{dict.register.websiteUrlLabel}</Label>
               <Input id="websiteUrl" type="url" {...formik.getFieldProps("websiteUrl")} />
-              {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-red-500 text-xs">{formik.errors.websiteUrl}</p>}
+              {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-destructive text-xs">{formik.errors.websiteUrl}</p>}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="country">{dict.register.countryLabel}</Label>
               <Combobox<Country> id="country" name="location.country" data={data} error={countryError} touched={countryTouched} onBlur={formik.handleBlur} value={formik.values.location?.country} onChange={(country) => { setSelectedCountry(country); formik.setFieldValue('location.country', country?.name || '') }} placeholder={dict.combobox.selectCountry} />
-              {countryTouched && countryError && <p className="text-red-500 text-xs">{countryError}</p>}
+              {countryTouched && countryError && <p className="text-destructive text-xs">{countryError}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="stateOrProvince">{dict.register.stateOrProvinceLabel}</Label>
-                  
-                  <Combobox<State> data={selectedCountry ? selectedCountry.states || [] : []} placeholder={dict.combobox.selectState} id="stateOrProvince" name="location.stateOrProvince" value={formik.values.location?.stateOrProvince} onBlur={formik.handleBlur} onChange={(state) => { setSelectedState(state); formik.setFieldValue("location.stateOrProvince", state?.name || '') }} />
-                  
-                  {stateTouched && stateError && <p className="text-red-500 text-xs">{stateError}</p>}
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="city">{dict.register.cityLabel}</Label>
-                    <Combobox<City> data={selectedState ? selectedState.cities || [] : []} onBlur={formik.handleBlur} id="city" name="location.city" value={formik.values.location?.city} onChange={(city) => { formik.setFieldValue('location.city', city.name) }} placeholder={dict.combobox.selectCity} />
-                    {cityTouched && cityError && <p className="text-red-500 text-xs">{cityError}</p>}
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="stateOrProvince">{dict.register.stateOrProvinceLabel}</Label>
+
+                <Combobox<State> data={selectedCountry ? selectedCountry.states || [] : []} placeholder={dict.combobox.selectState} id="stateOrProvince" name="location.stateOrProvince" value={formik.values.location?.stateOrProvince} onBlur={formik.handleBlur} onChange={(state) => { setSelectedState(state); formik.setFieldValue("location.stateOrProvince", state?.name || '') }} />
+
+                {stateTouched && stateError && <p className="text-destructive text-xs">{stateError}</p>}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="city">{dict.register.cityLabel}</Label>
+                <Combobox<City> data={selectedState ? selectedState.cities || [] : []} onBlur={formik.handleBlur} id="city" name="location.city" value={formik.values.location?.city} onChange={(city) => { formik.setFieldValue('location.city', city.name) }} placeholder={dict.combobox.selectCity} />
+                {cityTouched && cityError && <p className="text-destructive text-xs">{cityError}</p>}
+              </div>
             </div>
           </div>
           <DrawerFooter className="px-0">

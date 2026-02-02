@@ -1,9 +1,9 @@
 
 import { apolloClient } from "@/graphql/apolloClient";
 import { CreateUserInput, UpdateUserInput } from "@/types/User";
-import { buildCreateUserMutation, buildFollowMutation, buildGetMeQuery, buildGetUserByUidQuery, buildRemoveConnectionMutation, buildUnfollowMutation, buildUpdateMyEmailMutation, buildUpdateMyProfileMutation } from "@/graphql/queries/index";
+import { buildCreateUserMutation, buildFollowMutation, buildGetMeQuery, buildGetUserByUidQuery, buildRemoveConnectionMutation, buildUnfollowMutation, buildUpdateMyEmailMutation, buildUpdateMyProfileMutation, buildUnregisterFcmTokenMutation } from "@/graphql/queries/index";
 import { clearAuth } from "../slices/authSlice";
-import { clearUser } from "../slices/userSlice";
+// import { clearUser } from "../slices/userSlice";
 import { AppDispatch } from "../store";
 import { FirebaseError } from "firebase/app";
 
@@ -122,7 +122,7 @@ export const deleteCurrentUser = createAsyncThunk(
  */
 export const followUser = createAsyncThunk(
     'user/follow',
-    async (userIdToFollow: string, {dispatch, rejectWithValue }) => {
+    async (userIdToFollow: string, { dispatch, rejectWithValue }) => {
         try {
             const { data, errors } = await apolloClient.mutate({
                 mutation: buildFollowMutation(),
@@ -149,7 +149,7 @@ export const followUser = createAsyncThunk(
  */
 export const unfollowUser = createAsyncThunk(
     'user/unfollow',
-    async (userIdToUnfollow: string, {dispatch, rejectWithValue }) => {
+    async (userIdToUnfollow: string, { dispatch, rejectWithValue }) => {
         try {
             const { data, errors } = await apolloClient.mutate({
                 mutation: buildUnfollowMutation(),
@@ -173,7 +173,7 @@ export const unfollowUser = createAsyncThunk(
  */
 export const removeConnection = createAsyncThunk(
     'user/removeConnection', // Note the prefix 'user/' now
-    async (userIdToRemove: string, {dispatch, rejectWithValue }) => {
+    async (userIdToRemove: string, { dispatch, rejectWithValue }) => {
         try {
             const { data, errors } = await apolloClient.mutate({
                 mutation: buildRemoveConnectionMutation(),
@@ -203,9 +203,39 @@ export const logoutUser = createAsyncThunk<void, void, { dispatch: AppDispatch }
     'user/logout',
     async (_, { dispatch, rejectWithValue }) => {
         try {
+            // 1. Unregister FCM Token if exists (Client-side only)
+            if (typeof window !== "undefined") {
+                try {
+                    const { getMessaging, getToken, deleteToken } = await import("firebase/messaging");
+                    const { default: firebaseApp } = await import("@/lib/firebase");
+                    const messaging = getMessaging(firebaseApp);
+
+                    const token = await getToken(messaging, {
+                        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+                    });
+
+                    if (token) {
+                        // Unregister from Backend
+                        await apolloClient.mutate({
+                            mutation: buildUnregisterFcmTokenMutation(),
+                            variables: { token }
+                        }).catch(err => console.error("Failed to unregister FCM token from backend:", err));
+
+                        // Optional: Delete from Firebase instance too? 
+                        // Usually good practice if we want to ensure no more messages come
+                        // AND to force a fresh token on next login if needed.
+                        await deleteToken(messaging);
+                    }
+                } catch (fcmError) {
+                    console.warn("FCM Cleanup failed:", fcmError);
+                    // Don't block logout
+                }
+            }
+
+            // 2. Logout from Firebase
             await firebaseLogout();
-            // Nettoie les slices de manière synchrone après la déconnexion réussie
-            dispatch(clearUser());
+
+            // 3. Clean Redux
             dispatch(clearAuth());
             return;
         } catch (error) {
@@ -220,7 +250,7 @@ export const logoutUser = createAsyncThunk<void, void, { dispatch: AppDispatch }
  */
 export const loginAndFetchUser = createAsyncThunk(
     'user/loginAndFetch',
-    async ({ email, password }: {email: string, password: string}, { rejectWithValue }) => {
+    async ({ email, password }: { email: string, password: string }, { rejectWithValue }) => {
         try {
             // Étape 1: Connexion à Firebase
             const firebaseUser = await login(email, password);
@@ -313,7 +343,7 @@ export const fetchMe = createAsyncThunk(
 /**
  * 
  * 
- */ 
+ */
 export const updateUser = createAsyncThunk(
     'user/update',
     async (updateUserInput: UpdateUserInput, { rejectWithValue }) => {

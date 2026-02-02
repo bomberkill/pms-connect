@@ -1,211 +1,234 @@
 {
-    "home": {
-      "title": "et voyez vos changements instantanément."
+  "home": {
+    "title": "et voyez vos changements instantanément."
+  },
+  "login": {
+    "title": "Connectez-vous à votre compte",
+    "description": "Entrez votre email ci-dessous pour vous connecter",
+    "emailLabel": "Email",
+    "passwordLabel": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "loginButton": "Se connecter",
+    "continueWith": "Ou continuer avec",
+    "googleButton": "Se connecter avec Google",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "signUp": "S'inscrire"
+  },
+  "auth": {
+    "otp": {
+      "sentTo": "Un code de vérification a été envoyé à",
+      "resendError": "Impossible de renvoyer le code. Veuillez réessayer.",
+      "resendIn": "Renvoyer dans",
+      "resend": "Renvoyer le code"
+    }
+  },
+  "validation": {
+    "email": {
+      "invalid": "Format d'email invalide",
+      "required": "L'email est requis",
+      "alreadyInUse": "Cet email est déjà utilisé",
+      "mustBeDifferent": "Le nouvel e-mail doit être différent de l'actuel."
+    },
+    "phoneNumber": {
+      "required": "Le numéro de téléphone est requis",
+      "alreadyInUse": "Ce numéro de téléphone est déjà utilisé",
+      "invalid": "Numéro de téléphone invalide"
+    },
+    "otp": {
+      "invalidLength": "Le code OTP doit contenir exactement 6 chiffres",
+      "required": "Le code OTP est requis",
+      "invalid": "Code de verification invalide"
+    },
+    "post": {
+      "contentRequired": "Le contenu de la publication ne peut pas être vide.",
+      "contentMax": "Le contenu de la publication ne peut pas dépasser 2000 caractères."
+    },
+    "password": {
+      "min": "Le mot de passe doit contenir au moins 6 caractères",
+      "required": "Le mot de passe est requis",
+      "weak": "Le mot de passe est trop faible, veuillez choisir un mot de passe plus fort"
+    },
+    "file": {
+      "required": "Un fichier est requis",
+      "tooLarge": "Le fichier est trop volumineux (max 2 Mo)",
+      "onlyPDF": "Seuls les fichiers PDF sont autorisés",
+      "onlyPng": "Seuls les fichiers PNG, JPG et JPEG sont autorisés",
+      "unsupported": "Format de fichier non pris en charge",
+      "min": "Au moins un fichier est requis",
+      "max": "Pas plus de 2 fichiers ne sont autorisés",
+      "atLeast": "Vous devez fournir au moins un fichier d’accréditation",
+      "maxFour": "Pas plus de 4 fichiers ne sont autorisés",
+      "tooLargePost": "Le fichier est trop volumineux (max 10 Mo)"
+    },
+    "websiteUrl": {
+      "invalidUrl": "Format d'URL invalide"
+    },
+    "country": {
+      "required": "Le pays est requis"
+    },
+    "state": {
+      "required": "L'état est requis"
+    },
+    "city": {
+      "required": "La ville est requise"
+    }
+  },
+  "feed": {
+    "errorTitle": "Impossible de charger le fil d'actualité",
+    "networkError": "Veuillez vérifier votre connexion internet et réessayer.",
+    "genericError": "Une erreur s'est produite. Veuillez réessayer plus tard.",
+    "retry": "Réessayer",
+    "newPosts": "Nouveaux posts"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "noNotifications": "Aucune notification pour le moment",
+    "error": "Erreur lors du chargement des notifications.",
+    "warning": "Attention",
+    "verification": {
+      "resentTitle": "E-mail renvoyé",
+      "resentMessage": "Un nouveau lien de vérification a été envoyé à votre adresse e-mail.",
+      "successTitle": "E-mail vérifié",
+      "successMessage": "Votre e-mail a été vérifié avec succès. Vous pouvez maintenant continuer."
     },
     "login": {
-      "title": "Connectez-vous à votre compte",
-      "description": "Entrez votre email ci-dessous pour vous connecter",
-      "emailLabel": "Email",
-      "passwordLabel": "Mot de passe",
-      "forgotPassword": "Mot de passe oublié ?",
-      "loginButton": "Se connecter",
-      "continueWith": "Ou continuer avec",
-      "googleButton": "Se connecter avec Google",
-      "noAccount": "Vous n'avez pas de compte ?",
-      "signUp": "S'inscrire"
-    },
-    "validation": {
-      "email": {
-        "invalid": "Format d'email invalide",
-        "required": "L'email est requis",
-        "alreadyInUse": "Cet email est déjà utilisé",
-        "mustBeDifferent": "Le nouvel e-mail doit être différent de l'actuel."
+      "success": {
+        "title": "Connexion réussie",
+        "message": "Content de vous revoir !"
       },
-      "phoneNumber": {
-        "required": "Le numéro de téléphone est requis",
-        "alreadyInUse": "Ce numéro de téléphone est déjà utilisé",
-        "invalid": "Numéro de téléphone invalide"
+      "info": {
+        "title": "Aucun utilisateur trouvé",
+        "message": "Veuillez creer votre compte d'abord."
       },
-      "otp": {
-        "invalidLength": "Le code OTP doit contenir exactement 6 chiffres",
-        "required": "Le code OTP est requis",
-        "invalid": "Code de verification invalide"
-      },
-      "post": {
-        "contentRequired": "Le contenu de la publication ne peut pas être vide.",
-        "contentMax": "Le contenu de la publication ne peut pas dépasser 2000 caractères."
-      },
-      "password": {
-        "min": "Le mot de passe doit contenir au moins 6 caractères",
-        "required": "Le mot de passe est requis",
-        "weak": "Le mot de passe est trop faible, veuillez choisir un mot de passe plus fort"
-      },
-      "file": {
-        "required": "Un fichier est requis",
-        "tooLarge": "Le fichier est trop volumineux (max 2 Mo)",
-        "onlyPDF": "Seuls les fichiers PDF sont autorisés",
-        "onlyPng": "Seuls les fichiers PNG, JPG et JPEG sont autorisés",
-        "unsupported": "Format de fichier non pris en charge",
-        "min": "Au moins un fichier est requis",
-        "max": "Pas plus de 2 fichiers ne sont autorisés",
-        "atLeast": "Vous devez fournir au moins un fichier d’accréditation"
-      },
-      "websiteUrl": {
-        "invalidUrl": "Format d'URL invalide"
-      },
-      "country": {
-        "required": "Le pays est requis"
-      },
-      "state": {
-        "required": "L'état est requis"
-      },
-      "city": {
-        "required": "La ville est requise"
-      }
-    },
-    "notifications": {
-      "warning": "Attention",
-      "verification": {
-        "resentTitle": "E-mail renvoyé",
-        "resentMessage": "Un nouveau lien de vérification a été envoyé à votre adresse e-mail.",
-        "successTitle": "E-mail vérifié",
-        "successMessage": "Votre e-mail a été vérifié avec succès. Vous pouvez maintenant continuer."
-      },
-      "login": {
-        "success": {
-          "title": "Connexion réussie",
-          "message": "Content de vous revoir !"
-        },
-        "info": {
-          "title": "Aucun utilisateur trouvé",
-          "message": "Veuillez creer votre compte d'abord."
-        },
-        "error": {
-          "title": "Échec de la connexion",
-          "messages": {
-            "default": "Une erreur s'est produite. Veuillez réessayer.",
-            "auth/invalid-credential": "Email ou mot de passe incorrect.",
-            "auth/user-disabled": "Ce compte a été désactivé.",
-            "auth/user-not-found": "Aucun utilisateur trouvé avec cet e-mail.",
-            "auth/network-request-failed": "Vérifiez votre connexion internet et réessayez",
-            "auth/too-many-requests": "Trop de tentatives. Veuillez réessayer plus tard.",
-            "auth/email-not-verified": {
-              "title": "E-mail non vérifié",
-              "message": "Vous devez vérifier votre adresse e-mail avant de vous connecter. Veuillez consulter votre boîte de réception pour le lien de vérification."
-            }
+      "error": {
+        "title": "Échec de la connexion",
+        "messages": {
+          "default": "Une erreur s'est produite. Veuillez réessayer.",
+          "auth/invalid-credential": "Email ou mot de passe incorrect.",
+          "auth/user-disabled": "Ce compte a été désactivé.",
+          "auth/user-not-found": "Aucun utilisateur trouvé avec cet e-mail.",
+          "auth/network-request-failed": "Vérifiez votre connexion internet et réessayez",
+          "auth/too-many-requests": "Trop de tentatives. Veuillez réessayer plus tard.",
+          "auth/email-not-verified": {
+            "title": "E-mail non vérifié",
+            "message": "Vous devez vérifier votre adresse e-mail avant de vous connecter. Veuillez consulter votre boîte de réception pour le lien de vérification."
           }
         }
-      },
-      "register": {
-        "success": {
-          "title": "Inscription réussie",
-          "message": "Votre compte a été créé avec succès !",
-          "googleAccount": {
-            "title": "Compte Google lié",
-            "message": "Votre compte Google a été lié avec succès, Veuillez compléter votre profil pour continuer."
-          }
-        },
-        "error": {
-          "title": "Échec de l'inscription",
-          "message": "Une erreur s'est produite lors de la création de votre compte. Veuillez réessayer.",
-          "uploadFailed": "File upload failed. Please check your internet connection"
-        }
-      },
-      "postCreated": {
-        "title": "Publication créée",
-        "message": "Votre publication est maintenant en ligne."
-      },
-      "postCreationFailed": {
-        "title": "Erreur",
-        "message": {
-          "default": "Impossible de créer la publication.",
-          "uploadFailed": "L'envoi du média a échoué."
-        }
-      },
-      "forgotPassword": {
-        "success": {
-          "title": "Lien envoyé",
-          "message": "Si un compte existe avec cet e-mail, un lien de réinitialisation a été envoyé."
-        },
-        "info": {
-          "title": "Connexion requise",
-          "message": "Cet email est associé à un compte créé sans mot de passe. Veuillez vous connecter via votre méthode d'inscription initiale."
-        },
-        "error": {
-          "title": "Échec de l’envoi",
-          "message": "Impossible d’envoyer le lien de réinitialisation. Veuillez réessayer."
-        }
-      },
-      "noChanges": {
-        "title": "Aucun changement",
-        "message": "Vous n'avez fait aucune modification."
-      },
-      "profileUpdated": {
-        "title": "Profil mis à jour",
-        "message": "Votre profil a été mis à jour avec succès."
-      },
-      "updateFailed": {
-        "title": "Échec de la mise à jour",
-        "defaultMessage": "Une erreur est survenue."
-      },
-      "emailUpdated": {
-        "title": "E-mail mis à jour",
-        "message": "Votre e-mail a été mis à jour. Un nouveau lien de vérification a été envoyé.",
-        "pendingVerificationMessage": "Un lien de vérification a été envoyé à {newEmail}. Veuillez consulter votre boîte de réception pour finaliser le changement d'e-mail."
       }
     },
     "register": {
-      "title": "Créer votre compte",
-      "description": "Commencez votre parcours avec nous !",
-      "step1Title": "Type de compte et identifiants",
-      "step1Description": "Choisissez votre type de compte et définissez vos identifiants.",
-      "userTypeLabel": "Type d'utilisateur",
-      "individual": "Personne physique",
-      "legalEntity": "Entité légale",
-      "individualDescription": "Pour les professionnels de santé, les chercheurs, les étudiants, etc.",
-      "legalEntityDescription": "Pour les entreprises, hôpitaux, associations, cliniques, établissements de recherche et autres entités de santé.",
-      "emailLabel": "Email",
-      "phoneNmmberLabel": "Numéro de téléphone",
-      "passwordLabel": "Mot de passe",
-      "confirmPasswordLabel": "Confirmer le mot de passe",
-      "step2Title": "Détails personnels",
-      "step2Description": "Fournissez quelques informations sur vous-même.",
-      "firstNameLabel": "Prénom",
-      "lastNameLabel": "Nom",
-      "specialityLabel": "Spécialité",
-      "professionalTitleLabel": "Titre professionnel",
-      "entityNameLabel": "Nom de l'entité",
-      "entityTypeLabel": "Type d'entité",
-      "step3Title": "Détails du profil et localisation",
-      "step3Description": "Ajoutez des informations facultatives pour votre profil et votre adresse.",
-      "bioLabel": "Biographie",
-      "profilePicUrlLabel": "URL de la photo de profil",
-      "coverPicUrlLabel": "URL de la photo de couverture",
-      "websiteUrlLabel": "URL du site web",
-      "addressLine1Label": "Adresse Ligne 1",
-      "addressLine2Label": "Adresse Ligne 2",
-      "cityLabel": "Ville",
-      "stateOrProvinceLabel": "État/Province",
-      "postalCodeLabel": "Code postal",
-      "countryLabel": "Pays",
-      "next": "Suivant",
-      "previous": "Précédent",
-      "registerButton": "S'inscrire",
-      "alreadyHaveAccount": "Vous avez déjà un compte ?",
-      "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
-      "uploadProfilePic": "Téléverser une photo de profil",
-      "uploadCoverPic": "Téléverser une photo de couverture",
-      "uploadAccreditations": "Téléverser des accréditations professionnelles (PDF, JPG, PNG)",
-      "professionalAccreditations": "Accréditations professionnelles",
-      "accreditationType": "Type d'accréditation",
-      "document": "Document (PDF, JPG, PNG)",
-      "addAccreditation": "Ajouter une accréditation",
+      "success": {
+        "title": "Inscription réussie",
+        "message": "Votre compte a été créé avec succès !",
+        "googleAccount": {
+          "title": "Compte Google lié",
+          "message": "Votre compte Google a été lié avec succès, Veuillez compléter votre profil pour continuer."
+        }
+      },
+      "error": {
+        "title": "Échec de l'inscription",
+        "message": "Une erreur s'est produite lors de la création de votre compte. Veuillez réessayer.",
+        "uploadFailed": "File upload failed. Please check your internet connection"
+      }
+    },
+    "postCreated": {
+      "title": "Publication créée",
+      "message": "Votre publication est maintenant en ligne."
+    },
+    "postCreationFailed": {
+      "title": "Erreur",
+      "message": {
+        "default": "Impossible de créer la publication.",
+        "uploadFailed": "L'envoi du média a échoué."
+      }
+    },
+    "forgotPassword": {
+      "success": {
+        "title": "Lien envoyé",
+        "message": "Si un compte existe avec cet e-mail, un lien de réinitialisation a été envoyé."
+      },
+      "info": {
+        "title": "Connexion requise",
+        "message": "Cet email est associé à un compte créé sans mot de passe. Veuillez vous connecter via votre méthode d'inscription initiale."
+      },
+      "error": {
+        "title": "Échec de l’envoi",
+        "message": "Impossible d’envoyer le lien de réinitialisation. Veuillez réessayer."
+      }
+    },
+    "noChanges": {
+      "title": "Aucun changement",
+      "message": "Vous n'avez fait aucune modification."
+    },
+    "profileUpdated": {
+      "title": "Profil mis à jour",
+      "message": "Votre profil a été mis à jour avec succès."
+    },
+    "updateFailed": {
+      "title": "Échec de la mise à jour",
+      "defaultMessage": "Une erreur est survenue."
+    },
+    "emailUpdated": {
+      "title": "E-mail mis à jour",
+      "message": "Votre e-mail a été mis à jour. Un nouveau lien de vérification a été envoyé.",
+      "pendingVerificationMessage": "Un lien de vérification a été envoyé à {newEmail}. Veuillez consulter votre boîte de réception pour finaliser le changement d'e-mail."
+    }
+  },
+  "register": {
+    "title": "Créer votre compte",
+    "description": "Commencez votre parcours avec nous !",
+    "step1Title": "Type de compte et identifiants",
+    "step1Description": "Choisissez votre type de compte et définissez vos identifiants.",
+    "userTypeLabel": "Type d'utilisateur",
+    "individual": "Personne physique",
+    "legalEntity": "Entité légale",
+    "individualDescription": "Pour les professionnels de santé, les chercheurs, les étudiants, etc.",
+    "legalEntityDescription": "Pour les entreprises, hôpitaux, associations, cliniques, établissements de recherche et autres entités de santé.",
+    "emailLabel": "Email",
+    "phoneNmmberLabel": "Numéro de téléphone",
+    "passwordLabel": "Mot de passe",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "step2Title": "Détails personnels",
+    "step2Description": "Fournissez quelques informations sur vous-même.",
+    "firstNameLabel": "Prénom",
+    "lastNameLabel": "Nom",
+    "specialityLabel": "Spécialité",
+    "professionalTitleLabel": "Titre professionnel",
+    "entityNameLabel": "Nom de l'entité",
+    "entityTypeLabel": "Type d'entité",
+    "step3Title": "Détails du profil et localisation",
+    "step3Description": "Ajoutez des informations facultatives pour votre profil et votre adresse.",
+    "bioLabel": "Biographie",
+    "profilePicUrlLabel": "URL de la photo de profil",
+    "coverPicUrlLabel": "URL de la photo de couverture",
+    "websiteUrlLabel": "URL du site web",
+    "addressLine1Label": "Adresse Ligne 1",
+    "addressLine2Label": "Adresse Ligne 2",
+    "cityLabel": "Ville",
+    "stateOrProvinceLabel": "État/Province",
+    "postalCodeLabel": "Code postal",
+    "countryLabel": "Pays",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "registerButton": "S'inscrire",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
+    "uploadProfilePic": "Téléverser une photo de profil",
+    "uploadCoverPic": "Téléverser une photo de couverture",
+    "uploadAccreditations": "Téléverser des accréditations professionnelles (PDF, JPG, PNG)",
+    "professionalAccreditations": "Accréditations professionnelles",
+    "accreditationType": "Type d'accréditation",
+    "document": "Document (PDF, JPG, PNG)",
+    "addAccreditation": "Ajouter une accréditation",
     "remove": "Retirer",
     "verifyEmailTitle": "Vérifiez votre e-mail",
     "verifyEmailMessage": "Nous avons envoyé un lien de vérification à {email}. Veuillez consulter votre boîte de réception pour continuer.",
-    "verifyEmailSpam": "Vous ne trouvez pas l'e-mail ? Vérifiez votre dossier de spam."
-    },
-    "specialities": {
+    "verifyEmailSpam": "Vous ne trouvez pas l'e-mail ? Vérifiez votre dossier de spam.",
+    "googleAccountLinked": "Compte Google lié",
+    "noPasswordNeeded": "Aucun mot de passe requis pour l'inscription via Google."
+  },
+  "specialities": {
     "MEDICAL_DOCTORS": "Médecins",
     "DENTAL_SURGEONS": "Chirurgiens-dentistes",
     "PHARMACISTS": "Pharmaciens",
@@ -240,7 +263,8 @@
       "settings": "Paramètres",
       "marketplace": "Marketplace",
       "library": "Bibliothèque",
-      "more": "Plus"
+      "more": "Plus",
+      "groups": "Groupes"
     },
     "navUser": {
       "account": "Profile",
@@ -250,7 +274,6 @@
       "settings": "Paramètres",
       "logout": "Se déconnecter"
     }
-
   },
   "profile": {
     "noBio": "Aucune biographie disponible.",
@@ -265,6 +288,10 @@
       "experience": "Expérience",
       "activity": "Activité",
       "replies": "Réponses"
+    },
+    "posts": {
+      "emptyTitle": "Aucune publication",
+      "emptyDesc": "Cet utilisateur n'a rien publié pour le moment."
     },
     "stats": {
       "title": "Statistiques",
@@ -283,7 +310,8 @@
     "back": "Retour",
     "sending": "Envoi en cours...",
     "resend": "Renvoyer l'e-mail",
-    "changeEmail": "Changer l'adresse e-mail"
+    "changeEmail": "Changer l'adresse e-mail",
+    "continue": "Continuer"
   },
   "updateProfile": {
     "title": "Modifier le profil",
@@ -293,7 +321,9 @@
     "selectCountry": "Sélectionnez un pays",
     "selectState": "Sélectionnez une région/état",
     "selectCity": "Sélectionnez une ville",
-    "noResults": "Aucun résultat trouvé."
+    "noResults": "Aucun résultat trouvé.",
+    "searchCountry": "Rechercher un pays...",
+    "noCountryFound": "Aucun pays trouvé."
   },
   "header": {
     "searchPlaceholder": "Rechercher vos amis, groupes et pages...",
@@ -305,20 +335,36 @@
     "description": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
     "emailLabel": "Adresse e-mail"
   },
-  "post": {
-    "whatsOnYourMind": "Quoi de neuf",
-    "addToPost": "Ajouter à votre publication",
-    "mediaPreviewAlt": "Aperçu du média",
-    "postYourReply": "Postez votre réponse",
-    "post": "Publication",
-    "postNotFound": "Publication non trouvée.",
-    "noComments": "Aucun commentaire pour le moment.",
-    "pdfDocument": "Document PDF"
-  },
   "friends": {
     "connectionRequests": "Mes demandes de connexion",
     "suggestions": "Suggestions",
-    "noSuggestions": "Aucune suggestion pour le moment."
+    "noSuggestions": "Aucune suggestion pour le moment.",
+    "title": "Relations",
+    "subtitle": "Gérez votre réseau professionnel.",
+    "searchPlaceholder": "Rechercher une relation...",
+    "tabs": {
+      "connections": "Mes relations",
+      "requests": "Invitations",
+      "suggestions": "Suggestions"
+    },
+    "sections": {
+      "received": "Reçues",
+      "sent": "Envoyées"
+    },
+    "empty": {
+      "connections": {
+        "title": "Aucune connexion active",
+        "description": "Recherchez des amis ou collègues pour développer votre réseau."
+      },
+      "requests": {
+        "title": "Aucune invitation reçue",
+        "description": "Vous n'avez pas de demandes de connexion en attente."
+      },
+      "suggestions": {
+        "title": "Aucune suggestion pour le moment",
+        "description": "Revenez plus tard pour découvrir de nouvelles personnes."
+      }
+    }
   },
   "actions": {
     "follow": "Suivre",
@@ -329,17 +375,128 @@
     "share": "Partager",
     "save": "Enregistrer",
     "cancelRequest": "Annuler la demande",
+    "declineRequest": "Refuser la demande",
     "acceptRequest": "Accepter la demande",
     "disconnect": "Se déconnecter",
     "connect": "Se connecter",
     "back": "Retour",
     "likes": "J'aime",
     "loadMore": "Charger plus",
-    "download": "Télécharger"
+    "download": "Télécharger",
+    "like": "J'aime",
+    "unlike": "Je n'aime plus",
+    "comment": "Commenter",
+    "bookmark": "Enregistrer",
+    "removeBookmark": "Retirer des enregistrements"
   },
   "changeEmail": {
     "title": "Changer votre adresse e-mail",
     "description": "Entrez votre nouvel e-mail et votre mot de passe actuel.",
     "newEmail": "Nouvelle adresse e-mail"
+  },
+  "globalErrors": {
+    "default": "Une erreur est survenue",
+    "defaultDescription": "Erreur inconnue du serveur.",
+    "network": "Erreur de connexion",
+    "networkDescription": "Impossible de joindre le serveur. Vérifiez votre connexion."
+  },
+  "groups": {
+    "title": "Groupes",
+    "subtitle": "Découvrez et rejoignez des communautés.",
+    "create": "Créer un groupe",
+    "notFound": "Groupe introuvable",
+    "noGroups": "Aucun groupe trouvé",
+    "noGroupsDesc": "Soyez le premier à créer une communauté !",
+    "noPosts": "Aucune publication pour le moment.",
+    "beFirst": "Soyez le premier à partager quelque chose !",
+    "about": "À propos",
+    "createdBy": "Créé par",
+    "join": "Rejoindre le groupe",
+    "leave": "Quitter le groupe",
+    "leftSuccess": "Vous avez quitté le groupe.",
+    "leftError": "Échec lors de la tentative de quitter le groupe.",
+    "members": "Membres du groupe",
+    "privacy": "Groupe"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "tabs": {
+      "account": "Compte",
+      "security": "Sécurité",
+      "preferences": "Préférences"
+    },
+    "sections": {
+      "profileInfo": "Informations du profil",
+      "profileDesc": "Mettez à jour vos informations personnelles.",
+      "contactInfo": "Coordonnées",
+      "contactDesc": "Gérez votre adresse e-mail.",
+      "password": "Mot de passe",
+      "passwordDesc": "Gérez votre mot de passe en toute sécurité.",
+      "language": "Langue",
+      "languageDesc": "Choisissez votre langue préférée.",
+      "theme": "Thème",
+      "themeDesc": "Personnalisez l'apparence de l'application.",
+      "appearance": "Apparence (Bientôt disponible)",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
+    "labels": {
+      "displayName": "Nom d'affichage",
+      "managedVia": "Géré via \"Modifier le profil\" sur votre page de profil.",
+      "emailAddress": "Adresse e-mail",
+      "changePassword": "Changer le mot de passe",
+      "resetEmailSent": "Nous vous enverrons un e-mail pour le réinitialiser."
+    }
+  },
+  "post": {
+    "createPostTitle": "Créer une publication",
+    "whatsOnYourMind": "Quoi de neuf",
+    "addToPost": "Ajouter à votre publication",
+    "mediaPreviewAlt": "Aperçu du média",
+    "postYourReply": "Postez votre réponse",
+    "post": "Publication",
+    "postNotFound": "Publication non trouvée.",
+    "noComments": "Aucun commentaire pour le moment.",
+    "pdfDocument": "Document PDF",
+    "deleted": "Cette publication a peut-être été supprimée ou vous n'avez pas la permission de la voir.",
+    "replyingTo": "En réponse à",
+    "clickToView": "Cliquer pour voir",
+    "speed": "Vitesse"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "actions": "Actions",
+    "relations": "Relations",
+    "choose": "Choisir",
+    "noResult": "Aucun résultat trouvé",
+    "back": "Retour",
+    "phoneNumber": "Numéro de téléphone",
+    "menu": "Menu",
+    "select": "Sélectionner...",
+    "cancel": "Annuler",
+    "toggle": "Basculer",
+    "install": "Installer",
+    "notNow": "Pas maintenant",
+    "preview": "Aperçu",
+    "pdf": "PDF",
+    "photo": "Photo",
+    "video": "Vidéo",
+    "document": "Document"
+  },
+  "timeAgo": {
+    "justNow": "à l'instant",
+    "m": "m",
+    "h": "h",
+    "d": "j"
+  },
+  "pwa": {
+    "installTitle": "Installer l'application",
+    "installDesc": "Installez cette application sur votre écran d'accueil pour une meilleure expérience.",
+    "installBanner": "Installez l’app sur votre écran d’accueil",
+    "browserInstruction": "Utilisez le menu du navigateur pour installer l’application.",
+    "iosTapShare": "Appuyez sur le bouton de partage",
+    "iosAndSelect": "et sélectionnez",
+    "iosAddHome": "Sur l'écran d'accueil"
   }
 }

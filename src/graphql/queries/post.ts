@@ -114,3 +114,29 @@ export const buildGetNewFeedItemsCountQuery = () => {
     }
   `;
 };
+
+/**
+ * Builds a GraphQL query for fetching posts by a specific author.
+ */
+export const buildGetPostsByAuthorQuery = () => {
+  return gql`
+    query getPostsByAuthor($authorId: ID!, $skip: Int, $limit: Int) {
+      getPostsByAuthor(authorId: $authorId, skip: $skip, limit: $limit) {
+        ${POST_FIELDS}
+      }
+    }
+  `;
+};
+
+/**
+ * Builds a GraphQL query for fetching posts by a specific group.
+ */
+export const buildGetPostsByGroupQuery = () => {
+  return gql`
+    query getPostsByGroup($groupId: ID!, $skip: Int, $limit: Int) {
+      getPostsByGroup(groupId: $groupId, skip: $skip, limit: $limit) {
+        ${POST_FIELDS}
+      }
+    }
+  `;
+};

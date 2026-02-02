@@ -1,12 +1,31 @@
-import { buildAddBookmarkMutation, buildRemoveBookmarkMutation } from "@/graphql/queries/bookmark";
-import { BookmarkableTypeGQL } from "@/types/Bookmark";
+import { buildAddBookmarkMutation, buildRemoveBookmarkMutation, buildGetMyBookmarksQuery } from "@/graphql/queries/bookmark";
+import { BookmarkableTypeGQL, Bookmark } from "@/types/Bookmark";
 import { Comment } from "@/types/Comment";
 import { Post } from "@/types/Post";
-import { useMutation, gql } from "@apollo/client";
+import { useMutation, useQuery, gql } from "@apollo/client";
 
 // =============================================================================
 // == BOOKMARKS
 // =============================================================================
+
+/**
+ * Hook to fetch the current user's bookmarks.
+ */
+export const useMyBookmarks = () => {
+  const { data, loading, error, refetch } = useQuery<{ myBookmarks: Bookmark[] }>(
+    buildGetMyBookmarksQuery(),
+    {
+      fetchPolicy: 'cache-and-network',
+    }
+  );
+
+  return {
+    bookmarks: data?.myBookmarks || [],
+    loading,
+    error,
+    refetch,
+  };
+};
 
 
 /**

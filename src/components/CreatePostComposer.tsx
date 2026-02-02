@@ -3,14 +3,16 @@
 import React, { useMemo } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import { useAppSelector, useDictionary, useNotification } from "@/lib/hooks";
+
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import TextareaAutosize from "react-textarea-autosize"; 
+import TextareaAutosize from "react-textarea-autosize";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Trash2, Video, FileIcon, X, Loader2 } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
-import { usePostMutations } from "@/hooks/useData/index";
-import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/components/Register-form";
+import { usePostMutations, useMe } from "@/hooks/useData/index";
+import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/utils/fileUpload";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MediaItem, MediaType } from "@/types/Post";
@@ -26,7 +28,8 @@ export type CreatePostComposerProps = {
 
 export default function CreatePostComposer({ onCreated, onClose, placeholder }: CreatePostComposerProps) {
   const dict = useDictionary();
-  const { user } = useAppSelector((state) => state.user);
+  // const { user } = useAppSelector((state) => state.user);
+  const { me: user } = useMe();
   const { createPost, creating } = usePostMutations();
   const { open } = useNotification();
   const isMobile = useIsMobile();
@@ -49,12 +52,12 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
             if (!value) return true;
             return ["image/jpeg", "image/png", "image/gif", "video/mp4", "video/quicktime", "application/pdf"].includes(value.type);
           })
-          .test("fileSize", dict.validation.file.tooLarge, (value) => {
+          .test("fileSize", dict.validation.file.tooLargePost, (value) => {
             if (!value) return true;
             return value.size <= MAX_FILE_SIZE * 5; // 10MB
           })
       )
-      .max(4, "You can upload a maximum of 4 files."),
+      .max(4, dict.validation.file.maxFour),
   });
 
   const formik = useFormik({
@@ -77,10 +80,10 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
           media = mediaFiles.reduce<MediaItem[]>((acc, file, idx) => {
             const result = uploadResults[idx];
             if (result?.publicUrl) {
-              acc.push({ 
+              acc.push({
                 url: result.publicUrl,
-                type: file.type.startsWith("video/") ? MediaType.VIDEO 
-                    : file.type.startsWith("image/") ? MediaType.IMAGE 
+                type: file.type.startsWith("video/") ? MediaType.VIDEO
+                  : file.type.startsWith("image/") ? MediaType.IMAGE
                     : MediaType.DOCUMENT,
               });
             }
@@ -129,11 +132,11 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
 
   return (
     <div
-      // className={cn(
-      //   "bg-background flex flex-col",
-      //   className,
-      //   isMobile && "fixed inset-0 z-50 h-full w-full"
-      // )}
+    // className={cn(
+    //   "bg-background flex flex-col",
+    //   className,
+    //   isMobile && "fixed inset-0 z-50 h-full w-full"
+    // )}
     >
       <div className="p-4 text-center relative">
         <h2 className="text-md font-bold">{dict.header.addNewPost}</h2>
@@ -173,7 +176,7 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
             {mediaPreviews.map((preview, index) => (
               <div key={preview.url} className="relative aspect-video">
                 {preview.type === MediaType.VIDEO ? (
-                  // eslint-disable-next-line jsx-a11y/media-has-caption
+
                   <video src={preview.url} className="w-full h-full object-cover rounded-md" controls />
                 ) : preview.type === MediaType.IMAGE ? (
                   <Image src={preview.url} alt={`${dict.post.mediaPreviewAlt} ${index + 1}`} fill className="object-cover rounded-md" />
@@ -219,11 +222,15 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
           <span className="text-sm font-medium">{dict.post.addToPost}</span>
           <div className="flex items-center gap-3">
             <label htmlFor="media-upload" className="cursor-pointer">
-              <ImageIcon className="h-6 w-6 text-green-500 hover:text-green-600" />
+              <ImageIcon className="h-6 w-6 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors" />
             </label>
             <input id="media-upload" type="file" multiple className="hidden" accept="image/*,video/mp4,video/quicktime,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
-            <label htmlFor="media-upload" className="cursor-pointer"><Video className="h-6 w-6 text-blue-500 hover:text-blue-600" /></label>
-            <label htmlFor="media-upload" className="cursor-pointer"><FileIcon className="h-6 w-6 text-amber-500 hover:text-amber-600" /></label>
+            <label htmlFor="media-upload" className="cursor-pointer">
+              <Video className="h-6 w-6 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" />
+            </label>
+            <label htmlFor="media-upload" className="cursor-pointer">
+              <FileIcon className="h-6 w-6 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors" />
+            </label>
           </div>
         </div>
         <Button type="submit" onClick={() => formik.handleSubmit()} disabled={disabled} className="w-full">

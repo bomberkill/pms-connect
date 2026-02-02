@@ -1,7 +1,8 @@
 "use client"
 
-import { EmailVerificationStep } from "@/components/EmailVerificationStep";
-import { useDictionary, useNotification } from "@/lib/hooks";
+import { EmailVerificationStep } from "@/components/auth/steps/StepEmailVerification";
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -26,10 +27,7 @@ function VerifyEmailPageContent() {
         router.push('/login');
     };
 
-    const handleEmailChanged = () => {
-        // Redirect to login page after email change request
-        router.push('/login');
-    };
+
 
     const handleBack = () => {
         // Retour simple à la page de connexion
@@ -37,15 +35,18 @@ function VerifyEmailPageContent() {
     };
 
     return (
-        <div className="container flex h-screen w-screen flex-col items-center justify-center">
+        <div className="container relative flex min-h-svh flex-col items-center justify-center px-4">
             <EmailVerificationStep email={email} onVerified={handleVerified} onBack={handleBack} />
-            <EmailVerificationStep email={email} onVerified={handleVerified} onEmailChanged={handleEmailChanged} onBack={handleBack} />
         </div>
     );
 }
 
 
 export default function VerifyEmailPage() {
+    // We can't use useDictionary here easily because it might not be inside the provider context if this page is high up, 
+    // but typically it is. Assuming useDictionary is safe to use here.
+    // Actually, safe to just use "Loading..." or we need to extract dict.
+    // Let's assume we can fetch dict inside.
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <VerifyEmailPageContent />

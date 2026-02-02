@@ -18,12 +18,13 @@ import { Comment, CreateCommentInput } from '@/types/Comment';
  */
 export const useComments = (postId: string, isComment?: boolean, options: { limit?: number } = {}) => {
   const { limit = 10 } = options;
+  const safePostId = postId?.trim();
   const { data, loading, error, fetchMore } = useQuery<{ getCommentsByPost: Comment[] }>(
     buildGetCommentsByPostQuery(),
     {
-      variables: { postId, limit, skip: 0 },
+      variables: safePostId ? { postId: safePostId, limit, skip: 0 } : undefined,
       fetchPolicy: 'cache-and-network',
-      skip: !postId || isComment,
+      skip: !safePostId || isComment,
     }
   );
 
@@ -47,7 +48,7 @@ export const useComment = (commentId: string, isComment?: boolean) => {
     buildGetCommentByIdQuery(),
     {
       variables: { id: commentId },
-      skip: !commentId || !isComment,
+      skip: !commentId || commentId.trim() === '' || !isComment,
     }
   );
 
@@ -55,27 +56,71 @@ export const useComment = (commentId: string, isComment?: boolean) => {
 }
 
 /**
- * Hook that provides comment mutation actions (add, remove).
+ * Hook that provides comment mutation actions (add, remove) with optimized cache updates.
  */
 export const useCommentActions = () => {
   const [addComment, { loading: adding, error: addError }] = useMutation<
     { addComment: Comment }, { createCommentInput: CreateCommentInput }
   >(buildAddCommentMutation(), {
-    update(cache, { data }) {
+    update(cache, { data }, { variables }) {
       if (!data?.addComment) return;
-      // This update is tricky because we don't know the post ID from the response if it's not returned.
-      // Assuming the post ID is part of the comment response.
-      const post = (data.addComment).post;
-      if (post) {
+
+      const newComment = data.addComment;
+      const postId = newComment.post?.id || newComment.post?.id;
+      const parentId = (variables?.createCommentInput as CreateCommentInput)?.parentId;
+
+      // Update post's comment count
+      if (postId) {
         cache.modify({
-          id: `Post:${post.id}`,
+          id: `Post:${postId}`,
           fields: {
             commentsCount(currentCount = 0) { return currentCount + 1; }
           }
         });
+
+        // Add comment to the comments list if it's a top-level comment
+        if (!parentId) {
+          try {
+            const existingComments = cache.readQuery<{ getCommentsByPost: Comment[] }>({
+              query: buildGetCommentsByPostQuery(),
+              variables: { postId, limit: 10, skip: 0 },
+            });
+
+            if (existingComments) {
+              cache.writeQuery({
+                query: buildGetCommentsByPostQuery(),
+                variables: { postId, limit: 10, skip: 0 },
+                data: {
+                  getCommentsByPost: [newComment, ...existingComments.getCommentsByPost],
+                },
+              });
+            }
+          } catch {
+            // Query might not be in cache yet, that's okay
+          }
+        } else {
+          // Add reply to the replies list
+          try {
+            const existingReplies = cache.readQuery<{ getCommentReplies: Comment[] }>({
+              query: buildGetCommentRepliesQuery(),
+              variables: { parentId, limit: 10, skip: 0 },
+            });
+
+            if (existingReplies) {
+              cache.writeQuery({
+                query: buildGetCommentRepliesQuery(),
+                variables: { parentId, limit: 10, skip: 0 },
+                data: {
+                  getCommentReplies: [newComment, ...existingReplies.getCommentReplies],
+                },
+              });
+            }
+          } catch {
+            // Query might not be in cache yet, that's okay
+          }
+        }
       }
     },
-    refetchQueries: ['GetCommentsByPost', 'GetCommentReplies'],
   });
 
   const [removeComment, { loading: removing, error: removeError }] = useMutation<
@@ -90,12 +135,13 @@ export const useCommentActions = () => {
  */
 export const useCommentReplies = (parentId: string, isComment?: boolean, options: { limit?: number } = {}) => {
   const { limit = 10 } = options;
+  const safeParentId = parentId?.trim();
 
   const { data, loading, error, fetchMore } = useQuery<{ getCommentReplies: Comment[] }>(
     buildGetCommentRepliesQuery(),
     {
-      variables: { parentId, limit, skip: 0 },
-      skip: !parentId || !isComment,
+      variables: safeParentId ? { parentId: safeParentId, limit, skip: 0 } : undefined,
+      skip: !safeParentId || !isComment,
       fetchPolicy: 'cache-and-network',
     }
   );
@@ -115,8 +161,8 @@ export const useCommentReplies = (parentId: string, isComment?: boolean, options
 };
 
 export const useCommentSubscription = (postId: string) => {
-  const {data, loading, error} = useSubscription<{commentAdded: string}>(buildCommentAddedSubscription(), {
-    variables: {postId}
+  const { data, loading, error } = useSubscription<{ commentAdded: string }>(buildCommentAddedSubscription(), {
+    variables: { postId }
   })
-  return {commentAdded: data?.commentAdded, loading, error}
+  return { commentAdded: data?.commentAdded, loading, error }
 }
