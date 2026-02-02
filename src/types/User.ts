@@ -91,6 +91,7 @@ export enum UserTypeGQL {
     fcmTokens: string[];   // Array of FCM tokens
     language: string;      // ISO 639-1 code
     createdAt: string;     // GraphQLISODateTime
+    providers: string[];   // e.g., ['password', 'google.com']
     updatedAt: string;     // GraphQLISODateTime
     lastLoginAt?: string;  // GraphQLISODateTime
   }
@@ -126,6 +127,7 @@ export enum UserTypeGQL {
     location?: Location;
     websiteUrl?: string;
     professionalAccreditation: ProfessionalAccreditation[];
+    providers: string[];
 
     // Fields specific to IndividualUser (only include if userType is INDIVIDUAL)
     firstName?: string;

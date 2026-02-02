@@ -28,13 +28,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { User } from "@/types/User"
-import { useAppDispatch, useDictionary } from "@/lib/hooks"
+import { useAppDispatch } from "@/hooks/use-redux"
+import { useDictionary } from "@/hooks/use-dictionary"
 import { logoutUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
 import { getUserDisplayName } from "@/lib/user-utils"
 
 export function NavUser(
-  {user}: {user: User}) {
+  { user }: { user: User }) {
   const { isMobile } = useSidebar()
   const dispatch = useAppDispatch()
   const dict = useDictionary()
@@ -88,7 +89,7 @@ export function NavUser(
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem className="cursor-pointer" onClick={() => router.replace(`/profile/${user.slug}`)}>
-                <BadgeCheck />
+                <BadgeCheck className="size-4 text-muted-foreground" />
                 {dict.appSideBar.navUser.account}
               </DropdownMenuItem>
               {/* <DropdownMenuItem>
@@ -96,13 +97,13 @@ export function NavUser(
                 Billing
               </DropdownMenuItem> */}
               <DropdownMenuItem className="cursor-pointer">
-                <Bell />
+                <Bell className="size-4 text-muted-foreground" />
                 {dict.appSideBar.navUser.notifications}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer" onClick={handleLogout} >
-              <LogOut />
+              <LogOut className="size-4 text-muted-foreground" />
               {dict.appSideBar.navUser.logout}
             </DropdownMenuItem>
           </DropdownMenuContent>

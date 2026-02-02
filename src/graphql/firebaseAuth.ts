@@ -1,4 +1,4 @@
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendEmailVerification, sendPasswordResetEmail, User} from "firebase/auth"
+import {signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendEmailVerification, sendPasswordResetEmail, User, updateEmail, deleteUser} from "firebase/auth"
 import {auth} from "@/lib/firebase"
 
 export const googleProvider = new GoogleAuthProvider()
@@ -30,15 +30,23 @@ export async function signInWithGoogle(): Promise<User> {
     return userCredential.user
 }   
 
-export async function sendVerificationEmail(): Promise<void> {
-    if (auth.currentUser) {
-      await sendEmailVerification(auth.currentUser)
+export async function sendVerificationEmail(user?: User): Promise<void> {
+    const targetUser = user || auth.currentUser;
+    if (targetUser) {
+        await sendEmailVerification(targetUser);
     } else {
-      throw new Error("No user is currently signed in")
+        throw new Error("No user is available to send a verification email.");
     }
+}
 
+export async function deleteFirebaseUser(): Promise<void> {
+    if (auth.currentUser) await deleteUser(auth.currentUser);
 }
 
 export async function resetPassword(email: string): Promise<void> {
     await sendPasswordResetEmail(auth, email)
 }
+
+export const updateFirebaseEmail = async (user: User, newEmail: string): Promise<void> => {
+    await updateEmail(user, newEmail);
+};

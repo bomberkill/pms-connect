@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import {Inter, Manrope } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "../../app/globals.css";
 import Providers from "../Providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -72,19 +72,27 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#ffffff',
-  colorScheme: 'light',
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+  colorScheme: 'light dark',
 };
 
+
+import { getDictionary } from "@/app/getDictionary";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 
 export default async function RootLayout({
   children,
   params
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{lang: string}>
+  params: Promise<{ lang: string }>
 }>) {
-  const {lang} = await params
+  const { lang } = await params
+  const dictionary = await getDictionary(lang as 'en' | 'fr'); // FETCH ON SERVER
+
   return (
     <html lang={lang} suppressHydrationWarning>
       <head>
@@ -95,10 +103,11 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={`${inter.variable} ${manrope.variable} antialiased`}
       >
-        <Providers lang={lang}>
+        <Providers dictionary={dictionary}>
+          <PwaInstallPrompt />
           {children}
         </Providers>
-        <Toaster position="top-center" richColors/>
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

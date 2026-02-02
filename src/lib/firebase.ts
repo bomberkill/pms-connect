@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 // "use client"
-import {initializeApp, FirebaseApp } from "firebase/app";
+import { initializeApp, FirebaseApp } from "firebase/app";
+import { getStorage } from "firebase/storage";
 import {
   Auth,
   getAuth,
@@ -15,7 +16,7 @@ const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,  
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // let app: FirebaseApp;
@@ -34,8 +35,22 @@ const firebaseConfig = {
 // }
 const app: FirebaseApp = initializeApp(firebaseConfig);
 const auth: Auth = getAuth(app);
+const storage = getStorage(app);
 
+// Initialize Messaging only on client side
+import type { Messaging } from "firebase/messaging";
+
+let messaging: Messaging | null = null;
+if (typeof window !== "undefined") {
+  import("firebase/messaging").then(({ getMessaging }) => {
+    try {
+      messaging = getMessaging(app);
+    } catch {
+      console.warn("Firebase Messaging not supported in this environment");
+    }
+  });
+}
 
 // Initialize Firebase
-export { auth };
-export default app ;
+export { auth, storage, messaging };
+export default app;

@@ -80,3 +80,66 @@ export const buildRemoveBookmarkMutation = () => {
     }
   `;
 };
+
+/**
+ * Builds a GraphQL query for fetching the current user's bookmarks.
+ * Corresponds to 'myBookmarks' resolver in bookmarks.resolver.ts.
+ * @returns A gql object.
+ */
+export const buildGetMyBookmarksQuery = () => {
+  return gql`
+    query MyBookmarks($skip: Int, $limit: Int) {
+      myBookmarks(skip: $skip, limit: $limit) {
+        id
+        createdAt
+        item {
+          ... on Post {
+            id
+            content
+            media {
+              url
+              type
+            }
+            author {
+              id
+              slug
+              profilePicUrl
+              ... on IndividualUserObject {
+                firstName
+                lastName
+                professionalTitle
+              }
+              ... on LegalEntityUserObject {
+                entityName
+                entityType
+              }
+            }
+            likesCount
+            commentsCount
+            createdAt
+          }
+          ... on Comment {
+            id
+            content
+            author {
+              id
+              slug
+              profilePicUrl
+              ... on IndividualUserObject {
+                firstName
+                lastName
+              }
+              ... on LegalEntityUserObject {
+                entityName
+              }
+            }
+            post {
+              id
+            }
+            createdAt
+          }
+        }
+      }
+    }
+  `;
+};

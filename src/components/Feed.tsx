@@ -1,14 +1,18 @@
-"use client";
+'use client';
 
 import React, { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { useFeed, useNewFeedItemsCount } from "@/hooks/useData/index";
+import { useFeed } from "@/hooks/useData/index";
 import { Skeleton } from "./ui/skeleton";
 import FeedItemCard from "./FeedItemCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, WifiOff } from "lucide-react";
+import { Button } from "./ui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { NewPostsBadge } from "./feed/NewPostsBadge";
+import { useDictionary } from "@/hooks/use-dictionary";
 
 const PostSkeleton = () => (
-  <div className="border rounded-xl bg-white shadow-sm p-4 mb-6">
+  <div className="border border-border rounded-xl bg-card shadow-sm p-4 mb-6">
     <div className="flex items-center gap-3 mb-4">
       <Skeleton className="h-10 w-10 rounded-full" />
       <div className="space-y-2">
@@ -23,11 +27,32 @@ const PostSkeleton = () => (
 );
 
 export const Feed = () => {
+  const dict = useDictionary();
   const PULL_THRESHOLD = 70; // Distance en pixels à tirer pour déclencher le rafraîchissement
-  const [lastPostDate, setLastPostDate] = useState<Date | undefined>(undefined);
-  const { count, refreshCount } = useNewFeedItemsCount(lastPostDate);
-  const { posts, loading, error, loadMore, refresh } = useFeed({ limit: 15 });
+
+  // Use enhanced useFeed with polling and new posts detection
+  const {
+    posts,
+    loading,
+    error,
+    loadMore,
+    refresh,
+    newPostsCount,
+    loadNewPosts,
+    isLoadingNewPosts
+  } = useFeed({ limit: 15, enablePolling: true });
+
   const { ref, inView } = useInView({ threshold: 0.5 });
+
+  // Badge state
+  const [showBadge, setShowBadge] = useState(false);
+
+  // Show badge when new posts are detected
+  useEffect(() => {
+    if (newPostsCount > 0) {
+      setShowBadge(true);
+    }
+  }, [newPostsCount]);
 
   // États pour le "Pull to Refresh"
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -35,11 +60,27 @@ export const Feed = () => {
   const touchStartRef = useRef(0);
   const isAtTopRef = useRef(true);
 
+  /**
+   * Handle new posts badge click (Twitter-style)
+   * Scrolls immediately for instant feedback, then loads new posts
+   */
+  const handleLoadNewPosts = async () => {
+    setShowBadge(false);
+    // Scroll immediately for instant feedback (don't wait for data)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Then load new posts in background
+    await loadNewPosts();
+  };
+
   const handleRefresh = async () => {
+    console.log("Refreshing...");
     if (isRefreshing) return;
+    console.log("Refreshing2...");
     setIsRefreshing(true);
-    await refresh();
-    refreshCount(); // Réinitialise aussi le compteur de nouveaux posts
+    await loadNewPosts(); // Use loadNewPosts instead of refresh
+    console.log("Refreshing3...");
+    setShowBadge(false); // Hide badge after manual refresh
+    console.log("Refreshing4...");
     setIsRefreshing(false);
     setPullPosition(0);
   };
@@ -75,16 +116,6 @@ export const Feed = () => {
   };
 
   useEffect(() => {
-    if (posts.length > 0) {
-      // Take the latest post date (first in the feed)
-      setLastPostDate(new Date(posts[0].createdAt));
-    }
-  }, [posts]);
-  useEffect(() => {
-    const interval = setInterval(() => refreshCount(), 60000); // every 30s
-    return () => clearInterval(interval);
-  }, [refreshCount]);
-  useEffect(() => {
     if (inView && !loading) loadMore();
   }, [inView, loading, loadMore]);
 
@@ -92,7 +123,23 @@ export const Feed = () => {
     return <div>{[...Array(2)].map((_, i) => <PostSkeleton key={i} />)}</div>;
   }
 
-  if (error) return <p>Error loading feed: {error.message}</p>;
+  if (error) {
+    const isNetworkError = error.message.toLowerCase().includes('failed to fetch');
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[calc(100vh-20rem)] gap-4 text-center p-4">
+        <WifiOff className="w-16 h-16 text-destructive" />
+        <h2 className="text-xl font-bold">{dict.feed.errorTitle}</h2>
+        <p className="text-muted-foreground">
+          {isNetworkError
+            ? dict.feed.networkError
+            : dict.feed.genericError}
+        </p>
+        <Button onClick={() => refresh()}>
+          {dict.feed.retry}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -101,6 +148,23 @@ export const Feed = () => {
       onTouchEnd={handleTouchEnd}
       className="relative"
     >
+      {/* New Posts Badge (Twitter-style) */}
+      <NewPostsBadge
+        count={newPostsCount}
+        onClick={handleLoadNewPosts}
+        show={showBadge}
+      />
+
+      {/* Loading indicator for new posts (shown only if prefetch incomplete) */}
+      {isLoadingNewPosts && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 
+                        bg-background/95 backdrop-blur-sm px-4 py-2 rounded-full 
+                        shadow-lg border border-border flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          {/* <span className="text-sm text-muted-foreground">Chargement...</span> */}
+        </div>
+      )}
+
       {/* Indicateur de rafraîchissement */}
       <div
         className="absolute top-0 left-0 right-0 flex justify-center items-center overflow-hidden text-muted-foreground transition-all duration-300"
@@ -113,22 +177,21 @@ export const Feed = () => {
         <Loader2 className={`animate-spin ${isRefreshing ? 'opacity-100' : 'opacity-0'}`} />
       </div>
 
-      {count > 0 && (
-        <div
-          className="sticky top-0 z-10 bg-blue-600 text-white text-center py-2 cursor-pointer"
-          onClick={async() => {
-            await refresh();   // recharge les posts
-            refreshCount();   // manually trigger reload of the feed
-          }}
-        >
-          {count} new post{count > 1 ? "s" : ""} available — click to refresh 🔄
-        </div>
-      )}
-      {posts.map((post) => (
-        <FeedItemCard key={post.id} item={post} />
-      ))}
+      {/* Feed posts */}
+      <AnimatePresence initial={false}>
+        {posts.map((post) => (
+          <motion.div
+            key={post.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FeedItemCard item={post} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
       <div ref={ref} style={{ height: "10px" }} />
-      {loading && posts.length > 0 && <PostSkeleton />}
     </div>
   );
 };

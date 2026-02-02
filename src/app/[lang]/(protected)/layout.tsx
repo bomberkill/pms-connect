@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
-import { useAppSelector, useAuthObserver } from "@/lib/hooks";
+import { useAuthObserver } from "@/hooks/use-auth";
+import { useAppSelector } from "@/hooks/use-redux";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import {
@@ -19,7 +20,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const {initialized, firebaseUid: uid} = useAuthObserver();
+  const { initialized, firebaseUid: uid } = useAuthObserver();
   const { firebaseUid, loading: authLoading } = useAppSelector(
     (state) => state.auth
   );
@@ -55,25 +56,10 @@ export default function ProtectedLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className="relative overflow-hidden">
-        {/* <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Overview</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </header> */}
         <Header />
-        <main className={cn("bg-sidebar", isMobile && "mt-[101px]")}>{children}</main>
+        <main className={cn("bg-sidebar", isMobile && "pt-14")}>{children}</main>
       </SidebarInset>
-      <SuggestionsSidebar/>
+      <SuggestionsSidebar />
     </SidebarProvider>
   );
 }

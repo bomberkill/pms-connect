@@ -3,7 +3,9 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAppDispatch, useDictionary, useNotification } from "@/lib/hooks"
+import { useAppDispatch } from "@/hooks/use-redux"
+import { useDictionary } from "@/hooks/use-dictionary"
+import { useNotification } from "@/hooks/use-notification"
 import * as yup from "yup"
 import { useFormik } from "formik"
 import { useState } from "react"
@@ -13,9 +15,10 @@ import { FirebaseError } from "firebase/app"
 import { fetchUserByUid, loginAndFetchUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
 // import { Loader2 } from "lucide-react"
-import { gql, useApolloClient } from "@apollo/client"
+import { useCheckUserExists } from "../hooks/useData/index"
 import Image from "next/image"
 import CustomLoader from "./Loader"
+import { User } from "firebase/auth"
 export function LoginForm({
   className,
   ...props
@@ -40,7 +43,6 @@ export function LoginForm({
   // }
   const dispatch = useAppDispatch()
   const router = useRouter()
-  const client = useApolloClient()
   // const currentUser = auth.currentUser;
   const loginFormik = useFormik({
     initialValues,
@@ -67,6 +69,11 @@ export function LoginForm({
           router.push("/register");
           return
         }
+        if (error === "auth/email-not-verified") {
+          open("info", dict.notifications.login.error.messages["auth/email-not-verified"].title, { message: dict.notifications.login.error.messages["auth/email-not-verified"].message });
+          router.push(`/verify-email?email=${values.email}`);
+          return;
+        }
         switch (error) {
           case "auth/invalid-credential":
             errorMessage = dict.notifications.login.error.messages["auth/invalid-credential"];
@@ -78,7 +85,7 @@ export function LoginForm({
             errorMessage = dict.notifications.login.error.messages["auth/user-not-found"];
             break;
           case "auth/network-request-failed":
-            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"] ;
+            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"];
             break;
           case "auth/too-many-requests":
             errorMessage = dict.notifications.login.error.messages["auth/too-many-requests"];
@@ -89,11 +96,11 @@ export function LoginForm({
         // if (error instanceof FirebaseError) {
         // } else 
         if (error instanceof Error) {
-        // Erreur provenant du thunk createUser ou d'une autre partie
+          // Erreur provenant du thunk createUser ou d'une autre partie
           errorMessage = error.message;
         }
-        open("error", dict.notifications.login.error.title, { 
-            message: errorMessage 
+        open("error", dict.notifications.login.error.title, {
+          message: errorMessage
         });
       } finally {
         setIsLoading(false)
@@ -105,29 +112,19 @@ export function LoginForm({
     email: yup.string().email(dict.validation.email.invalid).required(dict.validation.email.required),
   })
 
+  const { checkByEmail } = useCheckUserExists();
+
   const resetFormik = useFormik({
     initialValues: { email: "" },
     validationSchema: resetSchema,
     onSubmit: async (values) => {
       setIsLoading(true)
       try {
-        const { data } = await client.query<{
-          checkUserExistsByEmail: { exists: boolean; hasPassword: boolean; providers: string[] };
-        }>({
-          query: gql`
-            query CheckUserExistsByEmail($email: String!) {
-              checkUserExistsByEmail(email: $email) {
-                exists
-                hasPassword
-                providers
-              }
-            }
-          `,
-          variables: { email: values.email },
-          fetchPolicy: "network-only",
-        });
-        // console.log("check email data", data)
-        if (data.checkUserExistsByEmail.exists && !data.checkUserExistsByEmail.hasPassword) {
+        const { data } = await checkByEmail({ variables: { email: values.email } });
+
+        const result = data?.checkUserExistsByEmail;
+
+        if (result?.exists && !result.hasPassword) {
           // Email already exists
           // resetFormik.setFieldError('email', dict.validation.email.alreadyInUse);
           open("info", dict.notifications.forgotPassword.info.title, { message: dict.notifications.forgotPassword.info.message });
@@ -153,7 +150,7 @@ export function LoginForm({
               errorMessage = dict.notifications.login.error.messages["auth/user-not-found"];
               break;
             case "auth/network-request-failed":
-              errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"] ;
+              errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"];
               break;
             case "auth/too-many-requests":
               errorMessage = dict.notifications.login.error.messages["auth/too-many-requests"];
@@ -163,7 +160,7 @@ export function LoginForm({
           }
         }
         if (error instanceof Error) {
-        errorMessage = error.message;
+          errorMessage = error.message;
         }
         open("error", dict.notifications.forgotPassword.error.title, {
           message: errorMessage
@@ -176,31 +173,37 @@ export function LoginForm({
   const handleGoogleSignIn = async () => {
     // const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsGoogleSignIn(true);
+    let result: User | null = null;
     try {
       // if (!isMobile) {
       //   console.log("Using redirect for mobile Google sign-in");
       //   await signInWithRedirect(auth, googleProvider);
       // }else {
       // }
-      const result = await signInWithGoogle();
+      result = await signInWithGoogle();
       if (result) {
-        await dispatch(fetchUserByUid(result.uid)).unwrap()
-        router.push("/");
-        open("success", dict.notifications.register.success.title, {
-          message: dict.notifications.register.success.message,
-        });
+        try {
+          // On essaie de récupérer l'utilisateur depuis notre DB
+          await dispatch(fetchUserByUid(result.uid)).unwrap();
+          // Si ça réussit, l'utilisateur existe, on le connecte
+          router.push("/");
+          open("success", dict.notifications.login.success.title, {
+            message: dict.notifications.login.success.message,
+          });
+        } catch {
+          // Si fetchUserByUid échoue (l'utilisateur n'est pas dans notre DB)
+          open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
+          router.push("/register");
+        }
       }
-      
-    } catch (error) {
+
+    } catch (error: unknown) {
+      if ((error as any)?.code === "auth/popup-closed-by-user") { // eslint-disable-line @typescript-eslint/no-explicit-any
+        console.warn("Google Sign-in popup closed by user.");
+        return;
+      }
       console.error("Google sign-in error:", error);
-      let errorMessage: string = dict.notifications.register.error.message; // Message par défaut
-      if (error === "getUserByFirebaseUid is null") {
-        // Cas particulier où l'utilisateur n'existe pas dans notre base
-        // errorMessage = "New user detected. Proceeding with registration."
-        open("info", dict.notifications.login.info.title, { message: dict.notifications.login.info.message });
-        router.push("/register");
-        return
-      }
+      let errorMessage: string = dict.notifications.login.error.messages.default;
       if (error instanceof FirebaseError) { // Gestion spécifique des erreurs Firebase
         switch (error.code) {
           case "auth/invalid-credential":
@@ -213,7 +216,7 @@ export function LoginForm({
             errorMessage = dict.notifications.login.error.messages["auth/user-not-found"];
             break;
           case "auth/network-request-failed":
-            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"] ;
+            errorMessage = dict.notifications.login.error.messages["auth/network-request-failed"];
             break;
           case "auth/too-many-requests":
             errorMessage = dict.notifications.login.error.messages["auth/too-many-requests"];
@@ -225,10 +228,10 @@ export function LoginForm({
         // Erreur provenant du thunk createUser ou d'une autre partie
         errorMessage = error.message;
       }
-      open("error", dict.notifications.register.error.title, {
+      open("error", dict.notifications.login.error.title, {
         message: errorMessage
       })
-    }finally {
+    } finally {
       setIsGoogleSignIn(false);
     }
   }
@@ -257,7 +260,7 @@ export function LoginForm({
                 onChange={loginFormik.handleChange}
                 onBlur={loginFormik.handleBlur}
                 value={loginFormik.values.email}
-                // disabled={isLoading}
+              // disabled={isLoading}
               />
               {loginFormik.touched.email && loginFormik.errors.email && (
                 <p className="text-red-500 text-xs">{loginFormik.errors.email}</p>
@@ -282,7 +285,7 @@ export function LoginForm({
                 onChange={loginFormik.handleChange}
                 onBlur={loginFormik.handleBlur}
                 value={loginFormik.values.password}
-                // disabled={isLoading}
+              // disabled={isLoading}
               />
               {loginFormik.touched.password && loginFormik.errors.password && (
                 <p className="text-red-500 text-xs">{loginFormik.errors.password}</p>
@@ -292,19 +295,19 @@ export function LoginForm({
               {dict.login.loginButton}
               {/* {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : dict.login.loginButton} */}
             </Button>
-            <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t"> 
-              <span className="bg-background text-muted-foreground relative z-10 px-2"> {dict.login.continueWith} </span> 
-            </div> 
-            <Button type="button" onClick={() => handleGoogleSignIn()} variant="outline" className="cursor-pointer w-full"> 
+            <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+              <span className="bg-background text-muted-foreground relative z-10 px-2"> {dict.login.continueWith} </span>
+            </div>
+            <Button type="button" onClick={() => handleGoogleSignIn()} variant="outline" className="cursor-pointer w-full">
               <Image src="/google-color.svg" alt="" width={4} height={4} className="h-4 w-4" />
               {dict.login.googleButton}
             </Button>
-            </div>
-            <div className="text-center text-sm">
-              {dict.login.noAccount}{" "}
-              <Link href="/register" className="underline underline-offset-4"> {dict.login.signUp} </Link>
-            </div>
-            {/* </div> */}
+          </div>
+          <div className="text-center text-sm">
+            {dict.login.noAccount}{" "}
+            <Link href="/register" className="underline underline-offset-4"> {dict.login.signUp} </Link>
+          </div>
+          {/* </div> */}
         </form>
       ) : (
         // ---------------- RESET PASSWORD FORM ----------------
@@ -326,7 +329,7 @@ export function LoginForm({
                 onChange={resetFormik.handleChange}
                 onBlur={resetFormik.handleBlur}
                 value={resetFormik.values.email}
-                // disabled={isLoading}
+              // disabled={isLoading}
               />
               {resetFormik.touched.email && resetFormik.errors.email && (
                 <p className="text-red-500 text-xs">{resetFormik.errors.email}</p>

@@ -132,3 +132,29 @@ export const buildConnectionRequestUpdatedSubscription = (meta?: { fields?: stri
     }
   `;
 };
+
+/**
+ * Builds a GraphQL query for fetching a user's connections.
+ * Corresponds to 'getConnections' resolver in connection-requests.resolver.ts.
+ * @returns A gql object.
+ */
+export const buildGetConnectionsQuery = () => {
+  return gql`
+    query GetConnections($userId: ID!) {
+      getConnections(userId: $userId) {
+        id
+        slug
+        profilePicUrl
+        ... on IndividualUserObject {
+          firstName
+          lastName
+          professionalTitle
+        }
+        ... on LegalEntityUserObject {
+          entityName
+          entityType
+        }
+      }
+    }
+  `;
+};

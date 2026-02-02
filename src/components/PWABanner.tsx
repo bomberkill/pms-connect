@@ -4,8 +4,10 @@ import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { X, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useDictionary } from "@/hooks/use-dictionary"
 
 export default function PWABanner() {
+  const dict = useDictionary()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
@@ -35,7 +37,7 @@ export default function PWABanner() {
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      alert("Utilisez le menu du navigateur pour installer l’application.")
+      alert(dict.pwa.browserInstruction)
       return
     }
     deferredPrompt.prompt()
@@ -57,7 +59,7 @@ export default function PWABanner() {
     >
       <div className="flex items-center gap-2 text-sm">
         <Download className="h-4 w-4 text-primary" />
-        <span>Installez l’app sur votre écran d’accueil</span>
+        <span>{dict.pwa.installBanner}</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -66,7 +68,7 @@ export default function PWABanner() {
           className="text-xs"
           onClick={handleInstall}
         >
-          Installer
+          {dict.common.install}
         </Button>
         <Button
           variant="ghost"

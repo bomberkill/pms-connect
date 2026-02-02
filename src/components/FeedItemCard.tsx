@@ -21,9 +21,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useBookmarkActions, useFollowActions, useGetMe, useLikeCommentActions, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
+import { useBookmarkActions, useFollowActions, useMe, useLikeCommentActions, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useDictionary } from "@/lib/hooks";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 import { Comment } from "@/types/Comment";
@@ -32,16 +32,16 @@ import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { useRouter } from "next/navigation";
 import { PostMedia } from "./PostMedia";
 
-const formatTimeAgo = (isoDate: string) => {
+const formatTimeAgo = (isoDate: string, dict: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const date = new Date(isoDate);
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return dict.timeAgo.justNow;
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60) return `${minutes}${dict.timeAgo.m}`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return `${hours}${dict.timeAgo.h}`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
+  if (days < 7) return `${days}${dict.timeAgo.d}`;
   return date.toLocaleDateString();
 };
 
@@ -109,16 +109,16 @@ interface FeedItemCardProps {
 export default function FeedItemCard({ item, isComment = false }: FeedItemCardProps) {
   const dict = useDictionary();
   const router = useRouter();
-  const { me } = useGetMe();
+  const { me } = useMe();
   const isMobile = useIsMobile();
 
   const authorId = item.author?.id;
   const { likePost, unlikePost, liking, unliking } = useLikePostActions(item.id);
-  const { likeComment, unlikeComment} = useLikeCommentActions(item.id);
+  const { likeComment, unlikeComment } = useLikeCommentActions(item.id);
   const { likesUpdate } = useLikesSubscription(item.id, isComment ? 'Comment' : 'Post');
   const { followUser, unfollowUser, following: followingReq, unfollowing } = useFollowActions();
   const { addBookmark, removeBookmark, adding: addingBookmark, removing: removingBookmark } = useBookmarkActions(item.id, isComment ? 'Comment' : 'Post');
-  
+
   const isLiked = 'isLiked' in item ? item.isLiked : false;
   const isFollowing = !!(authorId && me?.following?.includes(authorId));
   React.useEffect(() => {
@@ -128,11 +128,11 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
   }, [likesUpdate]);
 
   const handleLikeToggle = () => {
-    if(isComment) {
+    if (isComment) {
       console.log("is comment and id: ", item.id)
       if (isLiked) unlikeComment();
       else likeComment();
-    }else {
+    } else {
       console.log("is post and id: ", item.id)
       if (isLiked) unlikePost();
       else likePost();
@@ -175,7 +175,10 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
   };
 
   return (
-    <div className={cn("bg-white overflow-hidden", isMobile ? "border-b" : "border rounded-xl shadow-sm my-4")}>
+    <div className={cn(
+      "bg-card text-card-foreground overflow-hidden transition-all duration-200",
+      isMobile ? "border-b border-border pb-2 mb-2" : isComment ? "border-b border-border py-4" : "border border-border rounded-2xl shadow-sm hover:shadow-md my-6"
+    )}>
       <div className="flex items-center justify-between px-4 py-3">
         <div onClick={() => router.push(`/profile/${item.author.slug}`)} className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
@@ -186,7 +189,7 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
             <div className="flex items-center gap-2">
               <span className="font-medium text-sm leading-tight">{getUserDisplayName(item.author)}</span>
               <span className="text-muted-foreground">·</span>
-              <span className="text-xs text-muted-foreground">{formatTimeAgo(item.createdAt)}</span>
+              <span className="text-xs text-muted-foreground">{formatTimeAgo(item.createdAt, dict)}</span>
             </div>
             <p className="text-[13px] text-muted-foreground truncate">
               {item.author.userType === UserTypeGQL.INDIVIDUAL ? (item.author as IndividualUser).professionalTitle : dict.entityTypes[(item.author as LegalEntityUser).entityType]}
@@ -201,8 +204,8 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator/>
+              <DropdownMenuLabel>{dict.common.actions}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
               {authorId && authorId !== me?.id && (
@@ -219,20 +222,19 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
         {'media' in item && <PostMedia media={item.media} />}
       </div>
 
-      <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground">
-        <div className="flex items-center justify-start gap-4">
-          <button onClick={handleLikeToggle} disabled={liking || unliking} className="flex items-center justify-center gap-1.5 text-xs font-medium hover:bg-muted rounded-lg px-2 py-1" aria-pressed={!!isLiked}>
-            <Heart className={cn("h-[18px] w-[18px]", isLiked && "fill-red-500 text-red-500")} />
-            <span>{'likesCount' in item ? item.likesCount : 0}</span>
+      <div className="flex items-center justify-between px-4 py-2 text-muted-foreground">
+        <div className="flex items-center justify-start gap-1">
+          <button onClick={handleLikeToggle} disabled={liking || unliking} className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors" aria-label={isLiked ? dict.actions.unlike : dict.actions.like} aria-pressed={!!isLiked}>
+            <Heart className={cn("size-5", isLiked && "fill-red-500 text-red-500")} />
+            <span className="text-sm font-medium tabular-nums">{'likesCount' in item ? item.likesCount : 0}</span>
           </button>
-          <button onClick={goToDetail} className="flex items-center justify-center gap-1.5 text-xs font-medium hover:bg-muted rounded-lg px-2 py-1">
-            <MessageCircle className="h-[18px] w-[18px]" />
-            <span>{'commentsCount' in item ? item.commentsCount : 0}</span>
+          <button onClick={goToDetail} className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors" aria-label={dict.actions.comment}>
+            <MessageCircle className="size-5" />
+            <span className="text-sm font-medium tabular-nums">{'commentsCount' in item ? item.commentsCount : 0}</span>
           </button>
           {!isComment && (
-            <button className="flex items-center justify-center gap-1.5 text-xs font-medium hover:bg-muted rounded-lg px-2 py-1">
-              <Share2 className="h-[18px] w-[18px]" />
-              {/* <span>{dict.actions.share}</span> */}
+            <button className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors" aria-label={dict.actions.share}>
+              <Share2 className="size-5" />
             </button>
           )}
         </div>
@@ -240,10 +242,10 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
           <button
             onClick={handleBookmarkToggle}
             disabled={addingBookmark || removingBookmark}
-            className="flex items-center justify-center gap-1.5 text-xs font-medium hover:bg-muted rounded-lg px-2 py-1"
+            className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors"
+            aria-label={item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
           >
-            <Bookmark className={cn("h-[18px] w-[18px]", item.isBookmarked && "fill-primary text-primary")} />
-            {/* <span>{dict.actions.save}</span> */}
+            <Bookmark className={cn("size-5", item.isBookmarked && "fill-primary text-primary")} />
           </button>
         )}
       </div>

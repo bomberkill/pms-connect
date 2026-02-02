@@ -24,11 +24,10 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSub,
   DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { useDictionary } from "@/lib/hooks";
+import { useDictionary } from "@/hooks/use-dictionary";
 import { Slider } from "./ui/slider";
 
 const SWIPE_CONFIDENCE_THRESHOLD = 10000;
@@ -163,6 +162,16 @@ export function PostMedia({ media }: { media?: MediaItem[] }) {
                   onDragEnd={handleDragEnd}
                   className="absolute w-full h-full flex items-center justify-center"
                 >
+                  {selected.type === MediaType.DOCUMENT && (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-white/10 md:p-8">
+                      <iframe
+                        src={selected.url}
+                        className="w-full h-full rounded-lg bg-white shadow-2xl"
+                        title="Document Viewer"
+                      />
+                    </div>
+                  )}
+
                   {selected.type === MediaType.IMAGE && (
                     <img
                       src={selected.url}
@@ -193,7 +202,9 @@ export function PostMedia({ media }: { media?: MediaItem[] }) {
   );
 }
 
+
 function VideoPlayer({ media, isMobile }: { media: MediaItem; isMobile: boolean }) {
+  const dict = useDictionary();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true); // Autoplay
   const [currentTime, setCurrentTime] = useState(0);
@@ -348,7 +359,7 @@ function VideoPlayer({ media, isMobile }: { media: MediaItem; isMobile: boolean 
               <DropdownMenuPortal>
                 <DropdownMenuContent align="end">
                   <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>Vitesse</DropdownMenuSubTrigger>
+                    <DropdownMenuTrigger>{dict.post.speed}</DropdownMenuTrigger>
                     <DropdownMenuPortal>
                       <DropdownMenuSubContent>
                         <DropdownMenuRadioGroup value={playbackRate} onValueChange={handlePlaybackRateChange}>
@@ -386,7 +397,7 @@ function MediaPreview({
       <img
         src={media.url}
         onClick={onClick}
-        alt="Preview"
+        alt={dict.common.preview}
         className="w-full h-60 object-cover rounded-md cursor-pointer hover:opacity-90 transition"
       />
     );
@@ -400,7 +411,6 @@ function MediaPreview({
         <video
           src={media.url}
           className="w-full h-full object-cover"
-          // Get duration without playing
           onLoadedMetadata={(e) =>
             setDuration(e.currentTarget.duration)
           }
@@ -420,17 +430,23 @@ function MediaPreview({
 
   // Documents (PDF, autres)
   if (media.type === MediaType.DOCUMENT) return (
-    <a
-      href={media.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="w-full h-60 bg-muted flex flex-col items-center justify-center rounded-md cursor-pointer hover:bg-muted/70 border"
+    <div
+      onClick={onClick}
+      className="w-full h-60 bg-muted border border-border flex flex-col items-center justify-center rounded-md cursor-pointer hover:bg-muted/80 transition group relative overflow-hidden"
     >
-      <FileIcon className="w-10 h-10 text-muted-foreground" />
-      <span className="text-sm text-muted-foreground text-center mt-2 break-all px-2">
-        {dict.post.pdfDocument || "Document PDF"}
+      <div className="absolute top-0 right-0 p-2 bg-red-500 text-white text-[10px] font-bold rounded-bl-lg shadow-sm">
+        {dict.common.pdf}
+      </div>
+      <div className="p-4 bg-card rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
+        <FileIcon className="w-8 h-8 text-red-500" />
+      </div>
+      <span className="text-sm font-medium text-foreground text-center px-4 line-clamp-2 break-words max-w-full">
+        {media.url.split("/").pop() || dict.post.pdfDocument}
       </span>
-    </a>
+      <span className="text-xs text-muted-foreground mt-1">
+        {dict.post.clickToView}
+      </span>
+    </div>
   );
   return null;
 }

@@ -1,5 +1,6 @@
 import { User } from './User';
 
+
 export enum PostStatus {
   PUBLISHED = 'PUBLISHED',
   ARCHIVED = 'ARCHIVED',
@@ -26,7 +27,7 @@ export interface Post {
   id: string;
   content: string;
   media?: MediaItem[];
-  author: User; // Using Partial<User> as we might not fetch the full user object every time.
+  author: User;
   likesCount: number;
   commentsCount: number;
   viewsCount: number;
@@ -40,12 +41,13 @@ export interface Post {
 
 
 export interface CreatePostInput {
-    content: string;
-    media?: MediaItem[];
-    status?: PostStatus;
+  content: string;
+  media?: MediaItem[];
+  status?: PostStatus;
+  groupId?: string;
 }
 
 export interface UpdatePostInput {
-    content?: string;
-    status?: PostStatus;
+  content?: string;
+  status?: PostStatus;
 }

@@ -25,16 +25,18 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useRouter } from "next/navigation"
-import { useAppSelector, useDictionary } from "@/lib/hooks"
+import { useDictionary } from "@/hooks/use-dictionary"
 import { Skeleton } from "@/components/ui/skeleton"
 import Image from "next/image"
 import { useCleanPathname } from "./Header"
+import { useMe } from "@/hooks/useData/index"
 
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const dict = useDictionary()
-  const {user} = useAppSelector((state) => state.user)
+  // const {user} = useAppSelector((state) => state.user)
+  const { me: user } = useMe();
   const router = useRouter()
   const pathname = useCleanPathname()
   const data = React.useMemo(() => ({
@@ -97,16 +99,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         items: [
         ],
       },
+      {
+        title: dict.appSideBar.navMain.groups,
+        url: "/groups",
+        icon: Users,
+        isActive: pathname.startsWith("/groups"),
+        items: [
+        ],
+      },
     ],
   }), [dict])
   return (
-    <Sidebar className="bg-background" side="left" variant="sidebar" {...props}>
+    <Sidebar className="bg-sidebar border-r border-sidebar-border" side="left" variant="sidebar" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="cursor-pointer" onClick={() => router.push('/')}>
             <SidebarMenuButton size="lg" asChild>
               <a>
-                  <Image src="/logo.png" alt="PMSCONNECT Logo" width={32} height={32} className="h-8 w-auto" />
+                <Image src="/logo.png" alt="PMSCONNECT Logo" width={32} height={32} className="h-8 w-auto" />
                 {/* <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Command className="size-4" />
                 </div> */}

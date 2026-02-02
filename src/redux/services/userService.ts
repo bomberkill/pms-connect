@@ -1,15 +1,15 @@
 
 import { apolloClient } from "@/graphql/apolloClient";
 import { CreateUserInput, UpdateUserInput } from "@/types/User";
-import { buildCreateUserMutation, buildFollowMutation, buildGetMeQuery, buildGetUserByUidQuery, buildRemoveConnectionMutation, buildUnfollowMutation, buildUpdateMyProfileMutation } from "@/graphql/queries/index";
+import { buildCreateUserMutation, buildFollowMutation, buildGetMeQuery, buildGetUserByUidQuery, buildRemoveConnectionMutation, buildUnfollowMutation, buildUpdateMyEmailMutation, buildUpdateMyProfileMutation, buildUnregisterFcmTokenMutation } from "@/graphql/queries/index";
 import { clearAuth } from "../slices/authSlice";
-import { clearUser } from "../slices/userSlice";
+// import { clearUser } from "../slices/userSlice";
 import { AppDispatch } from "../store";
 import { FirebaseError } from "firebase/app";
 
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { login, logout as firebaseLogout } from "@/graphql/firebaseAuth";
+import { deleteFirebaseUser, login, logout as firebaseLogout, register, sendVerificationEmail, updateFirebaseEmail } from "@/graphql/firebaseAuth";
 /**
  * Un thunk asynchrone pour créer un utilisateur.
  * Il gère automatiquement les actions pending/fulfilled/rejected.
@@ -39,12 +39,90 @@ export const createUser = createAsyncThunk(
 );
 
 /**
+ * Thunk to update the email of an unverified user.
+ */
+export const updateUnverifiedEmail = createAsyncThunk(
+    'user/updateUnverifiedEmail',
+    async ({ oldEmail, newEmail, password }: { oldEmail: string, newEmail: string, password: string }, { rejectWithValue }) => {
+        try {
+            // 1. Re-authenticate to prove ownership. `login` returns the Firebase User object directly.
+            const firebaseUser = await login(oldEmail, password);
+
+            // 2. Update email in Firebase Auth
+            await updateFirebaseEmail(firebaseUser, newEmail);
+
+            // 3. Send new verification email
+            await sendVerificationEmail(firebaseUser);
+
+            // 4. Update email in our backend DB
+            const { data, errors } = await apolloClient.mutate({
+                mutation: buildUpdateMyEmailMutation(),
+                variables: { newEmail },
+            });
+
+            if (errors) {
+                throw new Error(errors[0].message);
+            }
+
+            return data.updateMyEmail;
+
+        } catch (error: unknown) {
+            return rejectWithValue(error);
+        }
+    }
+);
+
+/**
+ * Thunk to register a user in Firebase and send a verification email.
+ * This separates Firebase account creation from profile creation in our DB.
+ */
+export const registerAndSendVerification = createAsyncThunk(
+    'user/registerAndSendVerification',
+    async ({ email, password }: { email: string, password?: string }, { rejectWithValue }) => {
+        if (!password) {
+            // This case is for Google Sign-In, where the user is already created.
+            // We just need to ensure the email is sent if they are new.
+            // The logic in the component will handle existing Google users.
+            return;
+        }
+        try {
+            const firebaseUser = await register(email, password);
+            await sendVerificationEmail(firebaseUser);
+            return firebaseUser.uid;
+        } catch (error: unknown) {
+            if (error instanceof FirebaseError) {
+                return rejectWithValue(error.code);
+            }
+            return rejectWithValue('errors.unknown');
+        }
+    }
+);
+
+/**
+ * Thunk to delete the current Firebase user.
+ * Useful for cleaning up if the user backs out of email verification.
+ */
+export const deleteCurrentUser = createAsyncThunk(
+    'user/deleteCurrentUser',
+    async (_, { rejectWithValue }) => {
+        try {
+            await deleteFirebaseUser();
+        } catch (error: unknown) {
+            if (error instanceof FirebaseError) {
+                return rejectWithValue(error.code);
+            }
+            return rejectWithValue('errors.unknown');
+        }
+    }
+);
+
+/**
  * Thunk to follow a user.
  * On success, it returns the ID of the user that was followed.
  */
 export const followUser = createAsyncThunk(
     'user/follow',
-    async (userIdToFollow: string, {dispatch, rejectWithValue }) => {
+    async (userIdToFollow: string, { dispatch, rejectWithValue }) => {
         try {
             const { data, errors } = await apolloClient.mutate({
                 mutation: buildFollowMutation(),
@@ -71,7 +149,7 @@ export const followUser = createAsyncThunk(
  */
 export const unfollowUser = createAsyncThunk(
     'user/unfollow',
-    async (userIdToUnfollow: string, {dispatch, rejectWithValue }) => {
+    async (userIdToUnfollow: string, { dispatch, rejectWithValue }) => {
         try {
             const { data, errors } = await apolloClient.mutate({
                 mutation: buildUnfollowMutation(),
@@ -95,7 +173,7 @@ export const unfollowUser = createAsyncThunk(
  */
 export const removeConnection = createAsyncThunk(
     'user/removeConnection', // Note the prefix 'user/' now
-    async (userIdToRemove: string, {dispatch, rejectWithValue }) => {
+    async (userIdToRemove: string, { dispatch, rejectWithValue }) => {
         try {
             const { data, errors } = await apolloClient.mutate({
                 mutation: buildRemoveConnectionMutation(),
@@ -125,9 +203,39 @@ export const logoutUser = createAsyncThunk<void, void, { dispatch: AppDispatch }
     'user/logout',
     async (_, { dispatch, rejectWithValue }) => {
         try {
+            // 1. Unregister FCM Token if exists (Client-side only)
+            if (typeof window !== "undefined") {
+                try {
+                    const { getMessaging, getToken, deleteToken } = await import("firebase/messaging");
+                    const { default: firebaseApp } = await import("@/lib/firebase");
+                    const messaging = getMessaging(firebaseApp);
+
+                    const token = await getToken(messaging, {
+                        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+                    });
+
+                    if (token) {
+                        // Unregister from Backend
+                        await apolloClient.mutate({
+                            mutation: buildUnregisterFcmTokenMutation(),
+                            variables: { token }
+                        }).catch(err => console.error("Failed to unregister FCM token from backend:", err));
+
+                        // Optional: Delete from Firebase instance too? 
+                        // Usually good practice if we want to ensure no more messages come
+                        // AND to force a fresh token on next login if needed.
+                        await deleteToken(messaging);
+                    }
+                } catch (fcmError) {
+                    console.warn("FCM Cleanup failed:", fcmError);
+                    // Don't block logout
+                }
+            }
+
+            // 2. Logout from Firebase
             await firebaseLogout();
-            // Nettoie les slices de manière synchrone après la déconnexion réussie
-            dispatch(clearUser());
+
+            // 3. Clean Redux
             dispatch(clearAuth());
             return;
         } catch (error) {
@@ -142,10 +250,14 @@ export const logoutUser = createAsyncThunk<void, void, { dispatch: AppDispatch }
  */
 export const loginAndFetchUser = createAsyncThunk(
     'user/loginAndFetch',
-    async ({ email, password }: {email: string, password: string}, { rejectWithValue }) => {
+    async ({ email, password }: { email: string, password: string }, { rejectWithValue }) => {
         try {
             // Étape 1: Connexion à Firebase
             const firebaseUser = await login(email, password);
+            // NOUVELLE VÉRIFICATION : L'e-mail doit être vérifié
+            if (!firebaseUser.emailVerified && firebaseUser.email) {
+                return rejectWithValue('auth/email-not-verified');
+            }
             // return firebaseUser;
             // Étape 2: Récupération du profil depuis notre API avec l'UID
             const { data, errors } = await apolloClient.query({
@@ -231,7 +343,7 @@ export const fetchMe = createAsyncThunk(
 /**
  * 
  * 
- */ 
+ */
 export const updateUser = createAsyncThunk(
     'user/update',
     async (updateUserInput: UpdateUserInput, { rejectWithValue }) => {
