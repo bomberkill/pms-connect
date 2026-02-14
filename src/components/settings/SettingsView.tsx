@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useMutation } from "@apollo/client";
 import { buildUpdateMyEmailMutation } from "@/graphql/queries/user";
-import { toast } from "sonner";
+import { useNotification } from "@/hooks/use-notification";
 import { sendPasswordResetEmail, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import {
@@ -26,9 +26,11 @@ import {
     Sun,
     Monitor,
     Camera,
-    Check
+    Check,
+    Bell
 } from "lucide-react";
 import { User as UserType } from "@/types/User";
+import { useFcmToken } from "@/hooks/useData/index";
 
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +40,7 @@ import { cn } from "@/lib/utils";
 export default function SettingsView() {
     const dict = useDictionary();
     const { me, loading } = useMe();
+    const { handleLogout } = useFcmToken();
     const router = useRouter();
 
     if (loading || !me) {
@@ -79,8 +82,9 @@ export default function SettingsView() {
                         <Button
                             variant="ghost"
                             className="w-full justify-start px-4 py-3 h-auto text-destructive hover:text-destructive hover:bg-destructive/10 mt-auto lg:mt-4"
-                            onClick={() => {
-                                signOut(auth);
+                            onClick={async () => {
+                                await handleLogout();
+                                await signOut(auth);
                                 router.push("/login");
                             }}
                         >
@@ -115,16 +119,17 @@ function AccountSettings({ me }: { me: UserType }) {
 
     const UPDATE_EMAIL_MUTATION = buildUpdateMyEmailMutation();
     const [updateEmail, { loading }] = useMutation(UPDATE_EMAIL_MUTATION);
+    const notification = useNotification();
 
     const handleUpdateEmail = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await updateEmail({ variables: { newEmail: email } });
-            toast.success(dict.notifications.emailUpdated.title);
+            notification.open("success", dict.notifications.emailUpdated.title);
             setIsEditing(false);
         } catch (error) {
             console.error(error);
-            toast.error(dict.notifications.updateFailed.defaultMessage);
+            notification.open("error", dict.notifications.updateFailed.defaultMessage);
         }
     };
 
@@ -222,14 +227,15 @@ function AccountSettings({ me }: { me: UserType }) {
 function SecuritySettings({ email }: { email: string }) {
     const dict = useDictionary();
     const [loading, setLoading] = useState(false);
+    const notification = useNotification();
 
     const handlePasswordReset = async () => {
         setLoading(true);
         try {
             await sendPasswordResetEmail(auth, email);
-            toast.success(dict.notifications.forgotPassword.success.title);
+            notification.open("success", dict.notifications.forgotPassword.success.title);
         } catch (e: unknown) {
-            toast.error((e as Error).message || dict.globalErrors.default);
+            notification.open("error", (e as Error).message || dict.globalErrors.default);
         } finally {
             setLoading(false);
         }
@@ -267,9 +273,52 @@ function SecuritySettings({ email }: { email: string }) {
 function PreferencesSettings() {
     const dict = useDictionary();
     const currentLang = typeof window !== 'undefined' && window.location.pathname.startsWith('/fr') ? 'fr' : 'en';
+    const { requestPermission, permissionState } = useFcmToken();
+    const [notifState, setNotifState] = useState(permissionState);
+    const notification = useNotification();
+
+    const handleEnableNotifications = async () => {
+        const granted = await requestPermission();
+        if (granted) {
+            setNotifState('granted');
+            notification.open("success", dict.settings.labels.enabledSuccess);
+        } else {
+            setNotifState('denied');
+            notification.open("error", dict.settings.labels.deniedError);
+        }
+    };
 
     return (
         <div className="space-y-6">
+            <Card>
+                <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="flex items-center gap-2">
+                        <Bell className="w-5 h-5" />
+                        {dict.settings.labels.pushNotifications}
+                    </CardTitle>
+                    <CardDescription>{dict.settings.labels.manageNotifications}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6">
+                    <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
+                        <div className="flex flex-col gap-1">
+                            <span className="font-medium">{dict.settings.labels.pushNotifications}</span>
+                            <span className="text-sm text-muted-foreground">
+                                {notifState === 'granted'
+                                    ? dict.settings.labels.notificationsEnabled
+                                    : dict.settings.labels.notificationsDisabled}
+                            </span>
+                        </div>
+                        <Button
+                            variant={notifState === 'granted' ? "outline" : "default"}
+                            onClick={handleEnableNotifications}
+                            disabled={notifState === 'granted'}
+                        >
+                            {notifState === 'granted' ? dict.settings.labels.enabled : dict.settings.labels.enable}
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader className="p-4 md:p-6">
                     <CardTitle className="flex items-center gap-2">

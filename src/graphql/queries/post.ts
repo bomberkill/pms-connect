@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
 
-const POST_FIELDS = `
+export const POST_FIELDS = `
   id
   content
   media {

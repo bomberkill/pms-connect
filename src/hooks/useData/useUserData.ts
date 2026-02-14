@@ -161,9 +161,58 @@ export const useFollowing = (userId: string) => {
  * Hook that provides follow/unfollow actions.
  */
 export const useFollowActions = () => {
-    const [followUser, { loading: following, error: followError }] = useMutation<{ follow: boolean }, { userId: string }>(buildFollowMutation());
+    const { me } = useMe();
+    const [followUser, { loading: following, error: followError }] = useMutation<{ follow: boolean }, { userId: string }>(buildFollowMutation(), {
+        optimisticResponse: { follow: true },
+        update(cache, { data }, { variables }) {
+            if (data?.follow && variables?.userId) {
+                // 1. Update target user's fields
+                cache.modify({
+                    id: cache.identify({ __typename: 'User', id: variables.userId }),
+                    fields: {
+                        isFollowing: () => true,
+                        followersCount: (count: number = 0) => count + 1,
+                    }
+                });
 
-    const [unfollowUser, { loading: unfollowing, error: unfollowError }] = useMutation<{ unfollow: boolean }, { userId: string }>(buildUnfollowMutation());
+                // 2. Update 'me' user's following count
+                if (me) {
+                    cache.modify({
+                        id: cache.identify({ __typename: 'User', id: me.id }),
+                        fields: {
+                            followingCount: (count: number = 0) => count + 1,
+                        }
+                    });
+                }
+            }
+        }
+    });
+
+    const [unfollowUser, { loading: unfollowing, error: unfollowError }] = useMutation<{ unfollow: boolean }, { userId: string }>(buildUnfollowMutation(), {
+        optimisticResponse: { unfollow: true },
+        update(cache, { data }, { variables }) {
+            if (data?.unfollow && variables?.userId) {
+                // 1. Update target user's fields
+                cache.modify({
+                    id: cache.identify({ __typename: 'User', id: variables.userId }),
+                    fields: {
+                        isFollowing: () => false,
+                        followersCount: (count: number = 0) => Math.max(0, count - 1),
+                    }
+                });
+
+                // 2. Update 'me' user's following count
+                if (me) {
+                    cache.modify({
+                        id: cache.identify({ __typename: 'User', id: me.id }),
+                        fields: {
+                            followingCount: (count: number = 0) => Math.max(0, count - 1),
+                        }
+                    });
+                }
+            }
+        }
+    });
 
     return { followUser, following, followError, unfollowUser, unfollowing, unfollowError };
 };
@@ -239,7 +288,7 @@ export const useUserMutations = () => {
  * Hook for FCM token management.
  */
 export const useFcmToken = () => {
-    const { me } = useMe(); // We need to know if user is logged in
+    const { me } = useMe();
     const [registerToken, { loading: registering, error: registerError }] = useMutation<
         { registerFcmToken: boolean },
         { token: string }
@@ -250,39 +299,102 @@ export const useFcmToken = () => {
         { token: string }
     >(buildUnregisterFcmTokenMutation());
 
-    useEffect(() => {
-        if (typeof window === "undefined" || !me) return;
+    const LAST_FCM_TOKEN_KEY = "pms_last_fcm_token";
 
-        const syncToken = async () => {
-            try {
-                const { getMessaging, getToken } = await import("firebase/messaging");
-                const { default: firebaseApp } = await import("@/lib/firebase");
+    const syncToken = async () => {
+        if (typeof window === "undefined") return;
 
-                // Check if supported
-                const messaging = getMessaging(firebaseApp);
+        try {
+            const { getMessaging, getToken, isSupported } = await import("firebase/messaging");
+            const { default: firebaseApp } = await import("@/lib/firebase");
 
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    const currentToken = await getToken(messaging, {
-                        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY // Optional if set in firebase config, but good to have
-                    });
+            const supported = await isSupported();
+            if (!supported) return;
 
-                    if (currentToken) {
-                        // Ideally we check if it changed, but register should be idempotent or cheap
+            const messaging = getMessaging(firebaseApp);
+            const permission = Notification.permission;
+
+            if (permission === 'granted') {
+                const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+
+                // Register Service Worker explicitly to avoid 404/MIME issues with localization middleware
+                let swRegistration = undefined;
+                try {
+                    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                } catch {
+                    // console.warn("[useFcmToken] SW registration failed, letting getToken handle it:", err);
+                }
+
+                // Add timeout to prevent hangs
+                const tokenPromise = getToken(messaging, {
+                    vapidKey,
+                    serviceWorkerRegistration: swRegistration
+                });
+
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Timeout")), 10000)
+                );
+
+                const currentToken = await Promise.race([tokenPromise, timeoutPromise]) as string | null;
+
+                if (currentToken) {
+                    const lastToken = localStorage.getItem(LAST_FCM_TOKEN_KEY);
+
+                    if (currentToken !== lastToken) {
+                        console.log("[useFcmToken] Registering new token");
                         await registerToken({ variables: { token: currentToken } });
-
-                        // Store in local storage to avoid re-syncing? 
-                        // The user might have logged out and back in. 
-                        // API should handle "already exists".
+                        localStorage.setItem(LAST_FCM_TOKEN_KEY, currentToken);
+                    } else {
+                        // console.log("[useFcmToken] Token already synced");
                     }
                 }
-            } catch (error) {
-                console.warn("FCM Token sync failed or not supported:", error);
             }
-        };
+        } catch (error) {
+            console.warn("[useFcmToken] Sync failed:", error);
+        }
+    };
+
+    // Auto-sync on mount and refresh periodically
+    useEffect(() => {
+        if (!me) return;
 
         syncToken();
+
+        // Periodic refresh (e.g., every 24h) to ensure token freshness
+        const interval = setInterval(() => {
+            syncToken();
+        }, 24 * 60 * 60 * 1000);
+
+        return () => clearInterval(interval);
     }, [me, registerToken]);
+
+    const requestPermission = async () => {
+        if (typeof window === "undefined") return false;
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                await syncToken();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Error requesting permission:", error);
+            return false;
+        }
+    };
+
+    // Helper to unregister token on logout
+    const handleLogout = async () => {
+        const token = localStorage.getItem(LAST_FCM_TOKEN_KEY);
+        if (token) {
+            try {
+                await unregisterToken({ variables: { token } });
+                localStorage.removeItem(LAST_FCM_TOKEN_KEY);
+            } catch (e) {
+                console.warn("Failed to unregister token on logout:", e);
+            }
+        }
+    };
 
     return {
         registerToken,
@@ -291,5 +403,8 @@ export const useFcmToken = () => {
         unregisterToken,
         unregistering,
         unregisterError,
+        requestPermission,
+        permissionState: typeof window !== "undefined" ? Notification.permission : 'default',
+        handleLogout // Expose this for Logout buttons
     };
 };

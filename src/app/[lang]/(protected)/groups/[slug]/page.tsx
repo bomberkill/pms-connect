@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useAuthObserver } from "@/hooks/use-auth";
+import { useMe } from "@/hooks/useData/useUserData";
 import CreatePostComposerMobile from "@/components/CreatePostComposerMobile";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useGroupPosts } from "@/hooks/useData/usePostData";
@@ -72,13 +72,13 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
     const { group, loading, error } = useGroup(slug);
     const { leaveGroup } = useGroupMutations();
     const router = useRouter();
-    const { firebaseUid } = useAuthObserver();
+    const { me } = useMe();
 
     // Fetch group members using new GroupMembership collection (Moved up for Rules of Hooks)
     const { members, membersCount, loading: membersLoading } = useGroupMembers(group?._id || "");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isMember = members.some((m: GroupMember) => m.user.id === firebaseUid || (m.user as any)._id === firebaseUid);
+    const isMember = members.some((m: GroupMember) => m.user.id === me?.id || (m.user as any)._id === me?.id);
 
     const handleLeave = async () => {
         if (!group) return;

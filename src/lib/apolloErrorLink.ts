@@ -22,7 +22,8 @@ export const errorLink = onError(({ graphQLErrors, networkError }) => {
 
             // Handle generic UNAUTHENTICATED error
             if (extensions?.code === 'UNAUTHENTICATED') {
-                handleAuthError();
+                // handleAuthError();
+                console.warn('Auth error (UNAUTHENTICATED) detected');
                 return;
             }
 
@@ -38,7 +39,8 @@ export const errorLink = onError(({ graphQLErrors, networkError }) => {
                     // Try to refresh token if possible (client-side)
                     // For now, simpliest approach is to force logout/login to get fresh token
                     // In a more advanced setup we would try `getIdToken(true)` and retry request
-                    handleAuthError();
+                    // handleAuthError();
+                    console.warn('Auth error (Token Expired) detected');
                 }
                 return;
             }
@@ -55,23 +57,17 @@ export const errorLink = onError(({ graphQLErrors, networkError }) => {
         console.error(`[Network error]: ${networkError}`);
         // Avoid spamming "Network Error" when the app was just in the background (common on mobile wake-up)
         if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-            notify("error", dict.globalErrors.network, {
-                message: dict.globalErrors.networkDescription,
-                duration: 5000,
-            });
+            // notify("error", dict.globalErrors.network, {
+            //     message: dict.globalErrors.networkDescription,
+            //     duration: 5000,
+            // });
+            console.warn('[Network Error] Suppressed notification for better UX:', networkError);
         }
     }
 });
 
-function handleAuthError() {
-    if (typeof window !== 'undefined') {
-        const pathname = window.location.pathname;
-        const locale = pathname.startsWith('/en') ? 'en' : 'fr';
-
-        // Clear potential stale data
-        // localStorage.removeItem('token'); // if used
-
-        // Redirect to login
-        window.location.href = `/${locale}/login?expired=true`;
-    }
-}
+// function handleAuthError() {
+//     if (typeof window !== 'undefined') {
+//         console.warn('Auth error detected (401). Redirect disabled manually.');
+//     }
+// }

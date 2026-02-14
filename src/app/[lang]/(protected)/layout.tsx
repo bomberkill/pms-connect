@@ -57,7 +57,7 @@ export default function ProtectedLayout({
       <AppSidebar />
       <SidebarInset className="relative overflow-hidden">
         <Header />
-        <main className={cn("bg-sidebar", isMobile && "pt-14")}>{children}</main>
+        <main className={cn("bg-sidebar pb-20 md:pb-0", isMobile && "pt-14")}>{children}</main>
       </SidebarInset>
       <SuggestionsSidebar />
     </SidebarProvider>

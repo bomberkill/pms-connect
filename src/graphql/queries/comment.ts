@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
 
-const COMMENT_FIELDS = `
+export const COMMENT_FIELDS = `
   id
   content
   createdAt

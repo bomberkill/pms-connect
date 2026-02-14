@@ -1,8 +1,6 @@
 import { buildAddBookmarkMutation, buildRemoveBookmarkMutation, buildGetMyBookmarksQuery } from "@/graphql/queries/bookmark";
 import { BookmarkableTypeGQL, Bookmark } from "@/types/Bookmark";
-import { Comment } from "@/types/Comment";
-import { Post } from "@/types/Post";
-import { useMutation, useQuery, gql } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 
 // =============================================================================
 // == BOOKMARKS
@@ -39,31 +37,14 @@ export const useBookmarkActions = (itemId: string, itemType: 'Post' | 'Comment')
     variables: { itemId, itemType: itemType === 'Post' ? BookmarkableTypeGQL.POST : BookmarkableTypeGQL.COMMENT },
     optimisticResponse: {
       addBookmark: true
-      // addBookmark: {
-      //   __typename: 'Bookmark',
-      //   id: 'temp-bookmark-id',
-      //   item: { id: itemId },
-      //   createdAt: new Date().toISOString(),
-      // }, // Using 'any' because item is a union and we only need the id for optimistic update
     },
     update: (cache) => {
-      const id = `${itemType}:${itemId}`;
-      const fragment = gql`
-        fragment ItemBookmark on ${itemType} {
-          isBookmarked
-        }
-      `;
-      const item = cache.readFragment<Post | Comment>({ id, fragment });
-      if (item) {
-        cache.writeFragment({
-          id,
-          fragment,
-          data: {
-            ...item,
-            isBookmarked: true,
-          },
-        });
-      }
+      cache.modify({
+        id: cache.identify({ __typename: itemType, id: itemId }),
+        fields: {
+          isBookmarked: () => true,
+        },
+      });
     },
   });
 
@@ -76,23 +57,12 @@ export const useBookmarkActions = (itemId: string, itemType: 'Post' | 'Comment')
       removeBookmark: true,
     },
     update: (cache) => {
-      const id = `${itemType}:${itemId}`;
-      const fragment = gql`
-        fragment ItemBookmark on ${itemType} {
-          isBookmarked
-        }
-      `;
-      const item = cache.readFragment<Post | Comment>({ id, fragment });
-      if (item) {
-        cache.writeFragment({
-          id,
-          fragment,
-          data: {
-            ...item,
-            isBookmarked: false,
-          },
-        });
-      }
+      cache.modify({
+        id: cache.identify({ __typename: itemType, id: itemId }),
+        fields: {
+          isBookmarked: () => false,
+        },
+      });
     },
   });
 

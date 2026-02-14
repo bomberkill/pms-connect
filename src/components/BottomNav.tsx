@@ -9,17 +9,23 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSmartFeedNavigation } from "@/hooks/useSmartFeedNavigation";
 
+import { useScrollDirection } from "@/hooks/use-scroll-direction";
+
 export function BottomNav() {
     const dict = useDictionary();
     const pathname = usePathname();
     const isMobile = useIsMobile();
     const navItems = getNavItems(dict, pathname || "/");
     const { navigateToFeed } = useSmartFeedNavigation("/");
+    const scrollDirection = useScrollDirection();
 
     if (!isMobile) return null;
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t pb-[env(safe-area-inset-bottom)]">
+        <nav className={cn(
+            "fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t pb-[env(safe-area-inset-bottom)] transition-transform duration-300",
+            scrollDirection === "down" ? "translate-y-full" : "translate-y-0"
+        )}>
             <div className="flex items-center justify-around h-16 px-2">
                 {navItems.slice(0, 5).map((item) => { // Limit to 5 items for mobile bottom bar
                     const Icon = item.icon;

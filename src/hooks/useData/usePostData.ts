@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation, gql } from '@apollo/client';
 import { useState, useEffect } from 'react';
 import {
   buildGetFeedQuery,
@@ -9,8 +9,10 @@ import {
   buildUpdatePostMutation,
   buildRemovePostMutation,
   buildGetNewFeedItemsCountQuery,
+  POST_FIELDS,
 } from '@/graphql/queries/index';
-import { Post, CreatePostInput, UpdatePostInput } from '@/types/Post';
+import { Post, CreatePostInput, UpdatePostInput, PostStatus } from '@/types/Post';
+import { useMe } from './useUserData';
 
 // =============================================================================
 // == FEED & POSTS
@@ -36,8 +38,21 @@ export const useFeed = (options: { limit?: number; enablePolling?: boolean } = {
 
   const posts: Post[] = data?.getFeed || [];
 
+  const { me } = useMe();
+
   // Track when user last viewed the feed (for new posts detection)
   const [lastViewedAt, setLastViewedAt] = useState<Date>(new Date());
+
+  // Restore lastViewedAt from localStorage when user is loaded
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const key = me ? `feed_last_viewed_${me.id}` : 'feed_last_viewed';
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        setLastViewedAt(new Date(saved));
+      }
+    }
+  }, [me]);
 
   // Prefetch state - stores posts fetched in background
   const [prefetchedPosts, setPrefetchedPosts] = useState<Post[] | null>(null);
@@ -94,7 +109,13 @@ export const useFeed = (options: { limit?: number; enablePolling?: boolean } = {
    * Shows loading state only if prefetch hasn't completed yet
    */
   const loadNewPosts = async () => {
-    setLastViewedAt(new Date());
+    const now = new Date();
+    setLastViewedAt(now);
+
+    if (typeof window !== 'undefined') {
+      const key = me ? `feed_last_viewed_${me.id}` : 'feed_last_viewed';
+      localStorage.setItem(key, now.toISOString());
+    }
 
     // If we have prefetched posts, they're already in Apollo cache
     // No need to refetch - just clear state and let cache update UI
@@ -150,10 +171,54 @@ export const usePost = (postId: string, isComment?: boolean) => {
  * Hook that provides post mutation actions (create, update, remove).
  */
 export const usePostMutations = () => {
+  const { me } = useMe();
   const [createPost, { loading: creating, error: createError }] = useMutation<
     { createPost: Post }, { createPostInput: CreatePostInput }
   >(buildCreatePostMutation(), {
-    // refetchQueries: ['GetFeed'],
+    optimisticResponse: (variables) => {
+      // Need user for optimistic response
+      if (!me) return undefined as unknown as { createPost: Post };
+
+      return {
+        createPost: {
+          __typename: 'Post',
+          id: `temp-${Date.now()}`,
+          content: variables.createPostInput.content,
+          media: variables.createPostInput.media || [],
+          author: me,
+          likesCount: 0,
+          commentsCount: 0,
+          viewsCount: 0,
+          sharesCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          isLiked: false,
+          isBookmarked: false,
+          status: PostStatus.PUBLISHED,
+        } as Post
+      };
+    },
+    update(cache, { data }) {
+      if (!data?.createPost) return;
+
+      cache.modify({
+        fields: {
+          getFeed(existingRefs = []) {
+            const newPostRef = cache.writeFragment({
+              data: data.createPost,
+              fragment: gql`
+                fragment NewPost on Post {
+                  ${POST_FIELDS}
+                }
+              `
+            });
+            return [newPostRef, ...existingRefs];
+          },
+          // Also update user's profile posts if needed, or rely on refetch
+        }
+      });
+    },
+    // refetchQueries: ['GetFeed'], // Disable refetch in favor of optimistic UI
   });
 
   const [updatePost, { loading: updating, error: updateError }] = useMutation<
@@ -163,7 +228,16 @@ export const usePostMutations = () => {
   const [removePost, { loading: removing, error: removeError }] = useMutation<
     { removePost: boolean }, { id: string }
   >(buildRemovePostMutation(), {
-    // refetchQueries: ['GetFeed'],
+    optimisticResponse: {
+      removePost: true
+    },
+    update(cache, { data }, { variables }) {
+      if (data?.removePost && variables?.id) {
+        cache.evict({ id: cache.identify({ __typename: 'Post', id: variables.id }) });
+        cache.gc();
+      }
+    }
+    // refetchQueries: ['GetFeed'], // Disable refetch
   });
 
   return { createPost, creating, createError, updatePost, updating, updateError, removePost, removing, removeError };

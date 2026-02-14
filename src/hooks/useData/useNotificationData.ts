@@ -3,6 +3,7 @@ import {
     buildGetMyNotificationsQuery,
     buildMarkNotificationsAsReadMutation,
     buildNotificationAddedSubscription,
+    buildUnreadNotificationsCountQuery,
 } from '@/graphql/queries/index';
 import { Notification } from '@/types/Notification';
 
@@ -42,7 +43,32 @@ export const useNotificationActions = () => {
     const [markAsRead, { loading: marking, error: markError }] = useMutation<
         { markNotificationsAsRead: boolean },
         { notificationIds: string[] }
-    >(buildMarkNotificationsAsReadMutation());
+    >(buildMarkNotificationsAsReadMutation(), {
+        optimisticResponse: {
+            markNotificationsAsRead: true
+        },
+        update(cache, { data }, { variables }) {
+            if (data?.markNotificationsAsRead && variables?.notificationIds) {
+                variables.notificationIds.forEach(id => {
+                    cache.modify({
+                        id: cache.identify({ __typename: 'Notification', id }),
+                        fields: {
+                            read: () => true
+                        }
+                    });
+                });
+
+                // Update unread count in cache
+                cache.modify({
+                    fields: {
+                        unreadNotificationsCount(existingCount = 0) {
+                            return Math.max(0, existingCount - variables.notificationIds.length);
+                        }
+                    }
+                });
+            }
+        }
+    });
 
     return {
         markAsRead,
@@ -63,5 +89,36 @@ export const useNotificationSubscription = () => {
         notification: data?.notificationAdded,
         loading,
         error,
+    };
+};
+
+/**
+ * Hook to fetch and track unread notifications count.
+ */
+export const useUnreadNotificationCount = () => {
+    const { data, loading, error, subscribeToMore } = useQuery<{ unreadNotificationsCount: number }>(
+        buildUnreadNotificationsCountQuery(),
+        {
+            fetchPolicy: 'cache-first',
+        }
+    );
+
+    return {
+        unreadCount: data?.unreadNotificationsCount || 0,
+        loading,
+        error,
+        subscribeToNewNotifications: () => {
+            return subscribeToMore({
+                document: buildNotificationAddedSubscription(),
+                updateQuery: (prev, { subscriptionData }) => {
+                    if (!subscriptionData.data) return prev;
+                    // Increment count
+                    return {
+                        ...prev,
+                        unreadNotificationsCount: (prev.unreadNotificationsCount || 0) + 1
+                    };
+                }
+            });
+        }
     };
 };

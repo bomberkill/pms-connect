@@ -416,7 +416,24 @@
     "leftSuccess": "Vous avez quitté le groupe.",
     "leftError": "Échec lors de la tentative de quitter le groupe.",
     "members": "Membres du groupe",
-    "privacy": "Groupe"
+    "privacy": "Groupe",
+    "form": {
+      "name": "Nom",
+      "namePlaceholder": "ex: Héros React",
+      "description": "Description",
+      "descriptionPlaceholder": "De quoi parle ce groupe ?",
+      "privacy": "Confidentialité",
+      "selectPrivacy": "Sélectionner la confidentialité",
+      "public": "Public",
+      "private": "Privé",
+      "publicDesc": "Les groupes publics sont visibles par tous.",
+      "privateDesc": "Les groupes privés nécessitent une approbation pour rejoindre.",
+      "createBtn": "Créer le groupe",
+      "createSuccess": "Groupe créé avec succès !",
+      "createError": "Échec de la création du groupe.",
+      "dialogTitle": "Créer un groupe",
+      "dialogDesc": "Créez une nouvelle communauté pour vous connecter."
+    }
   },
   "settings": {
     "title": "Paramètres",
@@ -446,7 +463,15 @@
       "managedVia": "Géré via \"Modifier le profil\" sur votre page de profil.",
       "emailAddress": "Adresse e-mail",
       "changePassword": "Changer le mot de passe",
-      "resetEmailSent": "Nous vous enverrons un e-mail pour le réinitialiser."
+      "resetEmailSent": "Nous vous enverrons un e-mail pour le réinitialiser.",
+      "pushNotifications": "Notifications Push",
+      "manageNotifications": "Gérer les notifications push",
+      "notificationsEnabled": "Vous recevez les notifications.",
+      "notificationsDisabled": "Activez les notifications pour rester informé.",
+      "enable": "Activer",
+      "enabled": "Activé",
+      "deniedError": "Notifications refusées. Veuillez les activer dans les paramètres du navigateur.",
+      "enabledSuccess": "Notifications activées !"
     }
   },
   "post": {

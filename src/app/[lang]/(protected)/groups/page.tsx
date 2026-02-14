@@ -25,7 +25,7 @@ export default function GroupsPage() {
 
     return (
         <div className="container max-w-4xl mx-auto p-4 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">{dict.groups.title}</h1>
                     <p className="text-muted-foreground">
@@ -50,7 +50,6 @@ export default function GroupsPage() {
                     <p className="text-muted-foreground mb-4">
                         {dict.groups.noGroupsDesc}
                     </p>
-                    <CreateGroupDialog />
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

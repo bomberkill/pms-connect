@@ -13,6 +13,7 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { useFollowActions, useUsers, useMe } from "@/hooks/useData/index";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { useIsTablet } from "@/hooks/use-mobile";
+import { NotificationBadge } from "./NotificationBadge";
 
 // Un composant réutilisable pour afficher une suggestion
 export const SuggestionItem = ({
@@ -66,8 +67,8 @@ export function SuggestionsSidebar({ ...props }: React.ComponentProps<typeof Sid
       icon: Bell,
       onClick: () => {
         router.push("/notifications")
-      }
-
+      },
+      hasBadge: true // Mark for badge logic
     },
     {
       icon: Settings,
@@ -95,9 +96,14 @@ export function SuggestionsSidebar({ ...props }: React.ComponentProps<typeof Sid
                 )}
                 <div className="flex items-center gap-1 justify-center">
                   {headerButtons.map((button, index) => (
-                    <SidebarMenuButton className="border-border rounded-full border shadow-sm hover:bg-muted/80 transition-colors h-8 w-8 p-0 flex items-center justify-center" key={index} onClick={button.onClick}>
-                      <button.icon className="size-4" />
-                    </SidebarMenuButton>
+                    <div key={index} className="relative">
+                      <SidebarMenuButton className="border-border rounded-full border shadow-sm hover:bg-muted/80 transition-colors h-8 w-8 p-0 flex items-center justify-center" onClick={button.onClick}>
+                        <button.icon className="size-4" />
+                      </SidebarMenuButton>
+                      {button.hasBadge && (
+                        <NotificationBadge className="absolute -top-1.5 -right-1.5 z-10 pointer-events-none" />
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

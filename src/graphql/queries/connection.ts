@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
 
-const CONNECTION_REQUEST_FIELDS = `
+export const CONNECTION_REQUEST_FIELDS = `
   id
   status
   createdAt
