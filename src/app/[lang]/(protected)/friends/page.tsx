@@ -23,7 +23,7 @@ export default function FriendsPage() {
     if (updatedRequest) {
       refetchRequests();
     }
-  }, [updatedRequest]);
+  }, [updatedRequest, refetchRequests]);
 
   const loading = loadingRequests || loadingSuggestions || loadingConnections;
 

@@ -14,6 +14,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useMe } from "@/hooks/useData/useUserData";
@@ -119,7 +120,7 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
             {/* Header / Cover */}
             <div className="relative h-48 md:h-64 bg-muted rounded-b-xl overflow-hidden mb-12">
                 {group.coverImageUrl ? (
-                    <img src={group.coverImageUrl} alt="Cover" className="w-full h-full object-cover" />
+                    <Image src={group.coverImageUrl} alt="Cover" fill className="object-cover" />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
                 )}

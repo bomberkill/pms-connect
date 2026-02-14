@@ -1,6 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import Image from "next/image";
 
 interface EmptyStateProps {
     icon?: LucideIcon;
@@ -24,7 +25,7 @@ export function EmptyState({
     return (
         <div className={cn("flex flex-col items-center justify-center text-center p-8 bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/25", className)}>
             {imageSrc ? (
-                <img src={imageSrc} alt="" className="w-48 h-48 mb-4 object-contain opacity-80" />
+                <Image src={imageSrc} alt="" width={192} height={192} className="mb-4 object-contain opacity-80" />
             ) : Icon ? (
                 <div className="bg-background p-4 rounded-full mb-4 shadow-sm ring-1 ring-border">
                     <Icon className="w-8 h-8 text-muted-foreground" />

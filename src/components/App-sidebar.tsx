@@ -108,7 +108,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
     ],
-  }), [dict])
+  }), [dict, pathname])
   return (
     <Sidebar className="bg-sidebar border-r border-sidebar-border" side="left" variant="sidebar" {...props}>
       <SidebarHeader>

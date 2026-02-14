@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MediaType } from "@/types/Post";
+import Image from "next/image";
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { MediaItem } from "@/types/Post";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -173,15 +174,20 @@ export function PostMedia({ media }: { media?: MediaItem[] }) {
                   )}
 
                   {selected.type === MediaType.IMAGE && (
-                    <img
-                      src={selected.url}
-                      alt="Full media"
-                      onClick={(e) => e.stopPropagation()}
+                    <div
                       className={cn(
-                        "object-contain",
-                        isMobile ? "max-h-full max-w-full" : "max-h-[90vh] max-w-[90vw]"
+                        "relative",
+                        isMobile ? "w-full h-full" : "w-[90vw] h-[90vh]"
                       )}
-                    />
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Image
+                        src={selected.url}
+                        alt="Full media"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
                   )}
 
                   {selected.type === MediaType.VIDEO && (
@@ -394,12 +400,17 @@ function MediaPreview({
   const [duration, setDuration] = useState<number | null>(null);
   if (media.type === MediaType.IMAGE)
     return (
-      <img
-        src={media.url}
+      <div
+        className="relative w-full h-60 rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition"
         onClick={onClick}
-        alt={dict.common.preview}
-        className="w-full h-60 object-cover rounded-md cursor-pointer hover:opacity-90 transition"
-      />
+      >
+        <Image
+          src={media.url}
+          alt={dict.common.preview}
+          fill
+          className="object-cover"
+        />
+      </div>
     );
 
   if (media.type === MediaType.VIDEO)
@@ -422,7 +433,7 @@ function MediaPreview({
 
         {duration && (
           <span className="absolute bottom-2 left-2 text-xs bg-black/60 text-white px-2 py-1 rounded">
-            {formatTime(duration)}
+            {formatTime(duration || 0)}
           </span>
         )}
       </div>

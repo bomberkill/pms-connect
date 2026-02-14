@@ -117,12 +117,14 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
     },
   });
 
+  const { setFieldValue, setFieldTouched } = formik;
+
   React.useEffect(() => {
-    formik.setFieldValue("mediaFiles", mediaFiles);
+    setFieldValue("mediaFiles", mediaFiles);
     if (mediaFiles.length > 0) {
-      formik.setFieldTouched("mediaFiles", true);
+      setFieldTouched("mediaFiles", true);
     }
-  }, [mediaFiles]);
+  }, [mediaFiles, setFieldValue, setFieldTouched]);
 
   const disabled = useMemo(() => isCreating || creating || !formik.isValid || !formik.dirty, [creating, formik.isValid, formik.dirty, isCreating]);
 

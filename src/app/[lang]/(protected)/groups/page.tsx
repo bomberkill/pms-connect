@@ -6,6 +6,7 @@ import { useGroups } from "@/hooks/useData/useGroups";
 import { Button } from "@/components/ui/button";
 import { Plus, Users } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupCardSkeletonList } from "@/components/skeletons/GroupCardSkeleton";
@@ -58,7 +59,7 @@ export default function GroupsPage() {
                             <Card className="h-full hover:shadow-md transition-shadow cursor-pointer overflow-hidden group">
                                 <div className="h-24 bg-muted relative">
                                     {group.coverImageUrl ? (
-                                        <img src={group.coverImageUrl} alt={group.name} className="w-full h-full object-cover" />
+                                        <Image src={group.coverImageUrl} alt={group.name} fill className="object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500" />
                                     )}

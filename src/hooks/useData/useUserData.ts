@@ -19,7 +19,7 @@ import {
 import { CheckUserExistsResponse, FollowsUpdated, User, UpdateUserInput } from '@/types/User';
 // import { useAppSelector, useAppDispatch } from '@/lib/hooks';
 // import { setUser } from '@/redux/slices/userSlice';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 // =============================================================================
 // == USER & SUGGESTIONS
@@ -301,7 +301,7 @@ export const useFcmToken = () => {
 
     const LAST_FCM_TOKEN_KEY = "pms_last_fcm_token";
 
-    const syncToken = async () => {
+    const syncToken = useCallback(async () => {
         if (typeof window === "undefined") return;
 
         try {
@@ -352,7 +352,7 @@ export const useFcmToken = () => {
         } catch (error) {
             console.warn("[useFcmToken] Sync failed:", error);
         }
-    };
+    }, [registerToken]);
 
     // Auto-sync on mount and refresh periodically
     useEffect(() => {
@@ -366,7 +366,7 @@ export const useFcmToken = () => {
         }, 24 * 60 * 60 * 1000);
 
         return () => clearInterval(interval);
-    }, [me, registerToken]);
+    }, [me, syncToken]);
 
     const requestPermission = async () => {
         if (typeof window === "undefined") return false;

@@ -222,7 +222,7 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
         return;
       }
     }
-  }, [followsUpdated])
+  }, [followsUpdated, authUser?.id, refetchMe])
 
   useEffect(() => {
     if (updatedRequest) {
