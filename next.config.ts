@@ -8,6 +8,10 @@ const baseConfig: NextConfig = {
   compiler: {
     // removeConsole: process.env.NODE_ENV !== "development",
   },
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    return config;
+  },
   images: {
     remotePatterns: [
       {
