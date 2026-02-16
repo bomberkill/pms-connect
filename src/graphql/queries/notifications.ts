@@ -69,3 +69,14 @@ export const buildNotificationAddedSubscription = (meta?: { fields?: string }) =
     }
   `;
 };
+/**
+ * Builds a GraphQL query for fetching the unread notifications count.
+ * @returns A gql object.
+ */
+export const buildUnreadNotificationsCountQuery = () => {
+  return gql`
+    query UnreadNotificationsCount {
+      unreadNotificationsCount
+    }
+  `;
+};

@@ -20,6 +20,7 @@ import CreatePostComposer from "./CreatePostComposer";
 import CreatePostComposerMobile from "./CreatePostComposerMobile";
 import { useMe } from "@/hooks/useData/useUserData";
 import { BottomNav } from "./BottomNav";
+import { NotificationBadge } from "./NotificationBadge";
 // import { locales } from "@/middleware";
 
 export function useCleanPathname() {
@@ -34,6 +35,7 @@ export function useCleanPathname() {
   }
   return pathname;
 }
+
 export default function Header() {
   const dict = useDictionary()
   const isMobile = useIsMobile();
@@ -42,7 +44,10 @@ export default function Header() {
   const { me: user } = useMe();
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const pathname = usePathname();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
+
+  const shouldShowFab = !pathname?.includes("/post/") && !pathname?.includes("/comment/") && !pathname?.includes("/messages");
 
   const handleLogout = async () => {
     if (!user) return;
@@ -75,7 +80,7 @@ export default function Header() {
               </Link>
               <Link href="/notifications" className="text-muted-foreground hover:text-primary relative">
                 <Bell className="size-6" />
-                {/* Badge placeholder */}
+                <NotificationBadge className="absolute -top-1.5 -right-1.5" />
               </Link>
               <Drawer>
                 <DrawerTrigger asChild>
@@ -133,20 +138,22 @@ export default function Header() {
         <BottomNav />
 
         {/* Floating Action Button pour ajouter un post */}
-        <div className="fixed bottom-20 right-4 z-40 md:hidden">
-          <Drawer open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-            <DrawerTrigger asChild>
-              <Button className="rounded-full w-14 h-14 shadow-lg bg-primary text-primary-foreground hover:scale-105 transition-transform duration-200 active:scale-95">
-                <Plus className="h-6 w-6" />
-                <span className="sr-only">{dict.header.addNewPost}</span>
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent>
-              <DrawerTitle className="sr-only">{dict.header.addNewPost}</DrawerTitle>
-              <CreatePostComposerMobile className="w-full max-h-[80vh] overflow-y-auto" onCreated={() => setIsCreatePostOpen(false)} />
-            </DrawerContent>
-          </Drawer>
-        </div>
+        {shouldShowFab && (
+          <div className="fixed bottom-20 right-4 z-40 md:hidden">
+            <Drawer open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+              <DrawerTrigger asChild>
+                <Button className="rounded-full w-14 h-14 shadow-lg bg-primary text-primary-foreground hover:scale-105 transition-transform duration-200 active:scale-95">
+                  <Plus className="h-6 w-6" />
+                  <span className="sr-only">{dict.header.addNewPost}</span>
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerTitle className="sr-only">{dict.header.addNewPost}</DrawerTitle>
+                <CreatePostComposerMobile className="w-full max-h-[80vh] overflow-y-auto" onCreated={() => setIsCreatePostOpen(false)} />
+              </DrawerContent>
+            </Drawer>
+          </div>
+        )}
         {/* <>
         </> */}
       </div>

@@ -6,7 +6,7 @@ const baseConfig: NextConfig = {
   //   turbopack: {},
   // },
   compiler: {
-    removeConsole: process.env.NODE_ENV !== "development",
+    // removeConsole: process.env.NODE_ENV !== "development",
   },
   images: {
     remotePatterns: [

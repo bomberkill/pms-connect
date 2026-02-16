@@ -427,6 +427,7 @@ export const useRegisterForm = () => {
             }
         });
         return () => unsubscribe();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // State Reset Effect

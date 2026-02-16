@@ -13,7 +13,9 @@ import { useRef } from "react";
 // type Dictionary = Awaited<ReturnType<typeof getDictionary>>;
 
 function FcmTokenManager() {
+  console.log("FcmTokenManager");
   useFcmToken();
+  console.log("FcmTokenManager end");
   return null;
 }
 

@@ -1,11 +1,12 @@
-import { useQuery, useMutation, useSubscription } from '@apollo/client';
+import { useQuery, useMutation, useSubscription, gql } from '@apollo/client';
 import {
   buildGetCommentsByPostQuery,
   buildAddCommentMutation,
   buildRemoveCommentMutation,
   buildGetCommentRepliesQuery,
   buildCommentAddedSubscription,
-  buildGetCommentByIdQuery
+  buildGetCommentByIdQuery,
+  COMMENT_FIELDS
 } from '@/graphql/queries/index';
 import { Comment, CreateCommentInput } from '@/types/Comment';
 
@@ -48,6 +49,7 @@ export const useComment = (commentId: string, isComment?: boolean) => {
     buildGetCommentByIdQuery(),
     {
       variables: { id: commentId },
+      fetchPolicy: 'cache-and-network',
       skip: !commentId || commentId.trim() === '' || !isComment,
     }
   );
@@ -55,18 +57,47 @@ export const useComment = (commentId: string, isComment?: boolean) => {
   return { comment: data?.getCommentById, loading, error };
 }
 
+import { useMe } from './useUserData';
+import { CommentStatus } from '@/types/Comment';
+import { Post } from '@/types/Post';
+
 /**
  * Hook that provides comment mutation actions (add, remove) with optimized cache updates.
  */
 export const useCommentActions = () => {
+  const { me } = useMe();
   const [addComment, { loading: adding, error: addError }] = useMutation<
     { addComment: Comment }, { createCommentInput: CreateCommentInput }
   >(buildAddCommentMutation(), {
+    optimisticResponse: (variables) => {
+      const { createCommentInput } = variables;
+      if (!me) return undefined as unknown as { addComment: Comment }; // Fix TS error for undefined
+
+      return {
+        addComment: {
+          __typename: 'Comment',
+          id: `temp-${Date.now()}`,
+          content: createCommentInput.content,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          likesCount: 0,
+          commentsCount: 0,
+          status: CommentStatus.VISIBLE,
+          author: me,
+          post: { __typename: 'Post', id: createCommentInput.postId } as unknown as Post,
+          parent: createCommentInput.parentId ? { __typename: 'Comment', id: createCommentInput.parentId } as unknown as Comment : null,
+          media: createCommentInput.media || [],
+          isLiked: false,
+          isBookmarked: false,
+        } as Comment
+      };
+    },
     update(cache, { data }, { variables }) {
       if (!data?.addComment) return;
 
       const newComment = data.addComment;
-      const postId = newComment.post?.id || newComment.post?.id;
+      // Use postId from variables as optimistic response might have partial post object
+      const postId = (variables?.createCommentInput as CreateCommentInput)?.postId;
       const parentId = (variables?.createCommentInput as CreateCommentInput)?.parentId;
 
       // Update post's comment count
@@ -80,44 +111,38 @@ export const useCommentActions = () => {
 
         // Add comment to the comments list if it's a top-level comment
         if (!parentId) {
-          try {
-            const existingComments = cache.readQuery<{ getCommentsByPost: Comment[] }>({
-              query: buildGetCommentsByPostQuery(),
-              variables: { postId, limit: 10, skip: 0 },
-            });
-
-            if (existingComments) {
-              cache.writeQuery({
-                query: buildGetCommentsByPostQuery(),
-                variables: { postId, limit: 10, skip: 0 },
-                data: {
-                  getCommentsByPost: [newComment, ...existingComments.getCommentsByPost],
-                },
-              });
+          cache.modify({
+            fields: {
+              getCommentsByPost(existingComments = []) {
+                const newCommentRef = cache.writeFragment({
+                  data: newComment,
+                  fragment: gql`
+                    fragment NewComment on Comment {
+                      ${COMMENT_FIELDS}
+                    }
+                  `
+                });
+                return [newCommentRef, ...existingComments];
+              }
             }
-          } catch {
-            // Query might not be in cache yet, that's okay
-          }
+          });
         } else {
           // Add reply to the replies list
-          try {
-            const existingReplies = cache.readQuery<{ getCommentReplies: Comment[] }>({
-              query: buildGetCommentRepliesQuery(),
-              variables: { parentId, limit: 10, skip: 0 },
-            });
-
-            if (existingReplies) {
-              cache.writeQuery({
-                query: buildGetCommentRepliesQuery(),
-                variables: { parentId, limit: 10, skip: 0 },
-                data: {
-                  getCommentReplies: [newComment, ...existingReplies.getCommentReplies],
-                },
-              });
+          cache.modify({
+            fields: {
+              getCommentReplies(existingReplies = []) {
+                const newCommentRef = cache.writeFragment({
+                  data: newComment,
+                  fragment: gql`
+                    fragment NewReply on Comment {
+                      ${COMMENT_FIELDS}
+                    }
+                  `
+                });
+                return [newCommentRef, ...existingReplies];
+              }
             }
-          } catch {
-            // Query might not be in cache yet, that's okay
-          }
+          });
         }
       }
     },
@@ -125,7 +150,15 @@ export const useCommentActions = () => {
 
   const [removeComment, { loading: removing, error: removeError }] = useMutation<
     { removeComment: boolean }, { commentId: string }
-  >(buildRemoveCommentMutation());
+  >(buildRemoveCommentMutation(), {
+    // TODO: Add optimistic response for removal if needed (requires finding parent ID/post ID to decrement counts)
+    update(cache, { data }, { variables }) {
+      if (data?.removeComment && variables?.commentId) {
+        cache.evict({ id: `Comment:${variables.commentId}` });
+        cache.gc();
+      }
+    }
+  });
 
   return { addComment, adding, addError, removeComment, removing, removeError };
 };

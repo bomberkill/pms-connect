@@ -33,6 +33,9 @@ import { useDictionary } from "@/hooks/use-dictionary"
 import { logoutUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
 import { getUserDisplayName } from "@/lib/user-utils"
+import { useFcmToken } from "@/hooks/useData/index"
+import { useUnreadNotificationCount } from "@/hooks/useData/useNotificationData"
+import { useEffect } from "react"
 
 export function NavUser(
   { user }: { user: User }) {
@@ -41,8 +44,19 @@ export function NavUser(
   const dict = useDictionary()
   const router = useRouter()
 
+  console.log("NavUser rendering...")
+
+  const { handleLogout: handleFcmLogout } = useFcmToken()
+  const { unreadCount, subscribeToNewNotifications } = useUnreadNotificationCount()
+
+  useEffect(() => {
+    const unsubscribe = subscribeToNewNotifications()
+    return () => unsubscribe()
+  }, [subscribeToNewNotifications])
+
   const handleLogout = async () => {
     console.log("Logging out user:", user.email)
+    await handleFcmLogout()
     await dispatch(logoutUser()).unwrap().catch((err) => {
       console.error("Logout failed:", err)
     })
@@ -57,10 +71,15 @@ export function NavUser(
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-full">
-                <AvatarImage className="object-cover" src={user.profilePicUrl} alt={getUserDisplayName(user)} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-8 w-8 rounded-full">
+                  <AvatarImage className="object-cover" src={user.profilePicUrl} alt={getUserDisplayName(user)} />
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                </Avatar>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 block h-3 w-3 rounded-full bg-red-500 ring-2 ring-sidebar-accent" />
+                )}
+              </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
                 <span className="truncate font-medium">{getUserDisplayName(user)}</span>
                 <span className="truncate text-xs">{user.email}</span>
@@ -96,9 +115,18 @@ export function NavUser(
                 <CreditCard />
                 Billing
               </DropdownMenuItem> */}
-              <DropdownMenuItem className="cursor-pointer">
-                <Bell className="size-4 text-muted-foreground" />
-                {dict.appSideBar.navUser.notifications}
+              <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/notifications')}>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Bell className="size-4 text-muted-foreground mr-2" />
+                    {dict.appSideBar.navUser.notifications}
+                  </div>
+                  {unreadCount > 0 && (
+                    <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem]">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </div>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

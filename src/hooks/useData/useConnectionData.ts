@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useSubscription } from '@apollo/client';
+import { useQuery, useMutation, useSubscription, gql, Reference } from '@apollo/client';
 import {
     buildGetConnectionsQuery,
     buildGetMyConnectionRequestsQuery,
@@ -8,6 +8,7 @@ import {
     buildDeclineOrCancelConnectionRequestMutation,
     buildRemoveConnectionMutation,
     buildConnectionRequestUpdatedSubscription,
+    CONNECTION_REQUEST_FIELDS,
 } from '@/graphql/queries/index';
 import { ConnectionRequest, ConnectionRequestForSubscription, ConnectionRequestStatus } from '@/types/ConnectionRequest';
 import { User } from '@/types/User';
@@ -35,10 +36,13 @@ export const useConnectionRequests = (status?: ConnectionRequestStatus) => {
     };
 }
 
+import { useMe } from './useUserData';
+
 /**
  * Hook that provides connection-related mutation actions with optimized cache updates.
  */
 export const useConnectionActions = () => {
+    const { me } = useMe();
     const [sendRequest, { loading: sending, error: sendError }] = useMutation<
         { sendConnectionRequest: boolean },
         { recipientId: string }
@@ -49,30 +53,29 @@ export const useConnectionActions = () => {
         update: (cache, { data }, { variables }) => {
             if (!data?.sendConnectionRequest || !variables) return;
 
-            // Read current connection requests from cache
-            const existingData = cache.readQuery<{ getMyConnectionRequests: ConnectionRequest[] }>({
-                query: buildGetMyConnectionRequestsQuery(),
+            cache.modify({
+                fields: {
+                    getMyConnectionRequests(existingRequests = []) {
+                        const newRequestRef = cache.writeFragment({
+                            data: {
+                                id: `temp-${Date.now()}`,
+                                requester: { __typename: 'User', id: me?.id || 'current-user' }, // Placeholder updated with real ID
+                                recipient: { __typename: 'User', id: variables.recipientId },
+                                status: ConnectionRequestStatus.PENDING,
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString(),
+                                __typename: 'ConnectionRequest'
+                            },
+                            fragment: gql`
+                                fragment NewConnectionRequest on ConnectionRequest {
+                                    ${CONNECTION_REQUEST_FIELDS}
+                                }
+                            `
+                        });
+                        return [...existingRequests, newRequestRef];
+                    }
+                }
             });
-
-            if (existingData) {
-                // Create optimistic connection request
-                const optimisticRequest: ConnectionRequest = {
-                    id: `temp-${Date.now()}`,
-                    requester: { id: 'current-user' } as User, // Will be updated by server response
-                    recipient: { id: variables.recipientId } as User,
-                    status: ConnectionRequestStatus.PENDING,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                };
-
-                // Write updated requests to cache
-                cache.writeQuery({
-                    query: buildGetMyConnectionRequestsQuery(),
-                    data: {
-                        getMyConnectionRequests: [...existingData.getMyConnectionRequests, optimisticRequest],
-                    },
-                });
-            }
         },
     });
 
@@ -86,38 +89,19 @@ export const useConnectionActions = () => {
         update: (cache, { data }, { variables }) => {
             if (!data?.acceptConnectionRequest || !variables) return;
 
-            // Remove the accepted request from connection requests
-            const existingData = cache.readQuery<{ getMyConnectionRequests: ConnectionRequest[] }>({
-                query: buildGetMyConnectionRequestsQuery(),
+            cache.modify({
+                fields: {
+                    getMyConnectionRequests(existingRequests = [], { readField }) {
+                        return existingRequests.filter(
+                            (reqRef: Reference) => readField('id', reqRef) !== variables.requestId
+                        );
+                    }
+                }
             });
 
-            if (existingData) {
-                cache.writeQuery({
-                    query: buildGetMyConnectionRequestsQuery(),
-                    data: {
-                        getMyConnectionRequests: existingData.getMyConnectionRequests.filter(
-                            req => req.id !== variables.requestId
-                        ),
-                    },
-                });
-            }
-
-            // Update user's connections count in cache (me query)
-            const meData = cache.readQuery<{ me: User }>({
-                query: buildGetMeQuery(),
-            });
-
-            if (meData?.me) {
-                cache.writeQuery({
-                    query: buildGetMeQuery(),
-                    data: {
-                        me: {
-                            ...meData.me,
-                            // Connections array will be updated by server response
-                        },
-                    },
-                });
-            }
+            // Note: The 'me' query connections update is handled by cache invalidation or refetch usually, 
+            // or we could optimistically add the connection if we knew the user ID.
+            // keeping it simple as per previous logic which didn't actually update the array manually.
         },
     });
 
@@ -131,21 +115,15 @@ export const useConnectionActions = () => {
         update: (cache, { data }, { variables }) => {
             if (!data?.declineOrCancelConnectionRequest || !variables) return;
 
-            // Remove the declined request from connection requests
-            const existingData = cache.readQuery<{ getMyConnectionRequests: ConnectionRequest[] }>({
-                query: buildGetMyConnectionRequestsQuery(),
+            cache.modify({
+                fields: {
+                    getMyConnectionRequests(existingRequests = [], { readField }) {
+                        return existingRequests.filter(
+                            (reqRef: Reference) => readField('id', reqRef) !== variables.requestId
+                        );
+                    }
+                }
             });
-
-            if (existingData) {
-                cache.writeQuery({
-                    query: buildGetMyConnectionRequestsQuery(),
-                    data: {
-                        getMyConnectionRequests: existingData.getMyConnectionRequests.filter(
-                            req => req.id !== variables.requestId
-                        ),
-                    },
-                });
-            }
         },
     });
 
@@ -159,22 +137,18 @@ export const useConnectionActions = () => {
         update: (cache, { data }, { variables }) => {
             if (!data?.removeConnection || !variables) return;
 
-            // Update user's connections in cache
-            const meData = cache.readQuery<{ me: User }>({
-                query: buildGetMeQuery(),
-            });
-
-            if (meData?.me) {
-                cache.writeQuery({
-                    query: buildGetMeQuery(),
-                    data: {
-                        me: {
-                            ...meData.me,
-                            connections: meData.me.connections?.filter(
-                                conn => conn !== variables.userIdB && conn !== variables.userIdB
-                            ) || [],
-                        },
-                    },
+            if (me) {
+                cache.modify({
+                    id: cache.identify({ __typename: 'User', id: me.id }),
+                    fields: {
+                        connections(existingConnections: readonly Reference[] = [], { readField }) {
+                            return existingConnections.filter(conn => {
+                                // Handle both string IDs and References
+                                const id = typeof conn === 'string' ? conn : readField('id', conn);
+                                return id !== variables.userIdB;
+                            });
+                        }
+                    }
                 });
             }
         },

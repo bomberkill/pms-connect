@@ -37,6 +37,12 @@ export const getNavItems = (dict: any, pathname: string) => [
     //     isActive: pathname === "/marketplace",
     // },
     {
+        title: dict.appSideBar.navMain.groups,
+        url: "/groups",
+        icon: Users,
+        isActive: pathname === "/groups" || pathname?.startsWith("/groups"),
+    },
+    {
         title: dict.appSideBar.navMain.library,
         url: "/library",
         icon: LibraryBig,

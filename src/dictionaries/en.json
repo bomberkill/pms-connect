@@ -416,7 +416,24 @@
     "leftSuccess": "You have left the group.",
     "leftError": "Failed to leave group.",
     "members": "Group members",
-    "privacy": "Group"
+    "privacy": "Group",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. React Developers",
+      "description": "Description",
+      "descriptionPlaceholder": "What is this group about?",
+      "privacy": "Privacy",
+      "selectPrivacy": "Select privacy",
+      "public": "Public",
+      "private": "Private",
+      "publicDesc": "Public groups are visible to everyone.",
+      "privateDesc": "Private groups require approval to join.",
+      "createBtn": "Create Group",
+      "createSuccess": "Group created successfully!",
+      "createError": "Failed to create group.",
+      "dialogTitle": "Create Group",
+      "dialogDesc": "Create a new community for people to connect."
+    }
   },
   "settings": {
     "title": "Settings",
@@ -446,7 +463,15 @@
       "managedVia": "Managed via \"Edit Profile\" on your profile page.",
       "emailAddress": "Email Address",
       "changePassword": "Change Password",
-      "resetEmailSent": "We'll send you an email to reset it."
+      "resetEmailSent": "We'll send you an email to reset it.",
+      "pushNotifications": "Push Notifications",
+      "manageNotifications": "Manage push notifications",
+      "notificationsEnabled": "You are receiving notifications.",
+      "notificationsDisabled": "Enable notifications to stay updated.",
+      "enable": "Enable",
+      "enabled": "Enabled",
+      "deniedError": "Notifications denied. Please enable them in browser settings.",
+      "enabledSuccess": "Notifications enabled!"
     }
   },
   "post": {

@@ -77,7 +77,7 @@ export default function NotificationsView() {
 
     if (loading && notifications.length === 0) {
         return (
-            <div className="flex justify-center items-center h-[50vh]">
+            <div className="flex justify-center items-center min-h-[50vh]">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
@@ -114,7 +114,7 @@ export default function NotificationsView() {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, height: 0 }}
                                 className={cn(
-                                    "relative flex items-center gap-4 p-4 mb-3 rounded-xl transition-all cursor-pointer border",
+                                    "relative flex items-center gap-4 p-4 my-3 rounded-xl transition-all cursor-pointer border",
                                     !notification.read
                                         ? "bg-primary/5 border-primary/10 shadow-sm"
                                         : "bg-card hover:bg-muted/50 border-transparent hover:border-border"

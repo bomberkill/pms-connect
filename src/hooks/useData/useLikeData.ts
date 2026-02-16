@@ -1,4 +1,4 @@
-import { useMutation, useSubscription, gql } from '@apollo/client';
+import { useMutation, useSubscription } from '@apollo/client';
 import {
   buildLikePostMutation,
   buildUnlikePostMutation,
@@ -6,8 +6,6 @@ import {
   buildUnlikeCommentMutation,
   buildLikesUpdatedSubscription,
 } from '@/graphql/queries/index';
-import { Post } from '@/types/Post';
-import { Comment } from '@/types/Comment';
 import { LikesUpdate } from '@/types/Like';
 
 /**
@@ -20,25 +18,16 @@ export const useLikePostActions = (postId: string) => {
       likePost: true,
     },
     update: (cache) => {
-      const id = `Post:${postId}`;
-      const fragment = gql`
-        fragment MyPost on Post {
-          isLiked
-          likesCount
-        }
-      `;
-      const post = cache.readFragment<Post>({ id, fragment });
-      if (post) {
-        cache.writeFragment({
-          id,
-          fragment,
-          data: {
-            ...post,
-            isLiked: true,
-            likesCount: post.likesCount + 1,
+      cache.modify({
+        id: cache.identify({ __typename: 'Post', id: postId }),
+        fields: {
+          isLiked: () => true,
+          likesCount: (existingCount: number = 0, { readField }) => {
+            const isLiked = readField('isLiked');
+            return isLiked ? existingCount : existingCount + 1;
           },
-        });
-      }
+        },
+      });
     },
   });
 
@@ -48,30 +37,23 @@ export const useLikePostActions = (postId: string) => {
       unlikePost: true,
     },
     update: (cache) => {
-      const id = `Post:${postId}`;
-      const fragment = gql`
-        fragment MyPost on Post {
-          isLiked
-          likesCount
-        }
-      `;
-      const post = cache.readFragment<Post>({ id, fragment });
-      if (post) {
-        cache.writeFragment({
-          id,
-          fragment,
-          data: {
-            ...post,
-            isLiked: false,
-            likesCount: post.likesCount - 1,
+      cache.modify({
+        id: cache.identify({ __typename: 'Post', id: postId }),
+        fields: {
+          isLiked: () => false,
+          likesCount: (existingCount: number = 0, { readField }) => {
+            const isLiked = readField('isLiked');
+            return isLiked ? existingCount - 1 : existingCount;
           },
-        });
-      }
+        },
+      });
     },
   });
 
   return { likePost, liking, unlikePost, unliking };
 };
+
+
 
 /**
  * Hook for like/unlike actions on a comment.
@@ -83,25 +65,16 @@ export const useLikeCommentActions = (commentId: string) => {
       likeComment: true,
     },
     update: (cache) => {
-      const id = `Comment:${commentId}`;
-      const fragment = gql`
-        fragment MyComment on Comment {
-          isLiked
-          likesCount
-        }
-      `;
-      const comment = cache.readFragment<Comment>({ id, fragment });
-      if (comment) {
-        cache.writeFragment({
-          id,
-          fragment,
-          data: {
-            ...comment,
-            isLiked: true,
-            likesCount: (comment.likesCount || 0) + 1,
+      cache.modify({
+        id: cache.identify({ __typename: 'Comment', id: commentId }),
+        fields: {
+          isLiked: () => true,
+          likesCount: (existingCount: number = 0, { readField }) => {
+            const isLiked = readField('isLiked');
+            return isLiked ? existingCount : existingCount + 1;
           },
-        });
-      }
+        },
+      });
     },
   });
 
@@ -111,25 +84,16 @@ export const useLikeCommentActions = (commentId: string) => {
       unlikeComment: true,
     },
     update: (cache) => {
-      const id = `Comment:${commentId}`;
-      const fragment = gql`
-        fragment MyComment on Comment {
-          isLiked
-          likesCount
-        }
-      `;
-      const comment = cache.readFragment<Comment>({ id, fragment });
-      if (comment) {
-        cache.writeFragment({
-          id,
-          fragment,
-          data: {
-            ...comment,
-            isLiked: false,
-            likesCount: (comment.likesCount || 0) - 1,
+      cache.modify({
+        id: cache.identify({ __typename: 'Comment', id: commentId }),
+        fields: {
+          isLiked: () => false,
+          likesCount: (existingCount: number = 0, { readField }) => {
+            const isLiked = readField('isLiked');
+            return isLiked ? existingCount - 1 : existingCount;
           },
-        });
-      }
+        },
+      });
     },
   });
 

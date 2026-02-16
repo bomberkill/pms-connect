@@ -42,11 +42,16 @@ import type { Messaging } from "firebase/messaging";
 
 let messaging: Messaging | null = null;
 if (typeof window !== "undefined") {
-  import("firebase/messaging").then(({ getMessaging }) => {
+  import("firebase/messaging").then(async ({ getMessaging, isSupported }) => {
     try {
-      messaging = getMessaging(app);
-    } catch {
-      console.warn("Firebase Messaging not supported in this environment");
+      const supported = await isSupported();
+      if (supported) {
+        messaging = getMessaging(app);
+      } else {
+        console.warn("Firebase Messaging not supported in this browser.");
+      }
+    } catch (e) {
+      console.warn("Firebase Messaging initialization failed", e);
     }
   });
 }

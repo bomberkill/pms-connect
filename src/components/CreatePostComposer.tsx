@@ -117,14 +117,16 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
     },
   });
 
+  const { setFieldValue, setFieldTouched } = formik;
+
   // Sync the formik state for validation purposes
   React.useEffect(() => {
-    formik.setFieldValue("mediaFiles", mediaFiles);
+    setFieldValue("mediaFiles", mediaFiles);
     // It's important to touch the field to trigger validation messages
     if (mediaFiles.length > 0) {
-      formik.setFieldTouched("mediaFiles", true);
+      setFieldTouched("mediaFiles", true);
     }
-  }, [mediaFiles]);
+  }, [mediaFiles, setFieldValue, setFieldTouched]);
 
   const disabled = useMemo(() => creating || !formik.isValid || !formik.dirty, [creating, formik.isValid, formik.dirty]);
 
