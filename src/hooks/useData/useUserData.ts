@@ -50,11 +50,11 @@ export const useUsers = (options: UseUsersOptions = {}) => {
 /**
  * Hook to get the current authenticated user's data.
  */
-export const useMe = () => {
+export const useMe = (options?: { skip?: boolean }) => {
     //   const { user } = useAppSelector((state) => state.user);
     //   const dispatch = useAppDispatch();
     const { data, loading, error, refetch } = useQuery<{ me: User }>(buildGetMeQuery(), {
-        // skip: !user,
+        skip: options?.skip,
         fetchPolicy: 'cache-and-network',
     });
 

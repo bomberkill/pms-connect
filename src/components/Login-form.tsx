@@ -12,7 +12,7 @@ import { useState } from "react"
 import { resetPassword, signInWithGoogle } from "@/graphql/firebaseAuth"
 import Link from "next/link"
 import { FirebaseError } from "firebase/app"
-import { fetchUserByUid, loginAndFetchUser } from "@/redux/services/userService"
+import { fetchUserByUid, loginAndFetchUser, logoutUser } from "@/redux/services/userService"
 import { useRouter } from "next/navigation"
 // import { Loader2 } from "lucide-react"
 import { useCheckUserExists } from "../hooks/useData/index"
@@ -72,6 +72,13 @@ export function LoginForm({
         if (error === "auth/email-not-verified") {
           open("info", dict.notifications.login.error.messages["auth/email-not-verified"].title, { message: dict.notifications.login.error.messages["auth/email-not-verified"].message });
           router.push(`/verify-email?email=${values.email}`);
+          return;
+        }
+        if (error === "auth/account-pending-approval") {
+          open("info", dict.notifications.login.error.messages["auth/account-pending-approval"].title, {
+            message: dict.notifications.login.error.messages["auth/account-pending-approval"].message
+          });
+          router.push("/pending-approval");
           return;
         }
         switch (error) {
@@ -184,7 +191,15 @@ export function LoginForm({
       if (result) {
         try {
           // On essaie de récupérer l'utilisateur depuis notre DB
-          await dispatch(fetchUserByUid(result.uid)).unwrap();
+          const profile = await dispatch(fetchUserByUid(result.uid)).unwrap();
+          if (profile.accountStatus === "PENDING_VERIFICATION") {
+            await dispatch(logoutUser()).unwrap();
+            open("info", dict.notifications.login.error.messages["auth/account-pending-approval"].title, {
+              message: dict.notifications.login.error.messages["auth/account-pending-approval"].message,
+            });
+            router.push("/pending-approval");
+            return;
+          }
           // Si ça réussit, l'utilisateur existe, on le connecte
           router.push("/");
           open("success", dict.notifications.login.success.title, {

@@ -8,7 +8,9 @@ import {
   Heart,
   MessageCircle,
   MoreVertical,
+  Pencil,
   Share2,
+  Trash2,
   UserMinus,
   UserPlus,
 } from "lucide-react";
@@ -24,6 +26,7 @@ import {
 import { useBookmarkActions, useFollowActions, useMe, useLikeCommentActions, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 import { Comment } from "@/types/Comment";
@@ -31,6 +34,9 @@ import { Post } from "@/types/Post";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { useRouter } from "next/navigation";
 import { PostMedia } from "./PostMedia";
+import { usePostMutations } from "@/hooks/useData/usePostData";
+import EditPostDialog from "./EditPostDialog";
+import ConfirmationDialog from "./ConfirmationDialog";
 
 const formatTimeAgo = (isoDate: string, dict: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const date = new Date(isoDate);
@@ -109,8 +115,12 @@ interface FeedItemCardProps {
 export default function FeedItemCard({ item, isComment = false }: FeedItemCardProps) {
   const dict = useDictionary();
   const router = useRouter();
+  const { open } = useNotification();
   const { me } = useMe();
   const isMobile = useIsMobile();
+  const { removePost, removing } = usePostMutations();
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
 
   const authorId = item.author?.id;
   const { likePost, unlikePost, liking, unliking } = useLikePostActions(item.id);
@@ -118,6 +128,8 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
   const { likesUpdate } = useLikesSubscription(item.id, isComment ? 'Comment' : 'Post');
   const { followUser, unfollowUser, following: followingReq, unfollowing } = useFollowActions();
   const { addBookmark, removeBookmark, adding: addingBookmark, removing: removingBookmark } = useBookmarkActions(item.id, isComment ? 'Comment' : 'Post');
+  const postItem = !isComment ? item as Post : null;
+  const isOwnPost = !!postItem && authorId === me?.id;
 
   const isLiked = 'isLiked' in item ? item.isLiked : false;
   const isFollowing = !!(authorId && me?.following?.includes(authorId));
@@ -174,11 +186,47 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
     router.push(postPath);
   };
 
+  const handleDeletePost = async () => {
+    if (!postItem) return;
+
+    try {
+      await removePost({ variables: { id: postItem.id } });
+      open("success", dict.post.deleteTitle, {
+        message: dict.post.deleteSuccess,
+      });
+      setIsDeleteOpen(false);
+    } catch (error) {
+      open("error", dict.notifications.updateFailed.title, {
+        message:
+          error instanceof Error
+            ? error.message
+            : dict.notifications.updateFailed.defaultMessage,
+      });
+    }
+  };
+
   return (
-    <div className={cn(
-      "bg-card text-card-foreground overflow-hidden transition-all duration-200",
-      isMobile ? "border-b border-border pb-2 mb-2" : isComment ? "border-b border-border py-4" : "border border-border rounded-2xl shadow-sm hover:shadow-md my-6"
-    )}>
+    <>
+      {postItem && (
+        <EditPostDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          post={postItem}
+        />
+      )}
+      <ConfirmationDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onConfirm={handleDeletePost}
+        title={dict.post.deleteTitle}
+        message={dict.post.deleteDescription}
+        confirmText={dict.actions.delete}
+        cancelText={dict.common.cancel}
+      />
+      <div className={cn(
+        "bg-card text-card-foreground overflow-hidden transition-all duration-200",
+        isMobile ? "border-b border-border pb-2 mb-2" : isComment ? "border-b border-border py-4" : "border border-border rounded-2xl shadow-sm hover:shadow-md my-6"
+      )}>
       <div className="flex items-center justify-between px-4 py-3">
         <div onClick={() => router.push(`/profile/${item.author.slug}`)} className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
@@ -206,6 +254,17 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>{dict.common.actions}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              {isOwnPost && postItem && (
+                <>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsEditOpen(true)}>
+                    <Pencil className="mr-2 h-4 w-4" /> {dict.actions.edit}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={() => setIsDeleteOpen(true)} disabled={removing}>
+                    <Trash2 className="mr-2 h-4 w-4" /> {dict.actions.delete}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
               {authorId && authorId !== me?.id && (
@@ -249,6 +308,7 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
           </button>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

@@ -250,7 +250,7 @@ export const logoutUser = createAsyncThunk<void, void, { dispatch: AppDispatch }
  */
 export const loginAndFetchUser = createAsyncThunk(
     'user/loginAndFetch',
-    async ({ email, password }: { email: string, password: string }, { rejectWithValue }) => {
+    async ({ email, password }: { email: string, password: string }, { dispatch, rejectWithValue }) => {
         try {
             // Étape 1: Connexion à Firebase
             const firebaseUser = await login(email, password);
@@ -273,6 +273,13 @@ export const loginAndFetchUser = createAsyncThunk(
             if (!data.getUserByFirebaseUid) {
                 return rejectWithValue('errors.user.profileNotFound');
             }
+
+            if (data.getUserByFirebaseUid.accountStatus === 'PENDING_VERIFICATION') {
+                await firebaseLogout();
+                dispatch(clearAuth());
+                return rejectWithValue('auth/account-pending-approval');
+            }
+
             // Étape 3: Retourner le profil utilisateur
             // Cela sera le payload de l'action `fulfilled`
             return data.getUserByFirebaseUid;

@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
+import { useGroupMutations } from "@/hooks/useData/useGroups";
+import { useDictionary } from "@/hooks/use-dictionary";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { Group, GroupPrivacy } from "@/types/Group";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -42,62 +49,71 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useGroupMutations } from "@/hooks/useData/useGroups";
-import { GroupPrivacy } from "@/types/Group";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-import { useDictionary } from "@/hooks/use-dictionary";
 
-const createGroupSchema = z.object({
-    name: z.string().min(3, "Name must be at least 3 characters").max(100, "Name must be less than 100 characters"),
-    description: z.string().max(500, "Description must be less than 500 characters").optional(),
+const editGroupSchema = z.object({
+    name: z.string().min(3).max(100),
+    description: z.string().max(500).optional(),
     privacy: z.nativeEnum(GroupPrivacy),
 });
 
-type CreateGroupFormValues = z.infer<typeof createGroupSchema>;
+type EditGroupFormValues = z.infer<typeof editGroupSchema>;
 
-interface CreateGroupDialogProps {
+interface EditGroupDialogProps {
+    group: Group;
     children?: React.ReactNode;
 }
 
-function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, className?: string }) {
+function EditGroupForm({
+    group,
+    afterSubmit,
+    className,
+}: {
+    group: Group;
+    afterSubmit: () => void;
+    className?: string;
+}) {
     const router = useRouter();
-    const { createGroup, creating } = useGroupMutations();
     const dict = useDictionary();
+    const { updateGroup, updating } = useGroupMutations();
 
-    const form = useForm<CreateGroupFormValues>({
-        resolver: zodResolver(createGroupSchema),
+    const form = useForm<EditGroupFormValues>({
+        resolver: zodResolver(editGroupSchema),
         defaultValues: {
-            name: "",
-            description: "",
-            privacy: GroupPrivacy.PUBLIC,
+            name: group.name,
+            description: group.description || "",
+            privacy: group.privacy,
         },
     });
 
-    const onSubmit = async (data: CreateGroupFormValues) => {
+    useEffect(() => {
+        form.reset({
+            name: group.name,
+            description: group.description || "",
+            privacy: group.privacy,
+        });
+    }, [form, group]);
+
+    const onSubmit = async (data: EditGroupFormValues) => {
         try {
-            const result = await createGroup({
+            const result = await updateGroup({
                 variables: {
-                    createGroupInput: {
+                    groupId: group._id,
+                    updateGroupInput: {
                         name: data.name,
                         description: data.description,
                         privacy: data.privacy,
-                    }
+                    },
                 },
             });
 
-            if (result.data?.createGroup) {
-                toast.success(dict.groups.form.createSuccess);
-                form.reset();
+            if (result.data?.updateGroup) {
+                toast.success(dict.groups.form.updateSuccess);
                 afterSubmit();
-                // Redirect to the new group
-                router.push(`/groups/${result.data.createGroup.slug}`);
+                router.push(`/groups/${result.data.updateGroup.slug}`);
+                router.refresh();
             }
-        } catch (error) {
-            console.error("Failed to create group:", error);
-            toast.error(dict.groups.form.createError);
+        } catch {
+            toast.error(dict.groups.form.updateError);
         }
     };
 
@@ -140,10 +156,7 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>{dict.groups.form.privacy}</FormLabel>
-                            <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                            >
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder={dict.groups.form.selectPrivacy} />
@@ -166,45 +179,39 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
                         </FormItem>
                     )}
                 />
-                <Button type="submit" disabled={creating} className="w-full md:w-auto">
-                    {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {dict.groups.form.createBtn}
+                <Button type="submit" disabled={updating} className="w-full md:w-auto">
+                    {updating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {dict.groups.form.updateBtn}
                 </Button>
             </form>
         </Form>
     );
 }
 
-export function CreateGroupDialog({ children }: CreateGroupDialogProps) {
+export default function EditGroupDialog({ group, children }: EditGroupDialogProps) {
     const [open, setOpen] = useState(false);
     const isMobile = useIsMobile();
     const dict = useDictionary();
 
+    const trigger = children || (
+        <Button variant="outline">
+            <Pencil className="mr-2 h-4 w-4" /> {dict.groups.edit}
+        </Button>
+    );
+
     if (isMobile) {
         return (
             <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>
-                    {children || (
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> {dict.groups.form.createBtn}
-                        </Button>
-                    )}
-                </DrawerTrigger>
+                <DrawerTrigger asChild>{trigger}</DrawerTrigger>
                 <DrawerContent>
                     <DrawerHeader className="text-left">
-                        <DrawerTitle>{dict.groups.form.dialogTitle}</DrawerTitle>
-                        <DrawerDescription>
-                            {dict.groups.form.dialogDesc}
-                        </DrawerDescription>
+                        <DrawerTitle>{dict.groups.form.editDialogTitle}</DrawerTitle>
+                        <DrawerDescription>{dict.groups.form.editDialogDesc}</DrawerDescription>
                     </DrawerHeader>
                     <div className="px-4 pb-4">
-                        <GroupForm afterSubmit={() => setOpen(false)} />
+                        <EditGroupForm group={group} afterSubmit={() => setOpen(false)} />
                     </div>
-                    <DrawerFooter className="pt-2">
-                        {/* <DrawerClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DrawerClose> */}
-                    </DrawerFooter>
+                    <DrawerFooter className="pt-2" />
                 </DrawerContent>
             </Drawer>
         );
@@ -212,21 +219,13 @@ export function CreateGroupDialog({ children }: CreateGroupDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {children || (
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" /> {dict.groups.form.createBtn}
-                    </Button>
-                )}
-            </DialogTrigger>
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>{dict.groups.form.dialogTitle}</DialogTitle>
-                    <DialogDescription>
-                        {dict.groups.form.dialogDesc}
-                    </DialogDescription>
+                    <DialogTitle>{dict.groups.form.editDialogTitle}</DialogTitle>
+                    <DialogDescription>{dict.groups.form.editDialogDesc}</DialogDescription>
                 </DialogHeader>
-                <GroupForm afterSubmit={() => setOpen(false)} />
+                <EditGroupForm group={group} afterSubmit={() => setOpen(false)} />
             </DialogContent>
         </Dialog>
     );

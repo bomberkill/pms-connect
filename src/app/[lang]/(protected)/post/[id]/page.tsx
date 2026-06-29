@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useComments, usePost, useCommentActions, useLikePostActions, useLikeCommentActions, useComment, useCommentReplies, useMe } from "@/hooks/useData/index";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, MessageCircle, Bookmark, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Bookmark, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import CommentComposer from "../../../../../components/CommentComposer";
 import { uploadFileToFirebase } from "@/utils/fileUpload";
 import { MediaItem, MediaType } from "@/types/Post";
@@ -18,6 +19,15 @@ import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { PostMedia } from "@/components/PostMedia";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { usePostMutations } from "@/hooks/useData/usePostData";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
+import EditPostDialog from "@/components/EditPostDialog";
 
 function formatDateTime(dateStr: string, locale: string) {
   try {
@@ -39,6 +49,7 @@ export default function PostDetailPage() {
   const isComment = searchParams.get("isComment") === "true"
   console.log("isComment", isComment);
   const dict = useDictionary();
+  const { open } = useNotification();
   const locale = params?.lang === "fr" ? "fr-FR" : "en-US";
 
   const { post: postFromHook, loading: loadingPost, error: errorPost } = usePost(postId, isComment);
@@ -63,6 +74,9 @@ export default function PostDetailPage() {
   const { likeComment, unlikeComment } = useLikeCommentActions(postId);
   const { addComment, adding: isAddingComment } = useCommentActions();
   const { me: user } = useMe();
+  const { removePost, removing } = usePostMutations();
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("post-detail-page");
@@ -141,10 +155,41 @@ export default function PostDetailPage() {
   }
 
   const isLiked = post.isLiked;
+  const canManagePost = !isComment && post.author.id === user?.id;
   const { time, date } = formatDateTime(post.createdAt, locale);
+
+  const handleDeletePost = async () => {
+    if (isComment) return;
+
+    try {
+      await removePost({ variables: { id: post.id } });
+      open("success", dict.post.deleteTitle, { message: dict.post.deleteSuccess });
+      router.push("/");
+    } catch (error) {
+      open("error", dict.notifications.updateFailed.title, {
+        message: error instanceof Error ? error.message : dict.notifications.updateFailed.defaultMessage,
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6">
+      {!isComment && (
+        <EditPostDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          post={post as import("@/types/Post").Post}
+        />
+      )}
+      <ConfirmationDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onConfirm={handleDeletePost}
+        title={dict.post.deleteTitle}
+        message={dict.post.deleteDescription}
+        confirmText={dict.actions.delete}
+        cancelText={dict.common.cancel}
+      />
       <style jsx global>{`
         body.post-detail-page header.md\\:hidden { display: none !important; }
         body.hide-fab .fab-button { display: none !important; }
@@ -184,9 +229,27 @@ export default function PostDetailPage() {
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-accent">
-              <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
-            </Button>
+            {canManagePost ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-accent">
+                    <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
+                    <Pencil className="mr-2 h-4 w-4" /> {dict.actions.edit}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsDeleteOpen(true)}
+                    disabled={removing}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> {dict.actions.delete}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
           </div>
 
           {/* Content */}

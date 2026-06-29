@@ -13,6 +13,8 @@ import { SuggestionsSidebar } from "@/components/Suggestions-sidebar";
 import Header from "@/components/Header";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AccountStatusGQL } from "@/types/User";
+import { useMe } from "@/hooks/useData";
 
 export default function ProtectedLayout({
   children,
@@ -25,6 +27,7 @@ export default function ProtectedLayout({
     (state) => state.auth
   );
   const isMobile = useIsMobile();
+  const { me, loading: meLoading } = useMe({ skip: !firebaseUid });
 
   useEffect(() => {
     // console.log("start protected layout useEffect, authLoading: ", authLoading, "firebaseUid: ", firebaseUid, "initialized: ", initialized, "uid: ", uid);
@@ -35,9 +38,15 @@ export default function ProtectedLayout({
     }
   }, [initialized, authLoading, uid, router]);
 
+  useEffect(() => {
+    if (firebaseUid && me?.accountStatus === AccountStatusGQL.PENDING_VERIFICATION) {
+      router.push("/pending-approval");
+    }
+  }, [firebaseUid, me?.accountStatus, router]);
+
   // Pendant le SSR ou le rendu initial du client, et pendant que l'état d'authentification se charge, on affiche un loader.
   // Cela garantit que le rendu du serveur correspond au rendu initial du client, évitant une erreur d'hydratation.
-  if (authLoading) {
+  if (authLoading || (firebaseUid && meLoading)) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -48,6 +57,10 @@ export default function ProtectedLayout({
   // Si la vérification de l'authentification est terminée et qu'il n'y a pas d'utilisateur, nous pouvons retourner null
   // pendant que la redirection vers /login se produit. Cela évite de faire clignoter le contenu protégé.
   if (!firebaseUid) {
+    return null;
+  }
+
+  if (me?.accountStatus === AccountStatusGQL.PENDING_VERIFICATION) {
     return null;
   }
 
