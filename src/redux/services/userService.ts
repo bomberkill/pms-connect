@@ -198,8 +198,8 @@ export const loginAndFetchUser = createAsyncThunk(
                 return rejectWithValue('errors.user.profileNotFound');
             }
 
-            if (data.getUserByFirebaseUid.accountStatus === 'PENDING_VERIFICATION') {
-                await firebaseLogout();
+            if (data.getUserByAuthUserId.accountStatus === 'PENDING_VERIFICATION') {
+                await authLogout();
                 dispatch(clearAuth());
                 return rejectWithValue('auth/account-pending-approval');
             }

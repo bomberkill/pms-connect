@@ -27,7 +27,7 @@ export default function ProtectedLayout({
     (state) => state.auth
   );
   const isMobile = useIsMobile();
-  const { me, loading: meLoading } = useMe({ skip: !firebaseUid });
+  const { me, loading: meLoading } = useMe({ skip: !uid });
 
   useEffect(() => {
     if (initialized && !uid && !authLoading) {
@@ -36,14 +36,14 @@ export default function ProtectedLayout({
   }, [initialized, authLoading, uid, router]);
 
   useEffect(() => {
-    if (firebaseUid && me?.accountStatus === AccountStatusGQL.PENDING_VERIFICATION) {
+    if (uid && me?.accountStatus === AccountStatusGQL.PENDING_VERIFICATION) {
       router.push("/pending-approval");
     }
-  }, [firebaseUid, me?.accountStatus, router]);
+  }, [uid, me?.accountStatus, router]);
 
   // Pendant le SSR ou le rendu initial du client, et pendant que l'état d'authentification se charge, on affiche un loader.
   // Cela garantit que le rendu du serveur correspond au rendu initial du client, évitant une erreur d'hydratation.
-  if (authLoading || (firebaseUid && meLoading)) {
+  if (authLoading || (uid && meLoading)) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
