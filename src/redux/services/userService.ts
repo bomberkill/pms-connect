@@ -1,43 +1,13 @@
 
 import { apolloClient } from "@/graphql/apolloClient";
-import { CreateUserInput, UpdateUserInput } from "@/types/User";
-import { buildCreateUserMutation, buildFollowMutation, buildGetMeQuery, buildGetUserByUidQuery, buildRemoveConnectionMutation, buildUnfollowMutation, buildUpdateMyEmailMutation, buildUpdateMyProfileMutation, buildUnregisterFcmTokenMutation } from "@/graphql/queries/index";
+import { UpdateUserInput } from "@/types/User";
+import { buildFollowMutation, buildGetMeQuery, buildGetUserByAuthUserIdQuery, buildRemoveConnectionMutation, buildUnfollowMutation, buildUpdateMyEmailMutation, buildUpdateMyProfileMutation, buildUnregisterFcmTokenMutation } from "@/graphql/queries/index";
 import { clearAuth } from "../slices/authSlice";
 // import { clearUser } from "../slices/userSlice";
 import { AppDispatch } from "../store";
-import { FirebaseError } from "firebase/app";
-
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { deleteFirebaseUser, login, logout as firebaseLogout, register, sendVerificationEmail, updateFirebaseEmail } from "@/graphql/firebaseAuth";
-/**
- * Un thunk asynchrone pour créer un utilisateur.
- * Il gère automatiquement les actions pending/fulfilled/rejected.
- * En cas de succès, il retourne les données de l'utilisateur.
- * En cas d'échec, il utilise `rejectWithValue` pour passer un message d'erreur clair.
- */
-export const createUser = createAsyncThunk(
-    'user/create', // Nom de l'action pour le Redux DevTools
-    async (createUserInput: CreateUserInput, { rejectWithValue }) => {
-        try {
-            const { data, errors } = await apolloClient.mutate({
-                mutation: buildCreateUserMutation(),
-                variables: { createUserInput: createUserInput }
-            });
-            if (errors && errors.length > 0) {
-                // Si l'API GraphQL retourne une erreur, on la rejette
-                return rejectWithValue(errors[0].message);
-            }
-            console.log("createUser data", data.createUser);
-            return data.createUser; // Ceci sera le payload de l'action `fulfilled`
-        } catch (error: unknown) {
-            // Pour les erreurs réseau ou autres exceptions
-            console.error("Create user error:", error);
-            return rejectWithValue('errors.unknown');
-        }
-    }
-);
-
+import { login, logout as authLogout, sendVerificationEmail, updateAuthEmail, AuthApiError } from "@/graphql/betterAuth";
 /**
  * Thunk to update the email of an unverified user.
  */
@@ -45,14 +15,14 @@ export const updateUnverifiedEmail = createAsyncThunk(
     'user/updateUnverifiedEmail',
     async ({ oldEmail, newEmail, password }: { oldEmail: string, newEmail: string, password: string }, { rejectWithValue }) => {
         try {
-            // 1. Re-authenticate to prove ownership. `login` returns the Firebase User object directly.
-            const firebaseUser = await login(oldEmail, password);
+            // 1. Re-authenticate to prove ownership (establishes the session Better Auth needs below).
+            await login(oldEmail, password);
 
-            // 2. Update email in Firebase Auth
-            await updateFirebaseEmail(firebaseUser, newEmail);
+            // 2. Update email via Better Auth
+            await updateAuthEmail(newEmail);
 
             // 3. Send new verification email
-            await sendVerificationEmail(firebaseUser);
+            await sendVerificationEmail(newEmail);
 
             // 4. Update email in our backend DB
             const { data, errors } = await apolloClient.mutate({
@@ -68,50 +38,6 @@ export const updateUnverifiedEmail = createAsyncThunk(
 
         } catch (error: unknown) {
             return rejectWithValue(error);
-        }
-    }
-);
-
-/**
- * Thunk to register a user in Firebase and send a verification email.
- * This separates Firebase account creation from profile creation in our DB.
- */
-export const registerAndSendVerification = createAsyncThunk(
-    'user/registerAndSendVerification',
-    async ({ email, password }: { email: string, password?: string }, { rejectWithValue }) => {
-        if (!password) {
-            // This case is for Google Sign-In, where the user is already created.
-            // We just need to ensure the email is sent if they are new.
-            // The logic in the component will handle existing Google users.
-            return;
-        }
-        try {
-            const firebaseUser = await register(email, password);
-            await sendVerificationEmail(firebaseUser);
-            return firebaseUser.uid;
-        } catch (error: unknown) {
-            if (error instanceof FirebaseError) {
-                return rejectWithValue(error.code);
-            }
-            return rejectWithValue('errors.unknown');
-        }
-    }
-);
-
-/**
- * Thunk to delete the current Firebase user.
- * Useful for cleaning up if the user backs out of email verification.
- */
-export const deleteCurrentUser = createAsyncThunk(
-    'user/deleteCurrentUser',
-    async (_, { rejectWithValue }) => {
-        try {
-            await deleteFirebaseUser();
-        } catch (error: unknown) {
-            if (error instanceof FirebaseError) {
-                return rejectWithValue(error.code);
-            }
-            return rejectWithValue('errors.unknown');
         }
     }
 );
@@ -232,8 +158,8 @@ export const logoutUser = createAsyncThunk<void, void, { dispatch: AppDispatch }
                 }
             }
 
-            // 2. Logout from Firebase
-            await firebaseLogout();
+            // 2. Logout from Better Auth
+            await authLogout();
 
             // 3. Clean Redux
             dispatch(clearAuth());
@@ -252,25 +178,23 @@ export const loginAndFetchUser = createAsyncThunk(
     'user/loginAndFetch',
     async ({ email, password }: { email: string, password: string }, { dispatch, rejectWithValue }) => {
         try {
-            // Étape 1: Connexion à Firebase
-            const firebaseUser = await login(email, password);
+            // Étape 1: Connexion via Better Auth
+            const authUser = await login(email, password);
             // NOUVELLE VÉRIFICATION : L'e-mail doit être vérifié
-            if (!firebaseUser.emailVerified && firebaseUser.email) {
-                return rejectWithValue('auth/email-not-verified');
+            if (!authUser.emailVerified && authUser.email) {
+                return rejectWithValue('EMAIL_NOT_VERIFIED');
             }
-            // return firebaseUser;
-            // Étape 2: Récupération du profil depuis notre API avec l'UID
+            // Étape 2: Récupération du profil depuis notre API avec l'identifiant Better Auth
             const { data, errors } = await apolloClient.query({
-                query: buildGetUserByUidQuery(),
-                variables: { firebaseUid: firebaseUser.uid },
+                query: buildGetUserByAuthUserIdQuery(),
+                variables: { authUserId: authUser.id },
                 fetchPolicy: 'network-only' // Toujours récupérer les données fraîches
             });
 
             if (errors && errors.length > 0) {
                 return rejectWithValue(errors[0].message);
             }
-            // console.log("loginAndFetchUser data", data);
-            if (!data.getUserByFirebaseUid) {
+            if (!data.getUserByAuthUserId) {
                 return rejectWithValue('errors.user.profileNotFound');
             }
 
@@ -282,42 +206,41 @@ export const loginAndFetchUser = createAsyncThunk(
 
             // Étape 3: Retourner le profil utilisateur
             // Cela sera le payload de l'action `fulfilled`
-            return data.getUserByFirebaseUid;
+            return data.getUserByAuthUserId;
 
         } catch (error: unknown) {
-            if (error instanceof FirebaseError) {
+            if (error instanceof AuthApiError) {
                 return rejectWithValue(error.code);
             }
-            // Gère les erreurs non-Firebase (ex: réseau, API GraphQL)
+            // Gère les erreurs inattendues (ex: réseau, API GraphQL)
             console.error("Unhandled login error:", error);
             return rejectWithValue('errors.unknown');
         }
     }
 );
 /**
- * Un thunk asynchrone pour récupérer un profil utilisateur par son UID.
- * Idéal pour être utilisé au chargement de l'app lorsque Firebase détecte une session.
+ * Un thunk asynchrone pour récupérer un profil utilisateur par son identifiant Better Auth.
+ * Idéal pour être utilisé au chargement de l'app lorsqu'une session est détectée.
  */
-export const fetchUserByUid = createAsyncThunk(
-    'user/fetchByUid',
-    async (uid: string, { rejectWithValue }) => {
+export const fetchUserByAuthId = createAsyncThunk(
+    'user/fetchByAuthId',
+    async (authUserId: string, { rejectWithValue }) => {
         try {
             const { data, errors } = await apolloClient.query({
-                query: buildGetUserByUidQuery(),
-                variables: { firebaseUid: uid },
+                query: buildGetUserByAuthUserIdQuery(),
+                variables: { authUserId },
                 fetchPolicy: 'network-only'
             });
 
             if (errors && errors.length > 0) {
                 return rejectWithValue(errors[0].message);
             }
-            if (!data.getUserByFirebaseUid) {
-                return rejectWithValue("getUserByFirebaseUid is null")
+            if (!data.getUserByAuthUserId) {
+                return rejectWithValue("getUserByAuthUserId is null")
             }
-            // console.log("fetchUserByUid data", data);
-            return data.getUserByFirebaseUid;
+            return data.getUserByAuthUserId;
         } catch (error: unknown) {
-            console.error("Failed to fetch user profile by UID:", error);
+            console.error("Failed to fetch user profile by auth id:", error);
             return rejectWithValue('errors.user.fetchProfileFailed');
         }
     }

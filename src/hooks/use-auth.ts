@@ -1,41 +1,26 @@
-import { useState, useEffect } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useEffect } from "react";
+import { useSession } from "@/lib/auth-client";
 import { useAppStore, useAppDispatch } from "./use-redux";
-import { useNotification } from "./use-notification";
-import { usePathname } from "next/navigation";
 import { setAuth, clearAuth } from "@/redux/slices/authSlice";
 
 export const useAuthObserver = () => {
     const store = useAppStore();
     const dispatch = useAppDispatch();
-    const { open } = useNotification();
-    const pathname = usePathname();
-    const [initialized, setInitialized] = useState(false);
-    const [firebaseUid, setFirebaseUid] = useState<string | null>(null);
+    const { data: session, isPending } = useSession();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setFirebaseUid(user.uid);
-                // Sync Firebase Auth with Redux Auth
-                const state = store.getState();
-                const currentUid = state.auth.firebaseUid;
+        if (isPending) return;
+        const userId = session?.user?.id ?? null;
+        const currentAuthUserId = store.getState().auth.authUserId;
 
-                if (currentUid !== user.uid) {
-                    dispatch(setAuth(user.uid));
-                }
-            } else {
-                // User is logged out, clear state
-                setFirebaseUid(null);
-                dispatch(clearAuth());
+        if (userId) {
+            if (currentAuthUserId !== userId) {
+                dispatch(setAuth(userId));
             }
-            setInitialized(true);
-        })
-        return () => {
-            unsubscribe();
+        } else if (currentAuthUserId !== null) {
+            dispatch(clearAuth());
         }
-    }, [dispatch, store, open, pathname])
+    }, [session, isPending, dispatch, store]);
 
-    return { initialized, firebaseUid };
+    return { initialized: !isPending, authUserId: session?.user?.id ?? null };
 }

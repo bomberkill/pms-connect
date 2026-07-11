@@ -10,8 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Camera, MessageCircle, Link as LinkIcon, UserMinus, Check, MoreVertical, Ban, Flag } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/utils/fileUpload"
-import { supabase } from "@/lib/supabaseClient"
+import { MAX_FILE_SIZE, uploadFileToR2, deleteUploadedFile } from "@/utils/fileUpload"
 import { updateUser } from "@/redux/services/userService"
 import React, { useEffect, useState } from "react"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
@@ -22,13 +21,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { apolloClient } from "@/graphql/apolloClient";
 import { buildGetUserBySlugQuery } from "@/graphql/queries/user"
 
-function extractFilePath(publicUrl: string, bucket: string): string {
-  const marker = `/object/public/${bucket}/`;
-  const idx = publicUrl.indexOf(marker);
-  if (idx === -1) {
-    throw new Error("Invalid Supabase public URL");
+function extractR2Key(publicUrl: string): string {
+  const base = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? "").replace(/\/$/, "");
+  if (!base || !publicUrl.startsWith(`${base}/`)) {
+    throw new Error("Invalid R2 public URL");
   }
-  return publicUrl.substring(idx + marker.length);
+  return publicUrl.slice(base.length + 1);
 }
 import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useFollowsSubscription, useMe } from "@/hooks/useData/index"
 import { ConnectionRequestStatus } from "@/types/ConnectionRequest"
@@ -116,7 +114,6 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
   // const isOwnProfile = authUser?.slug === slug;
 
   const [isUploading, setIsUploading] = useState(false)
-  let uploadedPath: string;
   const [dialogConfig, setDialogConfig] = useState<{
     isOpen: boolean;
     title: string;
@@ -161,12 +158,13 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
         setIsUploading(true);
         // let uploadedPath: string;
 
+        let uploadedKey: string | undefined;
         try {
-          // Upload dans Supabase
-          const uploadedFile = await uploadFileToFirebase(file, `public/${authUser?.firebaseUid}/${field}`);
+          // Upload direct vers Cloudflare R2
+          const uploadedFile = await uploadFileToR2(file, field === "profile" ? "AVATAR" : "COVER_PICTURE");
           if (!uploadedFile) return;
 
-          uploadedPath = uploadedFile.uploadedPath;
+          uploadedKey = uploadedFile.key;
           const fieldToUpdate = field === "profile" ? "profilePicUrl" : "coverPicUrl";
 
           // Update User dans Redux
@@ -179,20 +177,21 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
           // Supprimer l’ancienne image si elle existe
           const publicUrl = field === "profile" ? authUser?.profilePicUrl : authUser?.coverPicUrl;
           if (publicUrl) {
-            const filePath = extractFilePath(publicUrl, "pms-connect-bucket");
-            const { error: removeErr } = await supabase.storage.from("pms-connect-bucket").remove([filePath]);
-            if (removeErr) console.error("Erreur suppression :", removeErr.message);
+            try {
+              await deleteUploadedFile(extractR2Key(publicUrl));
+            } catch (removeErr) {
+              console.error("Erreur suppression :", removeErr);
+            }
           }
         } catch (error) {
           // Rollback si upload fail
           console.error("error:", error);
           try {
-            if (uploadedPath) {
-              const { error: removeErr } = await supabase.storage.from("pms-connect-bucket").remove([uploadedPath]);
-              if (removeErr) console.error("Erreur rollback :", removeErr.message);
+            if (uploadedKey) {
+              await deleteUploadedFile(uploadedKey);
             }
           } catch (err) {
-            console.error("Rollback Supabase failed:", err);
+            console.error("Rollback R2 failed:", err);
           }
         } finally {
           setIsUploading(false);

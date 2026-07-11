@@ -6,11 +6,9 @@ import Link from "next/link"
 import CustomLoader from "./Loader"
 import { useRegisterForm } from "./auth/hooks/useRegisterForm"
 import { StepCredentials } from "./auth/steps/StepCredentials"
-import { EmailVerificationStep } from "./auth/steps/StepEmailVerification"
 import { StepUserType } from "./auth/steps/StepUserType"
 import { StepIdentity } from "./auth/steps/StepIdentity"
 import { StepAdditionalInfo } from "./auth/steps/StepAdditionalInfo"
-import { deleteCurrentUser } from "@/redux/services/userService"
 
 export function RegisterForm({
   className,
@@ -20,7 +18,6 @@ export function RegisterForm({
   const {
     formik,
     currentStep,
-    setCurrentStep,
     isLoading,
     isGoogleSignIn,
     googleUser,
@@ -34,7 +31,6 @@ export function RegisterForm({
     setAccreditationsPreview,
     validationSchemas,
     dict,
-    dispatch
   } = useRegisterForm();
 
   const renderStep = () => {
@@ -48,24 +44,10 @@ export function RegisterForm({
           />
         )
       case 1:
-        return (
-          <EmailVerificationStep
-            email={formik.values.email}
-            onVerified={() => {
-              // open("success", dict.notifications.verification.successTitle, { message: dict.notifications.verification.successMessage });
-              setCurrentStep(currentStep + 1);
-            }}
-            onBack={async () => {
-              await dispatch(deleteCurrentUser());
-              setCurrentStep(currentStep - 1);
-            }}
-          />
-        );
-      case 2:
         return <StepUserType formik={formik} />
-      case 3:
+      case 2:
         return <StepIdentity formik={formik} />
-      case 4:
+      case 3:
         return (
           <StepAdditionalInfo
             formik={formik}
@@ -92,13 +74,13 @@ export function RegisterForm({
         </div>
         <div className="flex flex-col min-h-100 items-center justify-start gap-8">
           {renderStep()}
-          <div className={cn("flex items-center justify-between gap-4", currentStep === 1 && "hidden")}>
-            {currentStep > 0 && currentStep !== 1 && (
+          <div className="flex items-center justify-between gap-4">
+            {currentStep > 0 && (
               <Button className="w-35" type="button" variant="outline" onClick={handlePrevious}>
                 {dict.register.previous}
               </Button>
             )}
-            <Button className="w-35" type="submit" disabled={currentStep === 1 || isLoading}>
+            <Button className="w-35" type="submit" disabled={isLoading}>
               {(currentStep < validationSchemas.length - 1 ? dict.register.next : dict.register.registerButton)}
             </Button>
           </div>

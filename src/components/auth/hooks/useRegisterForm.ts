@@ -4,20 +4,18 @@ import * as yup from "yup";
 import { useAppDispatch } from "@/hooks/use-redux";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
-import { createUser, registerAndSendVerification } from "@/redux/services/userService";
-import { googleProvider, signInWithGoogle } from "@/graphql/firebaseAuth";
-import { auth } from "@/lib/firebase";
-import { User, deleteUser, signInWithRedirect } from "firebase/auth";
-import { FirebaseError } from "firebase/app";
+import { signInWithGoogle, AuthUser } from "@/graphql/betterAuth";
+import { useSession } from "@/lib/auth-client";
+import { completeRegistration } from "@/app/actions/register";
 import { useRouter } from "next/navigation";
 import parsePhoneNumberFromString from "libphonenumber-js";
 import { useCheckUserExists } from "@/hooks/useData/useUserData";
-import { getStorage, ref, deleteObject } from "firebase/storage";
 import { RegisterFormValues, AccreditationPreviewItem } from "../types";
-import { UserTypeGQL, SpecialityGQL, EntityTypeGQL, CreateUserInput } from "@/types/User";
-import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/utils/fileUpload";
+import { UserTypeGQL, SpecialityGQL, EntityTypeGQL } from "@/types/User";
+import { MAX_FILE_SIZE } from "@/utils/fileUpload";
 
 const REGISTRATION_STATE_KEY = "pms-connect-registration-state";
+const GOOGLE_REDIRECT_PENDING_KEY = "pms-connect-google-redirect-pending";
 
 const getInitialStep = (): number => {
     if (typeof window === "undefined") return 0;
@@ -37,12 +35,13 @@ export const useRegisterForm = () => {
     const { open } = useNotification();
     const router = useRouter();
     const { checkByEmail, checkByPhone } = useCheckUserExists();
+    const { data: session } = useSession();
 
     const [currentStep, setCurrentStep] = useState(getInitialStep());
     const [isRestored, setIsRestored] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleSignIn, setIsGoogleSignIn] = useState(false);
-    const [googleUser, setGoogleUser] = useState<User | null>(null);
+    const [googleUser, setGoogleUser] = useState<AuthUser | null>(null);
     const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
     const [coverPicPreview, setCoverPicPreview] = useState<string | null>(null);
     const [accreditationsPreview, setAccreditationsPreview] = useState<AccreditationPreviewItem[]>([]);
@@ -103,13 +102,11 @@ export const useRegisterForm = () => {
                 otherwise: schema => schema.notRequired()
             })
         }),
-        // Step 1: Email Verification
-        yup.object().shape({}),
-        // Step 2: Account Type
+        // Step 1: Account Type
         yup.object().shape({
             userType: yup.string().oneOf(Object.values(UserTypeGQL)).required(dict.register.userTypeLabel),
         }),
-        // Step 3: Personal/Entity Details
+        // Step 2: Personal/Entity Details
         yup.object().shape({
             firstName: yup.string().when('userType', {
                 is: UserTypeGQL.INDIVIDUAL,
@@ -141,7 +138,7 @@ export const useRegisterForm = () => {
                 otherwise: (schema) => schema.notRequired(),
             }),
         }),
-        // Step 4: Optional Profile & Location
+        // Step 3: Optional Profile & Location
         yup.object().shape({
             profilePicFile: yup.mixed().notRequired()
                 .test("fileType", dict.validation.file.unsupported, (value) => {
@@ -161,20 +158,20 @@ export const useRegisterForm = () => {
                     if (!value) return true;
                     return (value as File).size <= MAX_FILE_SIZE;
                 }),
+            // Optional at signup — can be added later from the profile page.
             accreditationsFile: yup.array().of(
-                yup.mixed().required(dict.validation.file.required)
+                yup.mixed()
                     .test("fileType", dict.validation.file.unsupported, (value) => {
-                        if (!value) return false;
+                        if (!value) return true;
                         return ["application/pdf", "image/jpeg", "image/png"].includes((value as File).type);
                     })
                     .test("fileSize", dict.validation.file.tooLarge, (value) => {
-                        if (!value) return false;
+                        if (!value) return true;
                         return (value as File).size <= MAX_FILE_SIZE;
                     })
             )
-                .min(1, dict.validation.file.min)
                 .max(2, dict.validation.file.max)
-                .required(dict.validation.file.atLeast),
+                .notRequired(),
             bio: yup.string().notRequired(),
             websiteUrl: yup.string().url(dict.validation.websiteUrl.invalidUrl).notRequired(),
             location: yup.object().shape({
@@ -185,38 +182,15 @@ export const useRegisterForm = () => {
         }),
     ], [googleUser, dict]);
 
-    // Used for potential rollback
-    const uploadedPaths: string[] = [];
-
     const formik = useFormik({
         initialValues,
         validationSchema: validationSchemas[currentStep],
         validateOnChange: true,
         validateOnBlur: false,
         onSubmit: async (values) => {
-            const rollbackRegistration = async (firebaseUserToDelete: User | null, pathsToDelete: string[], isGoogleAuth: boolean) => {
-                const storage = getStorage();
-                if (pathsToDelete.length) {
-                    try {
-                        const deletePromises = pathsToDelete.map(path => {
-                            const fileRef = ref(storage, path);
-                            return deleteObject(fileRef);
-                        });
-                        await Promise.all(deletePromises);
-                    } catch (err) {
-                        console.error("Firebase Storage rollback failed:", err);
-                    }
-                }
-                if (firebaseUserToDelete && !isGoogleAuth) {
-                    try {
-                        await deleteUser(firebaseUserToDelete);
-                    } catch (err) {
-                        console.error("Failed to delete Firebase user:", err);
-                    }
-                }
-            };
-
-            // Step 0 -> 1
+            // Step 0 -> 1: just a duplicate-check gate, nothing is created yet
+            // (the Better Auth account itself is only created at the very end,
+            // see the final submission below).
             if (currentStep === 0) {
                 setIsLoading(true);
                 try {
@@ -230,41 +204,14 @@ export const useRegisterForm = () => {
 
                     if (emailExists) {
                         formik.setFieldError('email', dict.validation.email.alreadyInUse);
-                        setIsLoading(false);
                         return;
                     }
                     if (phoneExists) {
                         formik.setFieldError('phoneNumber', dict.validation.phoneNumber.alreadyInUse);
-                        setIsLoading(false);
                         return;
                     }
 
-                    if (auth.currentUser && auth.currentUser.email === values.email && auth.currentUser.emailVerified) {
-                        setCurrentStep(2);
-                    } else {
-                        try {
-                            await dispatch(registerAndSendVerification({ email: values.email, password: values.password })).unwrap();
-                            setCurrentStep(currentStep + 1);
-                        } catch (error: unknown) {
-                            let errorMessage = "Une erreur est survenue lors de l'inscription.";
-                            if (typeof error === 'string') {
-                                switch (error) {
-                                    case 'auth/email-already-in-use':
-                                        await auth.currentUser?.reload();
-                                        if (auth.currentUser?.emailVerified) {
-                                            setCurrentStep(2);
-                                            return;
-                                        }
-                                        errorMessage = dict.validation.email.alreadyInUse;
-                                        break;
-                                    case 'auth/weak-password':
-                                        errorMessage = dict.validation.password.weak;
-                                        break;
-                                }
-                            }
-                            open("error", "Erreur d'inscription", { message: errorMessage });
-                        }
-                    }
+                    setCurrentStep(currentStep + 1);
                 } catch (error: unknown) {
                     open("error", "Erreur de vérification", { message: error instanceof Error ? error.message : "Impossible de vérifier l'e-mail pour le moment." });
                 } finally {
@@ -273,87 +220,67 @@ export const useRegisterForm = () => {
             } else if (currentStep < validationSchemas.length - 1) {
                 setCurrentStep(currentStep + 1);
             } else {
-                // Final submission
+                // Final submission: a single server action creates the Better
+                // Auth account (or reuses the existing Google session), uploads
+                // any files and creates the profile — all in one continuous
+                // flow, no mid-wizard wait for email verification.
                 setIsLoading(true);
-                let firebaseUser: User | null = null;
                 try {
-                    const { email, phoneNumber, userType, firstName, lastName, speciality, entityName, entityType, bio, websiteUrl, location, profilePicFile, coverPicFile, accreditationsFile, professionalTitle } = values;
+                    const { email, password, phoneNumber, userType, firstName, lastName, speciality, entityName, entityType, bio, websiteUrl, location, profilePicFile, coverPicFile, accreditationsFile, professionalTitle } = values;
 
-                    if (googleUser) {
-                        firebaseUser = googleUser;
-                    } else if (auth.currentUser) {
-                        firebaseUser = auth.currentUser;
-                    } else {
-                        throw new Error("Aucun utilisateur authentifié trouvé.");
+                    const submission = new FormData();
+                    submission.set("isGoogleSignup", googleUser ? "1" : "0");
+                    submission.set("email", email);
+                    if (!googleUser) {
+                        submission.set("password", password ?? "");
+                    }
+                    submission.set("phoneNumber", phoneNumber);
+                    submission.set("userType", userType);
+                    if (bio) submission.set("bio", bio);
+                    if (websiteUrl) submission.set("websiteUrl", websiteUrl);
+                    submission.set("location", JSON.stringify(location));
+                    submission.set("providers", JSON.stringify(googleUser ? ["google.com"] : ["password"]));
+                    if (userType === UserTypeGQL.INDIVIDUAL) {
+                        if (firstName) submission.set("firstName", firstName);
+                        if (lastName) submission.set("lastName", lastName);
+                        if (speciality) submission.set("speciality", speciality);
+                        if (professionalTitle) submission.set("professionalTitle", professionalTitle);
+                    }
+                    if (userType === UserTypeGQL.LEGAL_ENTITY) {
+                        if (entityName) submission.set("entityName", entityName);
+                        if (entityType) submission.set("entityType", entityType);
+                    }
+                    if (profilePicFile) submission.set("profilePicFile", profilePicFile);
+                    if (coverPicFile) submission.set("coverPicFile", coverPicFile);
+                    accreditationsFile?.forEach((file) => submission.append("accreditationsFile", file));
+
+                    const result = await completeRegistration(submission);
+                    if (!result.success) {
+                        throw new Error(result.error);
                     }
 
-                    const uid = firebaseUser.uid;
-                    const [uploadedProfilePicUrl, uploadedCoverPicUrl, uploadedAccreditations] = await Promise.all([
-                        profilePicFile ? uploadFileToFirebase(profilePicFile, `public/${uid}/profile`).then(url => {
-                            if (url?.uploadedPath) uploadedPaths.push(url.uploadedPath);
-                            return { publicUrl: url?.publicUrl ?? "" };
-                        }) : Promise.resolve(undefined),
-                        coverPicFile ? uploadFileToFirebase(coverPicFile, `public/${uid}/cover`).then(url => {
-                            if (url?.uploadedPath) uploadedPaths.push(url.uploadedPath);
-                            return { publicUrl: url?.publicUrl ?? "" };
-                        }) : Promise.resolve(undefined),
-                        accreditationsFile?.length > 0 ? Promise.all(
-                            accreditationsFile.map(file => uploadFileToFirebase(file, `private/${uid}/accreditations`).then(url => {
-                                if (url?.uploadedPath) uploadedPaths.push(url.uploadedPath);
-                                return { documentUrl: url?.publicUrl ?? "" };
-                            }))
-                        ) : Promise.resolve([]),
-                    ]);
-
-                    const userData: CreateUserInput = {
-                        email,
-                        phoneNumber,
-                        userType,
-                        bio: bio || undefined,
-                        websiteUrl: websiteUrl || undefined,
-                        location,
-                        profilePicUrl: uploadedProfilePicUrl?.publicUrl ?? "",
-                        coverPicUrl: uploadedCoverPicUrl?.publicUrl ?? "",
-                        providers: googleUser ? ['google.com'] : ['password'],
-                        professionalAccreditation: uploadedAccreditations as { documentUrl: string }[],
-                        ...(userType === UserTypeGQL.INDIVIDUAL && {
-                            firstName,
-                            lastName,
-                            speciality,
-                            professionalTitle
-                        }),
-                        ...(userType === UserTypeGQL.LEGAL_ENTITY && {
-                            entityName,
-                            entityType,
-                        }),
-                    };
-
-                    await dispatch(createUser(userData)).unwrap();
-                    open("success", dict.notifications.register.success.title, {
-                        message: dict.notifications.register.success.message,
-                    });
                     localStorage.removeItem(REGISTRATION_STATE_KEY);
-                    router.push('/login');
+
+                    if (result.requiresEmailVerification) {
+                        open("success", dict.notifications.register.success.pendingVerification.title, {
+                            message: dict.notifications.register.success.pendingVerification.message,
+                        });
+                        router.push('/login');
+                    } else {
+                        open("success", dict.notifications.register.success.title, {
+                            message: dict.notifications.register.success.message,
+                        });
+                        router.push('/');
+                    }
 
                 } catch (error: unknown) {
                     console.error("Registration error:", error);
                     let errorMessage = dict.notifications.register.error.message;
-                    if (error instanceof FirebaseError) {
-                        // Handle Firebase errors
-                        switch (error.code) {
-                            case 'auth/email-already-in-use':
-                                errorMessage = dict.validation.email.alreadyInUse || "Cette adresse e-mail est déjà utilisée.";
-                                break;
-                            case 'auth/weak-password':
-                                errorMessage = dict.validation.password.weak || "Le mot de passe est trop faible.";
-                                break;
-                            default:
-                                errorMessage = error.message;
-                        }
-                    } else if (error instanceof Error) {
-                        errorMessage = error.message;
+                    if (error instanceof Error) {
+                        errorMessage = error.message === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL'
+                            ? (dict.validation.email.alreadyInUse || "Cette adresse e-mail est déjà utilisée.")
+                            : error.message;
                     }
-                    await rollbackRegistration(firebaseUser, uploadedPaths, !!googleUser);
                     open("error", dict.notifications.register.error.title, { message: errorMessage });
                 } finally {
                     setIsLoading(false);
@@ -363,32 +290,17 @@ export const useRegisterForm = () => {
     });
 
     const handleGoogleSignIn = async () => {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         setIsGoogleSignIn(true);
         try {
-            if (isMobile) {
-                await signInWithRedirect(auth, googleProvider);
-            } else {
-                const result = await signInWithGoogle();
-                if (result) {
-                    setGoogleUser(result);
-                    formik.setValues({
-                        ...formik.values,
-                        email: result.email ?? "",
-                        password: "",
-                        confirmPassword: "",
-                        profilePicUrl: result.photoURL || "",
-                        firstName: result.displayName?.split(" ")[0] || "",
-                        lastName: result.displayName?.split(" ")[1] || "",
-                    }, true);
-                    open("success", dict.notifications.register.success.googleAccount.title, { message: dict.notifications.register.success.googleAccount.message });
-                }
-            }
+            // Better Auth's social sign-in is redirect-based (it navigates away to
+            // Google and back), unlike Firebase's popup flow. Completion is picked
+            // up by the session-watching effect below once the browser returns. The
+            // flag lets that effect know a Google sign-in was actually in flight, so
+            // it doesn't also fire after a plain email/password registration step.
+            localStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, "1");
+            await signInWithGoogle();
         } catch (error: unknown) {
-            if ((error as { code?: string })?.code === "auth/popup-closed-by-user") {
-                console.warn("Google Sign-in popup closed by user.");
-                return;
-            }
+            localStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
             console.error("Google sign-in error:", error);
         } finally {
             setIsGoogleSignIn(false);
@@ -396,39 +308,29 @@ export const useRegisterForm = () => {
     };
 
     const handlePrevious = () => {
-        if (currentStep === 2 && auth.currentUser?.emailVerified) {
-            setCurrentStep(0);
-        } else {
-            setCurrentStep(currentStep - 1);
-        }
+        setCurrentStep(currentStep - 1);
     };
 
-    // Google Redirect Effect
+    // Google Redirect Effect: after signInWithGoogle() redirects back, the
+    // Better Auth session becomes available here; pick it up to prefill the form.
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(user => {
-            if (user && user.uid !== googleUser?.uid) {
-                // Check if the user is actually signed in via Google
-                const isGoogleAuth = user.providerData.some(
-                    (provider) => provider.providerId === "google.com"
-                );
-
-                if (isGoogleAuth) {
-                    setGoogleUser(user);
-                    formik.setValues({
-                        ...formik.values,
-                        email: user.email ?? "",
-                        firstName: user.displayName?.split(" ")[0] || "",
-                        lastName: user.displayName?.split(" ")[1] || "",
-                    });
-                    open("success", dict.notifications.register.success.googleAccount.title, {
-                        message: dict.notifications.register.success.googleAccount.message
-                    });
-                }
-            }
-        });
-        return () => unsubscribe();
+        const user = session?.user;
+        if (user && user.id !== googleUser?.id && localStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY) === "1") {
+            localStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
+            setGoogleUser(user);
+            formik.setValues({
+                ...formik.values,
+                email: user.email ?? "",
+                profilePicUrl: user.image || "",
+                firstName: user.name?.split(" ")[0] || "",
+                lastName: user.name?.split(" ")[1] || "",
+            });
+            open("success", dict.notifications.register.success.googleAccount.title, {
+                message: dict.notifications.register.success.googleAccount.message
+            });
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [session]);
 
     // State Reset Effect
     useEffect(() => {

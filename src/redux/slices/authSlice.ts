@@ -1,13 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface AuthState {
-  firebaseUid: string | null;
+  authUserId: string | null;
   loading: boolean; // <-- Notre nouvel état
   error: string | null;
 }
 
 const initialState: AuthState = {
-  firebaseUid: null,
+  authUserId: null,
   loading: true, // <-- L'application commence en état de chargement
   error: null,
 };
@@ -17,11 +17,11 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setAuth: (state, action: PayloadAction<string>) => {
-      state.firebaseUid = action.payload;
+      state.authUserId = action.payload;
       state.loading = false; // <-- On a une réponse, le chargement est terminé
     },
     clearAuth: (state) => {
-      state.firebaseUid = null;
+      state.authUserId = null;
       state.loading = false; // <-- On a une réponse, le chargement est terminé
     },
     setAuthError: (state, action: PayloadAction<string | null>) => {

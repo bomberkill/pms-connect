@@ -22,18 +22,15 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { initialized, firebaseUid: uid } = useAuthObserver();
-  const { firebaseUid, loading: authLoading } = useAppSelector(
+  const { initialized, authUserId: uid } = useAuthObserver();
+  const { authUserId, loading: authLoading } = useAppSelector(
     (state) => state.auth
   );
   const isMobile = useIsMobile();
   const { me, loading: meLoading } = useMe({ skip: !firebaseUid });
 
   useEffect(() => {
-    // console.log("start protected layout useEffect, authLoading: ", authLoading, "firebaseUid: ", firebaseUid, "initialized: ", initialized, "uid: ", uid);
-
     if (initialized && !uid && !authLoading) {
-      // console.log("no firebaseUid found. redirect to login, authLoading: ", authLoading, "firebaseUid: ", firebaseUid, "initialized: ", initialized, "uid: ", uid);
       router.push("/login");
     }
   }, [initialized, authLoading, uid, router]);
@@ -56,7 +53,7 @@ export default function ProtectedLayout({
 
   // Si la vérification de l'authentification est terminée et qu'il n'y a pas d'utilisateur, nous pouvons retourner null
   // pendant que la redirection vers /login se produit. Cela évite de faire clignoter le contenu protégé.
-  if (!firebaseUid) {
+  if (!authUserId) {
     return null;
   }
 

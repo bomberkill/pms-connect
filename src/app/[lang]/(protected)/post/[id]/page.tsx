@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import CommentComposer from "../../../../../components/CommentComposer";
-import { uploadFileToFirebase } from "@/utils/fileUpload";
+import { uploadFileToR2 } from "@/utils/fileUpload";
 import { MediaItem, MediaType } from "@/types/Post";
 import FeedItemCard from "@/components/FeedItemCard";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
@@ -95,7 +95,7 @@ export default function PostDetailPage() {
       if (files && files.length > 0) {
         const uploadResults = await Promise.all(
           files.map((file) =>
-            uploadFileToFirebase(file, `public/${user.firebaseUid}/comments`)
+            uploadFileToR2(file, "POST_MEDIA")
           )
         );
 

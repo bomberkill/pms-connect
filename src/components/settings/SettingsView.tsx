@@ -11,8 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useMutation } from "@apollo/client";
 import { buildUpdateMyEmailMutation } from "@/graphql/queries/user";
 import { useNotification } from "@/hooks/use-notification";
-import { sendPasswordResetEmail, signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { resetPassword, logout } from "@/graphql/betterAuth";
 import {
     Loader2,
     User,
@@ -84,7 +83,7 @@ export default function SettingsView() {
                             className="w-full justify-start px-4 py-3 h-auto text-destructive hover:text-destructive hover:bg-destructive/10 mt-auto lg:mt-4"
                             onClick={async () => {
                                 await handleLogout();
-                                await signOut(auth);
+                                await logout();
                                 router.push("/login");
                             }}
                         >
@@ -232,7 +231,7 @@ function SecuritySettings({ email }: { email: string }) {
     const handlePasswordReset = async () => {
         setLoading(true);
         try {
-            await sendPasswordResetEmail(auth, email);
+            await resetPassword(email);
             notification.open("success", dict.notifications.forgotPassword.success.title);
         } catch (e: unknown) {
             notification.open("error", (e as Error).message || dict.globalErrors.default);

@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { MailCheck, Pencil } from 'lucide-react';
-import { auth } from '@/lib/firebase';
-import { sendVerificationEmail } from '@/graphql/firebaseAuth';
+import { sendVerificationEmail } from '@/graphql/betterAuth';
+import { checkEmailVerified } from '@/app/actions/auth-status';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { ChangeEmailForm } from '../../ChangeEmailForm';
 
 interface EmailVerificationStepProps {
   email: string;
-  onVerified: () => void;
+  onVerified: () => void | Promise<void>;
   onBack: () => void;
 }
 
@@ -29,21 +29,32 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
   const [isChangeEmailOpen, setIsChangeEmailOpen] = useState(false);
   const [currentEmail, setCurrentEmail] = useState(email);
 
-  // This effect polls for email verification status
+  // The `email` prop can arrive empty on mount and only get populated a tick
+  // later (e.g. the wizard restoring persisted form values asynchronously
+  // after `currentStep` itself was already restored synchronously). Pick up
+  // that late value once, without ever overwriting a deliberate change made
+  // via ChangeEmailForm below.
+  useEffect(() => {
+    if (email && !currentEmail) {
+      setCurrentEmail(email);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+
+  // This effect polls for email verification status. It checks the account's
+  // state directly in the database (not the local session), so it also
+  // picks up verification done on another device/browser.
   useEffect(() => {
     const interval = setInterval(async () => {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await currentUser.reload();
-        if (currentUser.emailVerified) {
-          clearInterval(interval);
-          onVerified();
-        }
+      const verified = await checkEmailVerified(currentEmail);
+      if (verified) {
+        clearInterval(interval);
+        await onVerified();
       }
     }, 3000); // Check every 3 seconds
 
     return () => clearInterval(interval);
-  }, [onVerified]);
+  }, [currentEmail, onVerified]);
 
   // This effect manages the resend button cooldown
   useEffect(() => {
@@ -57,7 +68,7 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
     if (resendCooldown > 0) return;
     setIsResending(true);
     try {
-      await sendVerificationEmail();
+      await sendVerificationEmail(currentEmail);
       open('success', dict.notifications.verification.resentTitle, { message: dict.notifications.verification.resentMessage });
       setResendCooldown(60); // 60-second cooldown
     } catch (error) {

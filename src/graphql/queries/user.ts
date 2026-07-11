@@ -7,7 +7,7 @@ import { gql } from "@apollo/client";
  */
 export const USER_FIELDS = `
   id
-  firebaseUid
+  authUserId
   email
   phoneNumber
   slug
@@ -273,11 +273,11 @@ export const buildUpdateAccountStatusMutation = (meta?: { fields?: string }) => 
  * @param meta - Optional metadata.
  * @returns A gql object.
  */
-export const buildGetUserByUidQuery = (meta?: { fields?: string }) => {
+export const buildGetUserByAuthUserIdQuery = (meta?: { fields?: string }) => {
   const fields = meta?.fields || USER_FIELDS;
   return gql`
-    query GetUserByFirebaseUid($firebaseUid: ID!) { # Argument name from resolver
-      getUserByFirebaseUid(firebaseUid: $firebaseUid) {
+    query GetUserByAuthUserId($authUserId: ID!) { # Argument name from resolver
+      getUserByAuthUserId(authUserId: $authUserId) {
         ${fields}
       }
     }

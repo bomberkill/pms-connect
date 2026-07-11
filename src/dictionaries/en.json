@@ -135,6 +135,16 @@
         "message": "Unable to send reset link. Please try again."
       }
     },
+    "passwordReset": {
+      "success": {
+        "title": "Password Updated",
+        "message": "Your password has been successfully reset. You can now sign in."
+      },
+      "error": {
+        "title": "Reset Failed",
+        "message": "Unable to reset your password. The link may have expired."
+      }
+    },
     "register": {
       "success": {
         "title": "Registration Successful",
@@ -142,6 +152,10 @@
         "googleAccount": {
           "title": "Google Account Linked",
           "message": "Your Google account has been linked successfully, please complete your profile to continue."
+        },
+        "pendingVerification": {
+          "title": "Account created",
+          "message": "Your account has been created. Check your inbox to confirm your email address, then log in."
         }
       },
       "error": {
@@ -220,7 +234,7 @@
     "passwordsDoNotMatch": "Passwords do not match.",
     "uploadProfilePic": "Upload Profile Picture",
     "uploadCoverPic": "Upload Cover Picture",
-    "uploadAccreditations": "Upload Professional Accreditations (PDF, JPG, PNG)",
+    "uploadAccreditations": "Upload Professional Accreditations (PDF, JPG, PNG) — optional, you can add these later",
     "professionalAccreditations": "Professional Accreditations",
     "accreditationType": "Accreditation Type",
     "document": "Document (PDF, JPG, PNG)",
@@ -337,7 +351,13 @@
   "resetPassword": {
     "title": "Reset Password",
     "description": "Enter your email address and we'll send you a link to reset your password.",
-    "emailLabel": "Email address"
+    "emailLabel": "Email address",
+    "newPasswordTitle": "Choose a new password",
+    "newPasswordDescription": "Enter your new password below.",
+    "newPasswordLabel": "New password",
+    "confirmNewPasswordLabel": "Confirm new password",
+    "submitButton": "Reset password",
+    "invalidToken": "This reset link is invalid or has expired. Please request a new one."
   },
   "friends": {
     "connectionRequests": "My Connection Requests",

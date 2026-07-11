@@ -1,10 +1,29 @@
 import type { NextConfig } from "next";
 
+// Derived from env so the R2 custom/public domain doesn't need to be
+// hardcoded here; falls back to no remote pattern until it's configured.
+const r2Hostname = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_R2_PUBLIC_URL
+      ? new URL(process.env.NEXT_PUBLIC_R2_PUBLIC_URL).hostname
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
 const baseConfig: NextConfig = {
   reactStrictMode: true,
   // experimental: {
   //   turbopack: {},
   // },
+  experimental: {
+    serverActions: {
+      // Registration can upload a profile pic + cover pic + up to 2
+      // accreditation documents (2MB each) in one go.
+      bodySizeLimit: "15mb",
+    },
+  },
   compiler: {
     // removeConsole: process.env.NODE_ENV !== "development",
   },
@@ -14,31 +33,10 @@ const baseConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "ruwtkjvwsoklwtzgalqq.supabase.co",
-        pathname: "/storage/v1/object/public/pms-connect-bucket/**",
-      },
-      {
-        protocol: "https",
-        hostname: "firebasestorage.googleapis.com",
-        // pathname: "/v0/b/pms-connect-e5cb8.appspot.com/o/**",
-        pathname: "/v0/b/nobisoft-nextjs-website.appspot.com/o/**",
-      },
+      ...(r2Hostname
+        ? [{ protocol: "https" as const, hostname: r2Hostname }]
+        : []),
     ],
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/__/auth/:path*",
-        destination: `https://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}/__/auth/:path*`,
-      },
-      {
-        source: "/__/firebase/init.json",
-        destination:
-          "https://pms-connect-e5cb8.firebaseapp.com/__/firebase/init.json",
-      },
-    ];
   },
 };
 

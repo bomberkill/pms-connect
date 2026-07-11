@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Trash2, Video, FileIcon, X, Loader2 } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { usePostMutations, useMe } from "@/hooks/useData/index";
-import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/utils/fileUpload";
+import { MAX_FILE_SIZE, uploadFileToR2 } from "@/utils/fileUpload";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MediaItem, MediaType } from "@/types/Post";
@@ -74,7 +74,7 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
       try {
         if (mediaFiles.length > 0) {
           const uploadResults = await Promise.all(
-            mediaFiles.map((file) => uploadFileToFirebase(file, `public/${user.firebaseUid}/posts`))
+            mediaFiles.map((file) => uploadFileToR2(file, "POST_MEDIA"))
           );
 
           media = mediaFiles.reduce<MediaItem[]>((acc, file, idx) => {

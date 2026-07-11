@@ -128,6 +128,10 @@
         "googleAccount": {
           "title": "Compte Google lié",
           "message": "Votre compte Google a été lié avec succès, Veuillez compléter votre profil pour continuer."
+        },
+        "pendingVerification": {
+          "title": "Compte créé",
+          "message": "Votre compte a été créé. Vérifiez votre boîte mail pour confirmer votre adresse, puis connectez-vous."
         }
       },
       "error": {
@@ -159,6 +163,16 @@
       "error": {
         "title": "Échec de l’envoi",
         "message": "Impossible d’envoyer le lien de réinitialisation. Veuillez réessayer."
+      }
+    },
+    "passwordReset": {
+      "success": {
+        "title": "Mot de passe mis à jour",
+        "message": "Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter."
+      },
+      "error": {
+        "title": "Échec de la réinitialisation",
+        "message": "Impossible de réinitialiser le mot de passe. Le lien est peut-être expiré."
       }
     },
     "noChanges": {
@@ -220,7 +234,7 @@
     "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
     "uploadProfilePic": "Téléverser une photo de profil",
     "uploadCoverPic": "Téléverser une photo de couverture",
-    "uploadAccreditations": "Téléverser des accréditations professionnelles (PDF, JPG, PNG)",
+    "uploadAccreditations": "Téléverser des accréditations professionnelles (PDF, JPG, PNG) — optionnel, vous pourrez les ajouter plus tard",
     "professionalAccreditations": "Accréditations professionnelles",
     "accreditationType": "Type d'accréditation",
     "document": "Document (PDF, JPG, PNG)",
@@ -337,7 +351,13 @@
   "resetPassword": {
     "title": "Réinitialiser le mot de passe",
     "description": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
-    "emailLabel": "Adresse e-mail"
+    "emailLabel": "Adresse e-mail",
+    "newPasswordTitle": "Choisir un nouveau mot de passe",
+    "newPasswordDescription": "Entrez votre nouveau mot de passe ci-dessous.",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "confirmNewPasswordLabel": "Confirmer le nouveau mot de passe",
+    "submitButton": "Réinitialiser le mot de passe",
+    "invalidToken": "Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau."
   },
   "friends": {
     "connectionRequests": "Mes demandes de connexion",

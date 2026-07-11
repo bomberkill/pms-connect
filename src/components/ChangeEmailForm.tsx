@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useAppDispatch } from "@/hooks/use-redux";
 import { updateUnverifiedEmail } from "@/redux/services/userService";
-import { FirebaseError } from "firebase/app";
+import { AuthApiError } from "@/graphql/betterAuth";
 
 interface ChangeEmailFormProps {
   currentEmail: string;
@@ -55,12 +55,12 @@ export function ChangeEmailForm({ currentEmail, onSuccess, onCancel }: ChangeEma
         onSuccess(values.newEmail);
       } catch (error: unknown) {
         let errorMessage = dict.notifications.updateFailed.defaultMessage;
-        if (error instanceof FirebaseError) {
+        if (error instanceof AuthApiError) {
           switch (error.code) {
-            case 'auth/invalid-credential':
+            case 'INVALID_EMAIL_OR_PASSWORD':
               errorMessage = dict.notifications.login.error.messages["auth/invalid-credential"];
               break;
-            case 'auth/email-already-in-use':
+            case 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL':
               errorMessage = dict.validation.email.alreadyInUse;
               break;
             default:

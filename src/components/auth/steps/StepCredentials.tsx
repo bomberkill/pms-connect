@@ -6,10 +6,10 @@ import PhoneInput from "@/components/PhoneInput";
 import Image from "next/image";
 import { StepProps } from "../types";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { User } from "firebase/auth";
+import { AuthUser } from "@/graphql/betterAuth";
 
 interface StepCredentialsProps extends StepProps {
-    googleUser: User | null;
+    googleUser: AuthUser | null;
     handleGoogleSignIn: () => void;
 }
 

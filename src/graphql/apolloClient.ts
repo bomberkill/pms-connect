@@ -9,7 +9,7 @@ import {
   split
 } from "@apollo/client";
 import { errorLink } from "@/lib/apolloErrorLink";
-import { getFirebaseToken } from "./firebaseAuth";
+import { getAuthToken } from "./betterAuth";
 import { createClient } from "graphql-ws";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
@@ -32,7 +32,7 @@ const authLink = new ApolloLink((operation, forward) => {
   return new Observable(observer => {
     (async () => {
       try {
-        const token = await getFirebaseToken();
+        const token = await getAuthToken();
 
         operation.setContext(({ headers = {} }) => ({
           headers: {
@@ -60,7 +60,7 @@ const authLink = new ApolloLink((operation, forward) => {
 const wsLink = new GraphQLWsLink(createClient({
   url: WEBSOCKET_URL,
   connectionParams: async () => {
-    const token = await getFirebaseToken();
+    const token = await getAuthToken();
     // console.log('Attempting to connect to WebSocket with token:', token);
     return {
       headers: {

@@ -43,5 +43,5 @@ export const config = {
   //   // Optional: only run on root (/) URL
   //   // '/'
   // ],
-  matcher: ['/((?!_next|favicon.ico|robots.txt|__\\/auth(?:\\/.*)?|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|.*\\.txt|.*\\.js).*)'],
+  matcher: ['/((?!_next|api|favicon.ico|robots.txt|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|.*\\.txt|.*\\.js).*)'],
 }

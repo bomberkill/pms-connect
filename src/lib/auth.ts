@@ -1,0 +1,77 @@
+import { betterAuth } from "better-auth";
+import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { jwt } from "better-auth/plugins";
+import { nextCookies } from "better-auth/next-js";
+import { MongoClient } from "mongodb";
+import { sendMail } from "./mailer";
+
+// Better Auth manages its own `user` / `session` / `account` / `verification`
+// collections in the same MongoDB database as the domain data (Mongoose's
+// `User` model lives in the `users` collection, no name collision).
+const client = new MongoClient(process.env.MONGODB_URI as string);
+const db = client.db();
+
+export const auth = betterAuth({
+  database: mongodbAdapter(db),
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: process.env.BETTER_AUTH_URL,
+  emailAndPassword: {
+    enabled: true,
+    // Deliberately false: Better Auth's own requireEmailVerification would
+    // refuse to establish a session on signUp, which we need immediately
+    // (registration creates the account, uploads files and creates the
+    // Mongo profile in one continuous flow, then explicitly signs the user
+    // back out). Verification is instead enforced by our own app code at
+    // login time (see loginAndFetchUser in userService.ts), exactly like
+    // before this flow existed.
+    requireEmailVerification: false,
+    sendResetPassword: async ({ user, url }) => {
+      await sendMail({
+        to: user.email,
+        subject: "Réinitialisation de votre mot de passe PMSCONNECT",
+        html: `
+          <p>Bonjour,</p>
+          <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+          <p>Cliquez sur le lien suivant pour choisir un nouveau mot de passe :</p>
+          <p><a href="${url}">${url}</a></p>
+          <p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+          <p>L'équipe PMSCONNECT</p>
+        `,
+        text: `Bonjour,\n\nVous avez demandé la réinitialisation de votre mot de passe.\nCopiez ce lien dans votre navigateur pour choisir un nouveau mot de passe :\n${url}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\nL'équipe PMSCONNECT`,
+      });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendMail({
+        to: user.email,
+        subject: "Vérifiez votre adresse email - PMSCONNECT",
+        html: `
+          <p>Bonjour,</p>
+          <p>Merci de vous être inscrit sur PMSCONNECT.</p>
+          <p>Cliquez sur le lien suivant pour vérifier votre adresse email :</p>
+          <p><a href="${url}">${url}</a></p>
+          <p>Si vous n'êtes pas à l'origine de cette inscription, ignorez cet email.</p>
+          <p>L'équipe PMSCONNECT</p>
+        `,
+        text: `Bonjour,\n\nMerci de vous être inscrit sur PMSCONNECT.\nCopiez ce lien dans votre navigateur pour vérifier votre adresse email :\n${url}\n\nSi vous n'êtes pas à l'origine de cette inscription, ignorez cet email.\n\nL'équipe PMSCONNECT`,
+      });
+    },
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
+  // Exposes /api/auth/jwks (verified by the NestJS backend) and
+  // /api/auth/token (used by the frontend to attach a bearer token to
+  // GraphQL requests).
+  // nextCookies must be last: it's what makes auth.api.* calls (e.g. from
+  // completeRegistration's Server Action) actually persist the session
+  // cookie via next/headers, instead of only returning it in a Response
+  // object nobody reads.
+  plugins: [jwt(), nextCookies()],
+});
