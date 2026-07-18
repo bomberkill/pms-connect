@@ -1,18 +1,19 @@
 import { betterAuth } from "better-auth";
-import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import { jwt } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
-import { MongoClient } from "mongodb";
+import { prisma } from "./prisma";
 import { sendMail } from "./mailer";
 
-// Better Auth manages its own `user` / `session` / `account` / `verification`
-// collections in the same MongoDB database as the domain data (Mongoose's
-// `User` model lives in the `users` collection, no name collision).
-const client = new MongoClient(process.env.MONGODB_URI as string);
-const db = client.db();
-
+// Better Auth manages its own auth-specific tables (user/session/account/
+// verification/jwks) via Prisma, in a DEDICATED Postgres database — same
+// Postgres server as pms-connect-api's domain schema, but a separate
+// database (not just separate tables in the same one). Two independent
+// Prisma projects (this one and pms-connect-api's) pointed at the same
+// database is unsafe: `prisma db push`/`migrate dev` on either side treats
+// tables it doesn't recognize as drift and can silently drop them.
 export const auth = betterAuth({
-  database: mongodbAdapter(db),
+  database: prismaAdapter(prisma, { provider: "postgresql" }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
   emailAndPassword: {
