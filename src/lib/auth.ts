@@ -5,6 +5,20 @@ import { nextCookies } from "better-auth/next-js";
 import { prisma } from "./prisma";
 import { sendMail } from "./mailer";
 
+const trustedOrigins = Array.from(
+  new Set(
+    [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://192.168.0.4:3000",
+      "https://pms-connect.vercel.app",
+      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+      process.env.BETTER_AUTH_URL,
+    ].filter((value): value is string => Boolean(value)),
+  ),
+);
+
 // Better Auth manages its own auth-specific tables (user/session/account/
 // verification/jwks) via Prisma, in a DEDICATED Postgres database — same
 // Postgres server as pms-connect-api's domain schema, but a separate
@@ -16,8 +30,17 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL,
+  // Lets the app be reached from another device on the LAN (e.g. testing on
+  // a phone) without Better Auth rejecting the request as cross-origin.
+  trustedOrigins,
   emailAndPassword: {
     enabled: true,
+    // Matches the mobile design system's password rule (12 chars minimum)
+    // and the client-side yup schemas below it — Better Auth's own default
+    // is 8, which the old yup schemas (min 6!) didn't even reach, so a
+    // password that passed client validation could still be rejected by
+    // the server. Keep both sides in sync if this changes.
+    minPasswordLength: 12,
     // Deliberately false: Better Auth's own requireEmailVerification would
     // refuse to establish a session on signUp, which we need immediately
     // (registration creates the account, uploads files and creates the

@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
 import { useAuthObserver } from "@/hooks/use-auth";
-import { useAppSelector } from "@/hooks/use-redux";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import {
@@ -23,11 +22,9 @@ export default function ProtectedLayout({
 }) {
   const router = useRouter();
   const { initialized, authUserId: uid } = useAuthObserver();
-  const { authUserId, loading: authLoading } = useAppSelector(
-    (state) => state.auth
-  );
+  const authLoading = !initialized;
   const isMobile = useIsMobile();
-  const { me, loading: meLoading } = useMe({ skip: !uid });
+  const { me, loading: meLoading, error: meError } = useMe({ skip: !uid });
 
   useEffect(() => {
     if (initialized && !uid && !authLoading) {
@@ -37,9 +34,15 @@ export default function ProtectedLayout({
 
   useEffect(() => {
     if (uid && me?.accountStatus === AccountStatusGQL.PENDING_VERIFICATION) {
-      router.push("/pending-approval");
+      router.replace("/pending-approval");
     }
   }, [uid, me?.accountStatus, router]);
+
+  useEffect(() => {
+    if (uid && !meLoading && !me && !meError) {
+      router.replace("/register");
+    }
+  }, [uid, meLoading, me, meError, router]);
 
   // Pendant le SSR ou le rendu initial du client, et pendant que l'état d'authentification se charge, on affiche un loader.
   // Cela garantit que le rendu du serveur correspond au rendu initial du client, évitant une erreur d'hydratation.
@@ -53,7 +56,11 @@ export default function ProtectedLayout({
 
   // Si la vérification de l'authentification est terminée et qu'il n'y a pas d'utilisateur, nous pouvons retourner null
   // pendant que la redirection vers /login se produit. Cela évite de faire clignoter le contenu protégé.
-  if (!authUserId) {
+  if (!uid) {
+    return null;
+  }
+
+  if (!meLoading && !me && !meError) {
     return null;
   }
 

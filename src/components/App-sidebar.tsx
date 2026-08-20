@@ -35,7 +35,6 @@ import { useMe } from "@/hooks/useData/index"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const dict = useDictionary()
-  // const {user} = useAppSelector((state) => state.user)
   const { me: user } = useMe();
   const router = useRouter()
   const pathname = useCleanPathname()

@@ -65,13 +65,13 @@ export default function NotificationsView() {
     const getIcon = (type: NotificationType) => {
         switch (type) {
             case NotificationType.POST_LIKE:
-                return <Heart className="w-4 h-4 text-red-500 fill-red-500" />;
+                return <Heart className="w-4 h-4 text-error fill-error" />;
             case NotificationType.POST_COMMENT:
-                return <MessageCircle className="w-4 h-4 text-blue-500 fill-blue-500" />;
+                return <MessageCircle className="w-4 h-4 text-info fill-info" />;
             case NotificationType.NEW_FOLLOWER:
-                return <UserPlus className="w-4 h-4 text-green-500" />;
+                return <UserPlus className="w-4 h-4 text-success" />;
             default:
-                return <Bell className="w-4 h-4 text-gray-500" />;
+                return <Bell className="w-4 h-4 text-muted-foreground" />;
         }
     };
 
@@ -84,7 +84,7 @@ export default function NotificationsView() {
     }
 
     if (error) {
-        return <div className="p-4 text-center text-red-500">{dict.notifications.error}</div>;
+        return <div className="p-4 text-center text-destructive">{dict.notifications.error}</div>;
     }
 
     return (

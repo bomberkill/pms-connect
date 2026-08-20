@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useMutation } from "@apollo/client";
 import { buildUpdateMyEmailMutation } from "@/graphql/queries/user";
 import { useNotification } from "@/hooks/use-notification";
-import { resetPassword, logout } from "@/graphql/betterAuth";
+import { resetPassword } from "@/graphql/betterAuth";
+import { logoutUser } from "@/graphql/authActions";
 import {
     Loader2,
     User,
@@ -39,7 +40,6 @@ import { cn } from "@/lib/utils";
 export default function SettingsView() {
     const dict = useDictionary();
     const { me, loading } = useMe();
-    const { handleLogout } = useFcmToken();
     const router = useRouter();
 
     if (loading || !me) {
@@ -82,8 +82,7 @@ export default function SettingsView() {
                             variant="ghost"
                             className="w-full justify-start px-4 py-3 h-auto text-destructive hover:text-destructive hover:bg-destructive/10 mt-auto lg:mt-4"
                             onClick={async () => {
-                                await handleLogout();
-                                await logout();
+                                await logoutUser();
                                 router.push("/login");
                             }}
                         >
@@ -169,7 +168,7 @@ function AccountSettings({ me }: { me: UserType }) {
                                 <Input disabled value={(me as any).firstName ? `${(me as any).firstName} ${(me as any).lastName}` : (me as any).entityName} className="bg-muted/50 pl-10" />
                                 <User className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
                             </div>
-                            <p className="text-[13px] text-muted-foreground">{dict.settings.labels.managedVia}</p>
+                            <p className="text-xs text-muted-foreground">{dict.settings.labels.managedVia}</p>
                         </div>
                     </div>
                 </CardContent>
@@ -387,7 +386,7 @@ function PreferencesSettings() {
                             <Sun className="w-6 h-6" />
                             <span className="text-sm font-medium">{dict.settings.sections.light}</span>
                         </div>
-                        <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-slate-950 text-white">
+                        <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-neutral-950 text-neutral-50">
                             <Moon className="w-6 h-6" />
                             <span className="text-sm font-medium">{dict.settings.sections.dark}</span>
                         </div>

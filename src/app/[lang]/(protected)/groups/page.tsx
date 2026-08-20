@@ -18,7 +18,7 @@ export default function GroupsPage() {
 
     if (error) {
         return (
-            <div className="p-4 text-center text-red-500">
+            <div className="p-4 text-center text-destructive">
                 {dict.globalErrors.default}
             </div>
         );
@@ -61,7 +61,7 @@ export default function GroupsPage() {
                                     {group.coverImageUrl ? (
                                         <Image src={group.coverImageUrl} alt={group.name} fill className="object-cover" />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500" />
+                                        <div className="w-full h-full bg-gradient-to-r from-primary-400 to-secondary-400" />
                                     )}
                                 </div>
                                 <CardHeader className="relative pt-12 pb-2">

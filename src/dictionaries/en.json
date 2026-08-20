@@ -3,16 +3,16 @@
     "title": "and see your changes instantly."
   },
   "login": {
-    "title": "Login to your account",
-    "description": "Enter your email below to login to your account",
-    "emailLabel": "Email",
+    "title": "Welcome back",
+    "description": "The network for healthcare professionals, institutions, and industry.",
+    "emailLabel": "Email address",
     "passwordLabel": "Password",
-    "forgotPassword": "Forgot your password?",
-    "loginButton": "Login",
-    "continueWith": "Or continue with",
-    "googleButton": "Login with Google",
-    "noAccount": "Don't have an account?",
-    "signUp": "Sign up"
+    "forgotPassword": "Forgot?",
+    "loginButton": "Log in",
+    "continueWith": "or",
+    "googleButton": "Continue with Google",
+    "noAccount": "Don't have an account yet?",
+    "signUp": "Create an account"
   },
   "auth": {
     "otp": {
@@ -41,12 +41,19 @@
     },
     "post": {
       "contentRequired": "The post content cannot be empty.",
-      "contentMax": "The post content cannot exceed 2000 characters."
+      "contentMax": "The post content cannot exceed 3000 characters."
     },
     "password": {
-      "min": "Password must be at least 6 characters",
+      "min": "Password must be at least 12 characters, including a digit",
       "required": "Password is required",
-      "weak": "Password is too weak, please choose a stronger password"
+      "weak": "Password is too weak, please choose a stronger password",
+      "strength": {
+        "0": "Weak",
+        "1": "Fair",
+        "2": "Strong",
+        "3": "Very strong",
+        "hint": "Add a special character to reach the maximum level"
+      }
     },
     "file": {
       "required": "A file is required",
@@ -196,8 +203,21 @@
   "register": {
     "title": "Create Your Account",
     "description": "Start your journey with us!",
-    "step1Title": "Account Type & Credentials",
-    "step1Description": "Choose your account type and set up your login details.",
+    "stepCredentialsBadge": "Credentials",
+    "stepCredentialsTitle": "Let's create your account",
+    "stepCredentialsDescription": "Use your professional address: it speeds up verification of your title.",
+    "stepAccountTypeBadge": "Account type",
+    "stepAccountTypeTitle": "Who are you?",
+    "stepAccountTypeDescription": "This choice determines what information is requested and how your profile appears. It can't be changed afterward.",
+    "stepDetailsBadge": "Your practice",
+    "stepDetailsTitle": "Your practice",
+    "stepDetailsDescription": "This information appears on your profile and is used to verify your title.",
+    "stepDetailsBadgeEntity": "Your organization",
+    "stepDetailsTitleEntity": "Your organization",
+    "stepDetailsDescriptionEntity": "This information is verified against the business registry or the relevant health authority.",
+    "stepProfileBadge": "Profile",
+    "stepProfileTitle": "Complete your profile",
+    "stepProfileDescription": "Optional, but a complete profile gets three times more connections.",
     "userTypeLabel": "User Type",
     "individual": "Individual",
     "legalEntity": "Legal Entity",
@@ -207,16 +227,12 @@
     "phoneNmmberLabel": "Phone Number",
     "passwordLabel": "Password",
     "confirmPasswordLabel": "Confirm Password",
-    "step2Title": "Personal Details",
-    "step2Description": "Provide some information about yourself.",
     "firstNameLabel": "First Name",
     "lastNameLabel": "Last Name",
     "specialityLabel": "Speciality",
     "professionalTitleLabel": "Professional Title",
     "entityNameLabel": "Entity Name",
     "entityTypeLabel": "Entity Type",
-    "step3Title": "Optional Profile & Location Details",
-    "step3Description": "Add optional information for your profile and address.",
     "bioLabel": "Bio",
     "profilePicUrlLabel": "Profile Picture URL",
     "coverPicUrlLabel": "Cover Picture URL",
@@ -227,10 +243,11 @@
     "stateOrProvinceLabel": "State/Province",
     "postalCodeLabel": "Postal Code",
     "countryLabel": "Country",
-    "next": "Next",
+    "next": "Continue",
     "previous": "Previous",
-    "registerButton": "Register",
-    "alreadyHaveAccount": "Already have an account?",
+    "registerButton": "Finish signing up",
+    "skipStep": "Skip this step",
+    "alreadyHaveAccount": "Already registered?",
     "passwordsDoNotMatch": "Passwords do not match.",
     "uploadProfilePic": "Upload Profile Picture",
     "uploadCoverPic": "Upload Cover Picture",
@@ -244,7 +261,8 @@
     "verifyEmailMessage": "We've sent a verification link to {email}. Please check your inbox to continue.",
     "verifyEmailSpam": "Can't find the email? Check your spam folder.",
     "googleAccountLinked": "Google Account Linked",
-    "noPasswordNeeded": "No password needed for Google sign-up."
+    "noPasswordNeeded": "No password needed for Google sign-up.",
+    "emailVerifiedByGoogle": "Email verified by Google."
   },
   "specialities": {
     "MEDICAL_DOCTORS": "Medical Doctors",
@@ -276,6 +294,7 @@
       "feed": "Feed",
       "friends": "Friends",
       "chat": "Chat",
+      "messages": "Messages",
       "job": "Jobs",
       "profile": "Profile",
       "settings": "Settings",
@@ -353,7 +372,7 @@
     "description": "Enter your email address and we'll send you a link to reset your password.",
     "emailLabel": "Email address",
     "newPasswordTitle": "Choose a new password",
-    "newPasswordDescription": "Enter your new password below.",
+    "newPasswordDescription": "You'll be signed out of your other devices.",
     "newPasswordLabel": "New password",
     "confirmNewPasswordLabel": "Confirm new password",
     "submitButton": "Reset password",
@@ -415,11 +434,41 @@
     "edit": "Edit",
     "delete": "Delete"
   },
+  "comingSoon": {
+    "notifyMe": "Notify me at launch",
+    "notified": "We'll notify you",
+    "notifyConfirmedTitle": "Noted",
+    "notifyConfirmedMessage": "We'll let you know as soon as it opens.",
+    "chat": {
+      "title": "Messaging is coming",
+      "description": "Direct messages between professionals arrive next quarter. In the meantime, comments and groups stay open."
+    },
+    "marketplace": {
+      "title": "Marketplace is under construction",
+      "description": "Equipment, supplies, and services between institutions and verified suppliers. Opening in the second half of the year, starting with institutions."
+    },
+    "jobs": {
+      "title": "Job listings",
+      "description": "Same timeline as the Marketplace — hospital and private-practice hiring in the second half of the year."
+    }
+  },
   "pendingApproval": {
     "title": "Account pending validation",
     "description": "Your email has been verified, but your profile still needs to be reviewed by the PMSCONNECT team before you can access the platform.",
     "reviewNotice": "You will be able to log in as soon as an administrator validates your account.",
-    "backToLogin": "Back to login"
+    "backToLogin": "Back to login",
+    "statusLabel": "Validation in progress",
+    "securityTitle": "Why this step?",
+    "securityDescription": "PMSCONNECT keeps access reserved for healthcare professionals and organizations so the network stays trusted, useful, and secure.",
+    "timelineSubmitted": "Profile submitted",
+    "timelineSubmittedDescription": "Your information has been saved.",
+    "timelineReview": "Administrative review",
+    "timelineReviewDescription": "The team checks your professional information.",
+    "timelineAccess": "Platform access",
+    "timelineAccessDescription": "You will be able to log in after validation.",
+    "nextStepTitle": "What you can do now",
+    "nextStepDescription": "Keep your email address accessible. If more details are needed, the PMSCONNECT team may contact you.",
+    "supportHint": "Need help? Contact the PMSCONNECT team using the email address you registered with."
   },
   "changeEmail": {
     "title": "Change your email address",

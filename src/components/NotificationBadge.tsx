@@ -21,13 +21,13 @@ export function NotificationBadge({ className, variant = 'number' }: Notificatio
 
     if (variant === 'dot') {
         return (
-            <span className={cn("absolute block h-3 w-3 rounded-full bg-red-500 ring-2 ring-background", className)} />
+            <span className={cn("absolute block h-3 w-3 rounded-full bg-error ring-2 ring-background", className)} />
         )
     }
 
     return (
         <span className={cn(
-            "flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-background",
+            "flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-2xs font-bold text-error-foreground ring-2 ring-background",
             className
         )}>
             {unreadCount > 99 ? '99+' : unreadCount}

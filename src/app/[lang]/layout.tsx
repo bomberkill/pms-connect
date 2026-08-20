@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Archivo, Bricolage_Grotesque } from "next/font/google";
 import "../../app/globals.css";
 import Providers from "../Providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,13 +9,13 @@ import { Toaster } from "@/components/ui/sonner";
 //   subsets: ["latin"],
 // });
 
-const inter = Inter({
-  variable: "--font-inter-sans",
+const archivo = Archivo({
+  variable: "--font-archivo-sans",
   subsets: ["latin"],
 });
 
-const manrope = Manrope({
-  variable: "--font-manrope-sans",
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage-sans",
   subsets: ["latin"],
 });
 
@@ -101,7 +101,7 @@ export default async function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${manrope.variable} antialiased`}
+        className={`${archivo.variable} ${bricolage.variable} antialiased`}
       >
         <Providers dictionary={dictionary}>
           <PwaInstallPrompt />

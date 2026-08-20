@@ -84,7 +84,7 @@ export default function CommentComposer({ user, placeholder, isSubmitting, onSub
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted/50">
+                  <button className="text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-full hover:bg-muted/50">
                     <SmilePlus className="size-5" />
                   </button>
                 </PopoverTrigger>
@@ -92,7 +92,7 @@ export default function CommentComposer({ user, placeholder, isSubmitting, onSub
                   <Picker onEmojiClick={(emojiObject) => setContent(prev => prev + emojiObject.emoji)} />
                 </PopoverContent>
               </Popover>
-              <label htmlFor="comment-media-upload" className="cursor-pointer text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted/50">
+              <label htmlFor="comment-media-upload" className="cursor-pointer text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-full hover:bg-muted/50">
                 <Paperclip className="size-5" />
               </label>
               <input id="comment-media-upload" type="file" multiple className="hidden" accept="image/*,video/*,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />

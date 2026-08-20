@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +31,7 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
     setAccreditationsPreview
 }) => {
     const dict = useDictionary();
+    const countries = useMemo(() => data as Country[], []);
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
     const [selectedState, setSelectedState] = useState<State | null>(null);
 
@@ -40,6 +41,14 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
     const stateTouched = getIn(formik.touched, "location.stateOrProvince");
     const cityError = getIn(formik.errors, "location.city");
     const cityTouched = getIn(formik.touched, "location.city");
+
+    useEffect(() => {
+        const country = countries.find((item) => item.name === formik.values.location?.country) ?? null;
+        const state = country?.states?.find((item) => item.name === formik.values.location?.stateOrProvince) ?? null;
+
+        setSelectedCountry(country);
+        setSelectedState(state);
+    }, [countries, formik.values.location?.country, formik.values.location?.stateOrProvince]);
 
     return (
         <div className="w-full flex flex-col gap-6 xs:max-w-4/5 sm:max-w-3/5 md:max-w-5/10">
@@ -221,16 +230,20 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                 <Combobox<Country>
                     id="country"
                     name="location.country"
-                    data={data as Country[]}
+                    data={countries}
                     error={countryError}
                     touched={countryTouched}
                     onBlur={formik.handleBlur}
                     value={formik.values.location?.country}
                     onChange={(country) => {
                         setSelectedCountry(country);
-                        formik.setFieldValue('location.country', country.name)
+                        setSelectedState(null);
+                        formik.setFieldValue('location.country', country.name);
+                        formik.setFieldValue('location.stateOrProvince', "");
+                        formik.setFieldValue('location.city', "");
                     }}
                     placeholder="Select Country"
+                    searchable={false}
                 />
                 {countryTouched && countryError && (
                     <p className="text-destructive text-xs">{countryError}</p>
@@ -246,10 +259,13 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                         name="location.stateOrProvince"
                         value={formik.values.location?.stateOrProvince}
                         onBlur={formik.handleBlur}
+                        disabled={!selectedCountry}
                         onChange={(state) => {
-                            setSelectedState(state)
-                            formik.setFieldValue("location.stateOrProvince", state.name)
+                            setSelectedState(state);
+                            formik.setFieldValue("location.stateOrProvince", state.name);
+                            formik.setFieldValue('location.city', "");
                         }}
+                        searchable={false}
                     />
                     {stateTouched && stateError && (
                         <p className="text-destructive text-xs">{stateError}</p>
@@ -263,10 +279,12 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                         id="city"
                         name="location.city"
                         value={formik.values.location?.city}
+                        disabled={!selectedState}
                         onChange={(city) => {
                             formik.setFieldValue('location.city', city.name)
                         }}
                         placeholder="Select City"
+                        searchable={false}
                     />
                     {cityTouched && cityError && (
                         <p className="text-destructive text-xs">{cityError}</p>

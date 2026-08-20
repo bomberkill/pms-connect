@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import { useAppDispatch } from "@/hooks/use-redux";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
-import { signInWithGoogle, AuthUser } from "@/graphql/betterAuth";
+import { signInWithGoogle, AuthUser, AuthApiError } from "@/graphql/betterAuth";
+import { fetchUserByAuthId } from "@/graphql/authActions";
 import { useSession } from "@/lib/auth-client";
 import { completeRegistration } from "@/app/actions/register";
 import { useRouter } from "next/navigation";
@@ -13,34 +13,24 @@ import { useCheckUserExists } from "@/hooks/useData/useUserData";
 import { RegisterFormValues, AccreditationPreviewItem } from "../types";
 import { UserTypeGQL, SpecialityGQL, EntityTypeGQL } from "@/types/User";
 import { MAX_FILE_SIZE } from "@/utils/fileUpload";
+import { PASSWORD_MIN_LENGTH, PASSWORD_DIGIT_RE } from "@/utils/passwordStrength";
 
 const REGISTRATION_STATE_KEY = "pms-connect-registration-state";
-const GOOGLE_REDIRECT_PENDING_KEY = "pms-connect-google-redirect-pending";
-
-const getInitialStep = (): number => {
-    if (typeof window === "undefined") return 0;
-    try {
-        const savedStateJSON = localStorage.getItem(REGISTRATION_STATE_KEY);
-        if (savedStateJSON) {
-            const savedState = JSON.parse(savedStateJSON);
-            return savedState.currentStep || 0;
-        }
-    } catch { }
-    return 0;
-};
 
 export const useRegisterForm = () => {
-    const dispatch = useAppDispatch();
     const dict = useDictionary();
     const { open } = useNotification();
     const router = useRouter();
     const { checkByEmail, checkByPhone } = useCheckUserExists();
-    const { data: session } = useSession();
+    const { data: session, isPending: sessionPending } = useSession();
 
-    const [currentStep, setCurrentStep] = useState(getInitialStep());
+    const [currentStep, setCurrentStep] = useState(0);
     const [isRestored, setIsRestored] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [isGoogleSignIn, setIsGoogleSignIn] = useState(false);
+    // True while: (a) the redirect to Google is in flight, or (b) we're
+    // checking a just-returned session against our own profile API. Either
+    // way the form isn't ready to show yet.
+    const [isGoogleSignIn, setIsGoogleSignIn] = useState(true);
     const [googleUser, setGoogleUser] = useState<AuthUser | null>(null);
     const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
     const [coverPicPreview, setCoverPicPreview] = useState<string | null>(null);
@@ -93,7 +83,10 @@ export const useRegisterForm = () => {
                 }),
             password: yup.string().when([], {
                 is: () => googleUser === null,
-                then: schema => schema.min(6, dict.validation.password.min).required(dict.validation.password.required),
+                then: schema => schema
+                    .min(PASSWORD_MIN_LENGTH, dict.validation.password.min)
+                    .matches(PASSWORD_DIGIT_RE, dict.validation.password.min)
+                    .required(dict.validation.password.required),
                 otherwise: schema => schema.notRequired(),
             }),
             confirmPassword: yup.string().when([], {
@@ -256,6 +249,12 @@ export const useRegisterForm = () => {
 
                     const result = await completeRegistration(submission);
                     if (!result.success) {
+                        if (result.error === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL') {
+                            open("error", dict.notifications.register.error.title, {
+                                message: dict.validation.email.alreadyInUse || "Cette adresse e-mail est déjà utilisée.",
+                            });
+                            return;
+                        }
                         throw new Error(result.error);
                     }
 
@@ -265,7 +264,7 @@ export const useRegisterForm = () => {
                         open("success", dict.notifications.register.success.pendingVerification.title, {
                             message: dict.notifications.register.success.pendingVerification.message,
                         });
-                        router.push('/login');
+                        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
                     } else {
                         open("success", dict.notifications.register.success.title, {
                             message: dict.notifications.register.success.message,
@@ -275,13 +274,9 @@ export const useRegisterForm = () => {
 
                 } catch (error: unknown) {
                     console.error("Registration error:", error);
-                    let errorMessage = dict.notifications.register.error.message;
-                    if (error instanceof Error) {
-                        errorMessage = error.message === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL'
-                            ? (dict.validation.email.alreadyInUse || "Cette adresse e-mail est déjà utilisée.")
-                            : error.message;
-                    }
-                    open("error", dict.notifications.register.error.title, { message: errorMessage });
+                    open("error", dict.notifications.register.error.title, {
+                        message: error instanceof Error ? error.message : dict.notifications.register.error.message,
+                    });
                 } finally {
                     setIsLoading(false);
                 }
@@ -292,17 +287,15 @@ export const useRegisterForm = () => {
     const handleGoogleSignIn = async () => {
         setIsGoogleSignIn(true);
         try {
-            // Better Auth's social sign-in is redirect-based (it navigates away to
-            // Google and back), unlike Firebase's popup flow. Completion is picked
-            // up by the session-watching effect below once the browser returns. The
-            // flag lets that effect know a Google sign-in was actually in flight, so
-            // it doesn't also fire after a plain email/password registration step.
-            localStorage.setItem(GOOGLE_REDIRECT_PENDING_KEY, "1");
-            await signInWithGoogle();
+            // Better Auth's social sign-in is redirect-based: it navigates the
+            // whole page away to Google and back, so nothing after this call
+            // ever runs in this component instance. The returning page (this
+            // one, or /login redirecting here) picks the session up fresh via
+            // the effect below — no localStorage flag needed, the session
+            // itself is the signal.
+            await signInWithGoogle("/register");
         } catch (error: unknown) {
-            localStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
             console.error("Google sign-in error:", error);
-        } finally {
             setIsGoogleSignIn(false);
         }
     };
@@ -311,43 +304,80 @@ export const useRegisterForm = () => {
         setCurrentStep(currentStep - 1);
     };
 
-    // Google Redirect Effect: after signInWithGoogle() redirects back, the
-    // Better Auth session becomes available here; pick it up to prefill the form.
+    // Runs on every mount (including arriving here fresh from /login's
+    // Google button, or a page refresh) and whenever the session settles.
+    // A session with no matching app profile means: authenticated via
+    // Google, but registration was never finished — show the completion
+    // form pre-filled from what Google already told us. A session that DOES
+    // have a profile means someone landed on /register by mistake (already
+    // registered) — send them home instead of showing a signup form.
     useEffect(() => {
+        if (sessionPending) return;
         const user = session?.user;
-        if (user && user.id !== googleUser?.id && localStorage.getItem(GOOGLE_REDIRECT_PENDING_KEY) === "1") {
-            localStorage.removeItem(GOOGLE_REDIRECT_PENDING_KEY);
-            setGoogleUser(user);
-            formik.setValues({
-                ...formik.values,
-                email: user.email ?? "",
-                profilePicUrl: user.image || "",
-                firstName: user.name?.split(" ")[0] || "",
-                lastName: user.name?.split(" ")[1] || "",
-            });
-            open("success", dict.notifications.register.success.googleAccount.title, {
-                message: dict.notifications.register.success.googleAccount.message
-            });
+        if (!user) {
+            setIsGoogleSignIn(false);
+            return;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session]);
+        if (user.id === googleUser?.id) {
+            // Already handled this exact session (e.g. a re-render after
+            // prefill) — nothing new to do.
+            setIsGoogleSignIn(false);
+            return;
+        }
 
-    // State Reset Effect
-    useEffect(() => {
-        if (googleUser && formik.values.email !== googleUser.email) {
-            setGoogleUser(null);
-        }
-    }, [formik.values.email, googleUser]);
+        fetchUserByAuthId(user.id)
+            .then(() => {
+                open("success", dict.notifications.login.success.title, {
+                    message: dict.notifications.login.success.message,
+                });
+                router.push("/");
+            })
+            .catch((error: unknown) => {
+                if (error instanceof AuthApiError && error.code === "ACCOUNT_PENDING_APPROVAL") {
+                    router.push("/pending-approval");
+                    return;
+                }
+
+                if (!(error instanceof AuthApiError) || error.code !== "PROFILE_NOT_FOUND") {
+                    console.error("Failed to restore registration flow:", error);
+                    open("error", dict.notifications.register.error.title, {
+                        message: error instanceof Error ? error.message : dict.notifications.register.error.message,
+                    });
+                    return;
+                }
+
+                setGoogleUser(user);
+                formik.setValues({
+                    ...formik.values,
+                    email: user.email ?? "",
+                    profilePicUrl: user.image || "",
+                    firstName: user.name?.split(" ")[0] || "",
+                    lastName: user.name?.split(" ").slice(1).join(" ") || "",
+                });
+                open("success", dict.notifications.register.success.googleAccount.title, {
+                    message: dict.notifications.register.success.googleAccount.message
+                });
+            })
+            .finally(() => setIsGoogleSignIn(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session, sessionPending]);
 
     // Persistence Effect
     useEffect(() => {
         if (!isRestored || isLoading) return;
+        // Never persist credentials or File objects to localStorage:
+        // restored `{}` placeholders from JSON can corrupt the final FormData
+        // submission after a refresh / tab restore / Google OAuth round-trip.
+        /* eslint-disable @typescript-eslint/no-unused-vars */
         const {
-            // profilePicFile,
-            // coverPicFile,
-            // accreditationsFile,
+            profilePicFile,
+            coverPicFile,
+            accreditationsFile,
+            password,
+            confirmPassword,
             ...serializableValues
         } = formik.values;
+        /* eslint-enable @typescript-eslint/no-unused-vars */
 
         const stateToSave = {
             values: serializableValues,
@@ -363,6 +393,10 @@ export const useRegisterForm = () => {
             try {
                 const savedState = JSON.parse(savedStateJSON);
                 formik.setValues({ ...initialValues, ...savedState.values });
+                const restoredStep = Number.isInteger(savedState.currentStep)
+                    ? Math.min(Math.max(savedState.currentStep, 0), validationSchemas.length - 1)
+                    : 0;
+                setCurrentStep(restoredStep);
             } catch {
                 localStorage.removeItem(REGISTRATION_STATE_KEY);
             }
@@ -375,6 +409,7 @@ export const useRegisterForm = () => {
         formik,
         currentStep,
         setCurrentStep,
+        isRestored,
         isLoading,
         isGoogleSignIn,
         googleUser,
@@ -388,6 +423,5 @@ export const useRegisterForm = () => {
         setAccreditationsPreview,
         validationSchemas,
         dict,
-        dispatch
     };
 };

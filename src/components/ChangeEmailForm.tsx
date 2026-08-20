@@ -9,8 +9,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useAppDispatch } from "@/hooks/use-redux";
-import { updateUnverifiedEmail } from "@/redux/services/userService";
+import { updateUnverifiedEmail } from "@/graphql/authActions";
 import { AuthApiError } from "@/graphql/betterAuth";
 
 interface ChangeEmailFormProps {
@@ -21,7 +20,6 @@ interface ChangeEmailFormProps {
 
 export function ChangeEmailForm({ currentEmail, onSuccess, onCancel }: ChangeEmailFormProps) {
   const dict = useDictionary();
-  const dispatch = useAppDispatch();
   const { open } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,13 +41,11 @@ export function ChangeEmailForm({ currentEmail, onSuccess, onCancel }: ChangeEma
     onSubmit: async (values) => {
       setIsLoading(true);
       try {
-        await dispatch(
-          updateUnverifiedEmail({
-            oldEmail: currentEmail,
-            newEmail: values.newEmail,
-            password: values.password,
-          })
-        ).unwrap();
+        await updateUnverifiedEmail({
+          oldEmail: currentEmail,
+          newEmail: values.newEmail,
+          password: values.password,
+        });
 
         open("success", dict.notifications.emailUpdated.title, { message: dict.notifications.emailUpdated.message });
         onSuccess(values.newEmail);
@@ -82,14 +78,14 @@ export function ChangeEmailForm({ currentEmail, onSuccess, onCancel }: ChangeEma
         <Label htmlFor="newEmail">{dict.changeEmail.newEmail}</Label>
         <Input id="newEmail" type="email" {...formik.getFieldProps("newEmail")} />
         {formik.touched.newEmail && formik.errors.newEmail && (
-          <p className="text-red-500 text-xs">{formik.errors.newEmail}</p>
+          <p className="text-destructive text-xs">{formik.errors.newEmail}</p>
         )}
       </div>
       <div className="grid gap-2">
         <Label htmlFor="password">{dict.login.passwordLabel}</Label>
         <Input id="password" type="password" {...formik.getFieldProps("password")} />
         {formik.touched.password && formik.errors.password && (
-          <p className="text-red-500 text-xs">{formik.errors.password}</p>
+          <p className="text-destructive text-xs">{formik.errors.password}</p>
         )}
       </div>
       <div className="flex justify-end gap-2 mt-4">

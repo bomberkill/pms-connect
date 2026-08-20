@@ -7,6 +7,7 @@ import Image from "next/image";
 import { StepProps } from "../types";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { AuthUser } from "@/graphql/betterAuth";
+import { PasswordStrengthMeter } from "../PasswordStrengthMeter";
 
 interface StepCredentialsProps extends StepProps {
     googleUser: AuthUser | null;
@@ -17,27 +18,28 @@ export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, google
     const dict = useDictionary();
 
     return (
-        <div className="flex flex-col gap-6 min-w-full xs:min-w-full sm:min-w-3/5 md:min-w-2/5">
-            <div className="grid gap-1">
+        <div className="flex w-full flex-col gap-5">
+            <div className="grid gap-1.5">
                 <Label htmlFor="email">{dict.register.emailLabel}</Label>
                 <Input
                     id="email"
                     name="email"
                     type="email"
                     placeholder="email@example.com"
-                    onChange={(event) => {
-                        formik.handleChange(event);
-                        // If we had logic to reset googleUser, it should be passed down or handled in effect
-                        // But typically purely visual here
-                    }}
+                    onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.email}
+                    disabled={!!googleUser}
+                    readOnly={!!googleUser}
                 />
+                {googleUser && (
+                    <p className="text-muted-foreground text-xs">{dict.register.emailVerifiedByGoogle}</p>
+                )}
                 {formik.touched.email && formik.errors.email && (
                     <p className="text-destructive text-xs">{formik.errors.email}</p>
                 )}
             </div>
-            <div className="grid gap-1">
+            <div className="grid gap-1.5">
                 <PhoneInput
                     label={dict.register.phoneNmmberLabel}
                     value={formik.values.phoneNumber}
@@ -48,7 +50,7 @@ export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, google
                 />
             </div>
             {googleUser ? (
-                <div className="rounded-md border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4">
+                <div className="rounded-field border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4">
                     <div className="flex items-center gap-3">
                         <Image src="/google-color.svg" alt="Google" width={24} height={24} className="h-6 w-6" />
                         <div className="flex flex-col">
@@ -59,7 +61,7 @@ export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, google
                 </div>
             ) : (
                 <>
-                    <div className="grid gap-1">
+                    <div className="grid gap-1.5">
                         <Label htmlFor="password">{dict.register.passwordLabel}</Label>
                         <Input
                             id="password"
@@ -70,11 +72,12 @@ export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, google
                             onBlur={formik.handleBlur}
                             value={formik.values.password}
                         />
+                        <PasswordStrengthMeter password={formik.values.password ?? ""} />
                         {formik.touched.password && formik.errors.password && (
                             <p className="text-destructive text-xs">{formik.errors.password}</p>
                         )}
                     </div>
-                    <div className="grid gap-1">
+                    <div className="grid gap-1.5">
                         <Label htmlFor="confirmPassword">{dict.register.confirmPasswordLabel}</Label>
                         <Input
                             id="confirmPassword"
@@ -91,20 +94,17 @@ export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, google
                     </div>
                 </>
             )}
-            <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
-                <span className="bg-background relative z-10 px-3">
-                    <Button
-                        type="button"
-                        size="icon"
-                        variant="outline"
-                        onClick={handleGoogleSignIn}
-                        className="rounded-full shadow-gray-200 border border-gray-200"
-                    >
-                        <Image src="/google-color.svg" alt="Google" width={16} height={16} className="h-4 w-4" />
-                        <span className="sr-only">{dict.login.googleButton}</span>
+            {!googleUser && (
+                <>
+                    <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+                        <span className="bg-background text-muted-foreground relative z-10 px-3">{dict.login.continueWith}</span>
+                    </div>
+                    <Button type="button" variant="outline" onClick={handleGoogleSignIn} className="w-full">
+                        <Image src="/google-color.svg" alt="" width={16} height={16} className="h-4 w-4" />
+                        {dict.login.googleButton}
                     </Button>
-                </span>
-            </div>
+                </>
+            )}
         </div>
     );
 };

@@ -140,8 +140,8 @@ export const buildConnectionRequestUpdatedSubscription = (meta?: { fields?: stri
  */
 export const buildGetConnectionsQuery = () => {
   return gql`
-    query GetConnections($userId: ID!) {
-      getConnections(userId: $userId) {
+    query GetConnections {
+      getConnections {
         id
         slug
         profilePicUrl

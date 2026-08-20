@@ -1,18 +1,16 @@
 "use client"
 
-import { useAppDispatch } from "@/hooks/use-redux"
 import { useDictionary } from "@/hooks/use-dictionary"
 import { useNotification } from "@/hooks/use-notification"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Camera, MessageCircle, Link as LinkIcon, UserMinus, Check, MoreVertical, Ban, Flag } from "lucide-react"
+import { Camera, MessageCircle, UserMinus, MoreHorizontal, Ban, Flag } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { MAX_FILE_SIZE, uploadFileToR2, deleteUploadedFile } from "@/utils/fileUpload"
-import { updateUser } from "@/redux/services/userService"
-import React, { useEffect, useState } from "react"
+import { updateUser } from "@/graphql/authActions"
+import React, { useEffect, useMemo, useState } from "react"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import UpdateProfileDialog from "@/components/UpdateProfileDialog"
 import CustomLoader from "@/components/Loader"
@@ -30,88 +28,64 @@ function extractR2Key(publicUrl: string): string {
 }
 import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useFollowsSubscription, useMe } from "@/hooks/useData/index"
 import { ConnectionRequestStatus } from "@/types/ConnectionRequest"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useIsMobile } from "@/hooks/use-mobile"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useUserPosts } from "@/hooks/useData/usePostData"
 import FeedItemCard from "@/components/FeedItemCard"
 import { EmptyState } from "@/components/ui/empty-state"
 import { useUserCounts } from "@/hooks/useData/useUserCounts"
 
-// NOTE: This page is now dynamic. The folder structure should be `/profile/[id]/page.tsx`
 export default function ProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const dict = useDictionary()
-  const dispatch = useAppDispatch()
   const { open } = useNotification()
   const { slug } = React.use(params);
-  const isMobile = useIsMobile()
 
-  // We'll fetch the profile user's data based on the ID in the URL
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
-  useEffect(() => {
-    // dispatch(fetchMe()); // No need to dispatch thunk anymore
-  }, [])
-
-  // const { loading: authUserLoading, user: authUser } = useAppSelector((state) => state.user);
   const { loading: authUserLoading, me: authUser, refetch: refetchMe } = useMe();
+  const isOwnProfile = useMemo(() => !!slug && slug === authUser?.slug, [slug, authUser?.slug]);
 
-  // Get user ID for stats (use profileUser if available, otherwise authUser)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const statsUserId = profileUser?.id || (profileUser as any)?._id || authUser?.id || (authUser as any)?._id || '';
-
-  // Fetch user posts for posts count
   const { posts: userPostsForCount } = useUserPosts(statsUserId);
-
-  // Fetch user statistics
   const { followersCount, followingCount, postsCount, loading: statsLoading } = useUserCounts(
     statsUserId,
     userPostsForCount?.length || 0
   );
 
-
   useEffect(() => {
-    const fetchUserBySlug = async (slug: string) => {
-      console.log("Fetching user with slug:", slug);
-      setLoading(true);
-      try {
-        const { data, errors } = await apolloClient.query({
-          query: buildGetUserBySlugQuery(),
-          variables: { slug },
-          fetchPolicy: 'network-only',
-        })
-        // console.log("GraphQL response data:", data);
-        if (errors && errors.length > 0) {
-          console.error("GraphQL errors:", errors);
-          setProfileUser(null);
-        } else {
-          setProfileUser(data.getUserBySlug);
-          // console.log("Fetched user data:", data.getUserBySlug);
-        }
-      } catch (error) {
-        console.error("GraphQL errors:", error);
-        setProfileUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (slug) {
-      if (authUserLoading) {
-        return;
-      }
-      if (slug !== authUser?.slug) {
-        fetchUserBySlug(slug);
-        setIsOwnProfile(false);
-      } else {
-        setProfileUser(authUser);
-        setLoading(authUserLoading);
-        setIsOwnProfile(true);
-      }
-    };
-  }, [slug, authUser, authUserLoading]);
+    if (!slug || authUserLoading) return;
 
-  // const isOwnProfile = authUser?.slug === slug;
+    if (slug === authUser?.slug) {
+      setProfileUser(authUser);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    apolloClient.query({
+      query: buildGetUserBySlugQuery(),
+      variables: { slug },
+      fetchPolicy: 'network-only',
+    }).then(({ data, errors }) => {
+      if (cancelled) return;
+      if (errors && errors.length > 0) {
+        console.error("GraphQL errors:", errors);
+        setProfileUser(null);
+      } else {
+        setProfileUser(data.getUserBySlug);
+      }
+    }).catch((error) => {
+      if (cancelled) return;
+      console.error("GraphQL errors:", error);
+      setProfileUser(null);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => { cancelled = true; };
+  }, [slug, authUser, authUserLoading]);
 
   const [isUploading, setIsUploading] = useState(false)
   const [dialogConfig, setDialogConfig] = useState<{
@@ -128,7 +102,6 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
     onCancel: () => { },
   });
 
-
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
     field: "profile" | "cover"
@@ -136,7 +109,6 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // 1. Validation
     const validTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!validTypes.includes(file.type)) {
       open("info", dict.notifications.warning, { message: dict.validation.file.onlyPng });
@@ -148,7 +120,6 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
       return;
     }
 
-    // 2. Si le fichier est valide -> on ouvre la confirmation
     setDialogConfig({
       isOpen: true,
       title: dict.profile.confirmUpdate.title,
@@ -156,25 +127,21 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
       onConfirm: async () => {
         setDialogConfig((prev) => ({ ...prev, isOpen: false }));
         setIsUploading(true);
-        // let uploadedPath: string;
 
         let uploadedKey: string | undefined;
         try {
-          // Upload direct vers Cloudflare R2
           const uploadedFile = await uploadFileToR2(file, field === "profile" ? "AVATAR" : "COVER_PICTURE");
           if (!uploadedFile) return;
 
           uploadedKey = uploadedFile.key;
           const fieldToUpdate = field === "profile" ? "profilePicUrl" : "coverPicUrl";
 
-          // Update User dans Redux
-          await dispatch(updateUser({ [fieldToUpdate]: uploadedFile.publicUrl })).unwrap();
+          await updateUser({ [fieldToUpdate]: uploadedFile.publicUrl });
 
           open("success", dict.notifications.profileUpdated.title, {
             message: dict.notifications.profileUpdated.message,
           });
 
-          // Supprimer l’ancienne image si elle existe
           const publicUrl = field === "profile" ? authUser?.profilePicUrl : authUser?.coverPicUrl;
           if (publicUrl) {
             try {
@@ -184,7 +151,6 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
             }
           }
         } catch (error) {
-          // Rollback si upload fail
           console.error("error:", error);
           try {
             if (uploadedKey) {
@@ -217,7 +183,6 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
     if (followsUpdated) {
       if (followsUpdated.follower.userId === authUser?.id || followsUpdated.following.userId === authUser?.id) {
         refetchMe();
-        // console.log("Follows updated, refetching auth user data...", followsUpdated);
         return;
       }
     }
@@ -225,95 +190,122 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
 
   useEffect(() => {
     if (updatedRequest) {
-      // console.log('Connection request updated, refetching requests...', updatedRequest);
-      refetchRequests(); // Refetch the connection requests
+      refetchRequests();
     }
   }, [updatedRequest, refetchRequests]);
 
-
+  const renderConnectionButton = () => {
+    if (!profileUser) return null;
+    if (pendingRequest) {
+      if (pendingRequest.recipient.id === profileUser.id) {
+        return (
+          <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => declineRequest({ variables: { requestId: pendingRequest.id } })}>
+            {dict.actions.cancelRequest}
+          </Button>
+        );
+      }
+      return (
+        <Button size="sm" onClick={() => acceptRequest({ variables: { requestId: pendingRequest.id } })}>
+          {dict.actions.acceptRequest}
+        </Button>
+      );
+    }
+    if (isConnected) {
+      return (
+        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => removeConnection({ variables: { userIdB: profileUser.id } })}>
+          {dict.actions.disconnect}
+        </Button>
+      );
+    }
+    return (
+      <Button variant="outline" size="sm" onClick={() => sendRequest({ variables: { recipientId: profileUser.id } })}>
+        {dict.actions.connect}
+      </Button>
+    );
+  };
 
   // Skeleton view
   if (loading || !profileUser) {
     return (
       <div className="bg-background min-h-screen">
-        {/* Cover skeleton */}
-        <Skeleton className="w-full h-48 md:h-60 lg:h-72" />
-
-        {/* Profile Info Skeleton */}
-        <div className="max-w-5xl mx-auto px-4 -mt-16 relative flex flex-col items-center">
-          <Skeleton className="w-28 h-28 rounded-full border-4 border-background" />
-          <Skeleton className="w-48 h-6 mt-4 rounded" />
-          <Skeleton className="w-64 h-4 mt-2 rounded" />
-          <Skeleton className="w-40 h-4 mt-2 rounded" />
-          <Skeleton className="w-28 h-10 mt-4 rounded" />
-
-          {/* Tabs Skeleton */}
+        <Skeleton className="w-full h-40 md:h-56 rounded-none" />
+        <div className="max-w-3xl mx-auto px-4 -mt-12 relative flex flex-col items-center">
+          <Skeleton className="w-24 h-24 rounded-full border-4 border-background" />
+          <Skeleton className="w-48 h-6 mt-4 rounded-full" />
+          <Skeleton className="w-64 h-4 mt-2 rounded-full" />
           <div className="mt-10 w-full">
-            <Skeleton className="w-full h-10 mb-6 rounded" />
-            <Skeleton className="w-full h-20 mb-4 rounded" />
-            <Skeleton className="w-full h-20 mb-4 rounded" />
+            <Skeleton className="w-full h-10 mb-6 rounded-full" />
+            <Skeleton className="w-full h-20 mb-4 rounded-2xl" />
+            <Skeleton className="w-full h-20 mb-4 rounded-2xl" />
           </div>
         </div>
       </div>
     )
   }
 
+  const displayName = profileUser.userType === UserTypeGQL.INDIVIDUAL
+    ? `${profileUser.firstName} ${profileUser.lastName}`
+    : profileUser.entityName;
+
+  const initials = profileUser.userType === UserTypeGQL.INDIVIDUAL
+    ? `${profileUser.firstName?.[0] ?? ""}${profileUser.lastName?.[0] ?? ""}`
+    : profileUser.entityName?.[0];
+
   return (
-    <div className="relative bg-background shadow-sm md:m-5 pb-5 min-h-screen md:rounded-lg">
+    <div className="relative bg-background md:m-5 pb-5 min-h-screen md:rounded-2xl md:border md:shadow-xs">
       {isUploading && <CustomLoader />}
-      {/* Cover Photo */}
-      {profileUser.coverPicUrl && (
-        <div className="relative w-full h-48 md:h-60 lg:h-72">
+
+      {/* Cover — a gradient placeholder keeps the avatar's negative margin from
+          sitting on nothing when the user hasn't uploaded one. */}
+      <div className="relative w-full h-40 md:h-56">
+        {profileUser.coverPicUrl ? (
           <Image
             src={profileUser.coverPicUrl}
             alt="Cover"
             fill
-            className="object-cover md:rounded-t-lg"
+            className="object-cover md:rounded-t-2xl"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent rounded-t-lg" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-400 to-secondary-400 md:rounded-t-2xl" />
+        )}
 
-          {/* Bouton pour changer la cover */}
-          {isOwnProfile && (
-            <>
-              <label htmlFor="coverPicFile">
-                <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-gray-300 shadow-md flex items-center justify-center cursor-pointer hover:bg-white">
-                  <Camera className="w-5 h-5 text-gray-700" />
-                </div>
-              </label>
-              <Input
-                id="coverPicFile"
-                name="coverPicFile"
-                type="file"
-                className="hidden"
-                accept="image/png, image/jpeg"
-                onChange={(event) => handleFileChange(event, "cover")}
-              />
-            </>
-          )}
-        </div>
+        {isOwnProfile && (
+          <>
+            <label htmlFor="coverPicFile">
+              <div className="absolute top-4 right-4 size-10 rounded-full bg-white/85 backdrop-blur-sm border border-neutral-300 shadow-xs flex items-center justify-center cursor-pointer hover:bg-white">
+                <Camera className="w-5 h-5 text-neutral-700" />
+              </div>
+            </label>
+            <Input
+              id="coverPicFile"
+              name="coverPicFile"
+              type="file"
+              className="hidden"
+              accept="image/png, image/jpeg"
+              onChange={(event) => handleFileChange(event, "cover")}
+            />
+          </>
+        )}
+      </div>
 
-      )}
-
-      {/* Profile Info */}
-      <div className="max-w-5xl mx-auto px-4 -mt-10 md:-mt-16 relative ">
-        <div className="flex row justify-between items-end md:ml-6">
-          <div>
-            <div className="relative group h-20 w-20 md:h-24 md:w-24 lg:h-28 lg:w-28">
-              <Avatar className="h-full w-full border-4 border-white shadow-lg">
+      {/* Profile info */}
+      <div className="max-w-3xl mx-auto px-4 -mt-10 md:-mt-12 relative">
+        <div className="flex justify-between items-end gap-3">
+          <div className="min-w-0">
+            <div className="relative group size-20 md:size-24">
+              <Avatar className="h-full w-full border-4 border-background shadow-xs">
                 <AvatarImage
                   className="object-cover"
                   src={profileUser.profilePicUrl}
-                  alt={profileUser.userType === UserTypeGQL.INDIVIDUAL ? profileUser.firstName : profileUser.entityName}
+                  alt={displayName}
                 />
-                <AvatarFallback className="text-4xl">
-                  {profileUser.userType === UserTypeGQL.INDIVIDUAL ? `${profileUser.firstName?.[0]}${profileUser.lastName?.[0]}` : profileUser.entityName?.[0]}
-                </AvatarFallback>
+                <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
               </Avatar>
               {isOwnProfile && (
                 <>
                   <label htmlFor="profilePicFile">
                     <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer">
-                      <Camera className="h-7 w-7 text-white" />
+                      <Camera className="h-6 w-6 text-white" />
                     </div>
                   </label>
                   <Input
@@ -328,14 +320,10 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
               )}
             </div>
 
-            <h1 className="text-lg font-medium">
-              {"firstName" in profileUser
-                ? `${profileUser.firstName} ${profileUser.lastName}`
-                : profileUser.entityName}
-            </h1>
+            <h1 className="text-lg font-bold mt-2 truncate">{displayName}</h1>
 
-            <p className="text-sm text-muted-foreground">
-              {"firstName" in profileUser
+            <p className="text-sm text-muted-foreground truncate">
+              {profileUser.userType === UserTypeGQL.INDIVIDUAL
                 ? profileUser.professionalTitle || ""
                 : profileUser.entityType}
             </p>
@@ -345,7 +333,7 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
                 href={profileUser.websiteUrl.startsWith("http") ? profileUser.websiteUrl : `https://${profileUser.websiteUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 text-sm"
+                className="text-primary text-sm underline-offset-4 hover:underline"
               >
                 {profileUser.websiteUrl}
               </a>
@@ -354,161 +342,67 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
 
           {isOwnProfile ? (
             <UpdateProfileDialog user={profileUser}>
-              <Button className="mt-4 cursor-pointer">{dict.button.edit}</Button>
+              <Button size="sm">{dict.button.edit}</Button>
             </UpdateProfileDialog>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {isFollowing ? (
-                <Button className="cursor-pointer" variant="outline" size="sm" onClick={async () => { await unfollowUser({ variables: { userId: profileUser?.id } }); }}>
-                  <div className="flex items-center gap-2">
-                    {/* <UserCheck className="h-4 w-4" /> */}
-                    {dict.actions.unfollow}
-                  </div>
+                <Button variant="outline" size="sm" onClick={async () => { await unfollowUser({ variables: { userId: profileUser.id } }); }}>
+                  {dict.actions.unfollow}
                 </Button>
               ) : (
-                <Button className="cursor-pointer" variant="outline" size="sm" onClick={async () => { await followUser({ variables: { userId: profileUser?.id } }); }}>
-                  <div className="flex items-center gap-2">
-                    {/* <UserPlus className="h-4 w-4" /> */}
-                    {dict.actions.follow}
-                  </div>
+                <Button size="sm" onClick={async () => { await followUser({ variables: { userId: profileUser.id } }); }}>
+                  {dict.actions.follow}
                 </Button>
               )}
-              {!isMobile && (
-                <>
-                  {pendingRequest ? (
-                    pendingRequest.recipient.id === profileUser?.id ? (
-                      <Button className="cursor-pointer" variant="destructive" size="sm" onClick={() => declineRequest({ variables: { requestId: pendingRequest.id } })}>
-                        <div className="flex items-center gap-2">
-                          {/* <UserMinus className="h-4 w-4" /> */}
-                          {dict.actions.cancelRequest}
-                        </div>
-                      </Button>
-                    ) : (
-                      <Button className="cursor-pointer" size="sm" onClick={async () => { await acceptRequest({ variables: { requestId: pendingRequest.id } }); }}>
-                        <div className="flex items-center gap-2">
-                          {/* <Check className="h-4 w-4" /> */}
-                          {dict.actions.acceptRequest}
-                        </div>
-                      </Button>
-                    )
-                  )
-                    : isConnected ? (
-                      <Button className="cursor-pointer" variant="destructive" size="sm" onClick={async () => { await removeConnection({ variables: { userIdB: profileUser?.id } }); }}>
-                        <div className="flex items-center gap-2">
-                          {/* <UserMinus className="h-4 w-4" /> */}{dict.actions.disconnect}
-                        </div>
-                      </Button>
-                    ) : (
-                      <Button className="cursor-pointer" variant="outline" size="sm" onClick={() => sendRequest({ variables: { recipientId: profileUser?.id } })}>
-                        <div className="flex text-sm items-center gap-2">
-                          {/* <LinkIcon className="h-4 w-4" /> */}{dict.actions.connect}
-                        </div>
-                      </Button>
-                    )
-                  }
-                </>
-              )}
-              <Button className="cursor-pointer" size="sm" asChild>
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4" />
-                </div>
-              </Button>
-              {isMobile && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button aria-label="More options" size="icon" variant="outline" className="p-1 rounded-md hover:bg-muted">
-                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>{dict.common.actions}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {pendingRequest ? (
-                      pendingRequest.recipient.id === profileUser?.id ? (
-                        <DropdownMenuItem onClick={() => declineRequest({ variables: { requestId: pendingRequest.id } })} className="cursor-pointer">
-                          <UserMinus className="mr-2 h-4 w-4" />
-                          {dict.actions.cancelRequest}
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => acceptRequest({ variables: { requestId: pendingRequest.id } })} className="cursor-pointer">
-                          <Check className="mr-2 h-4 w-4" />
-                          {dict.actions.acceptRequest}
-                        </DropdownMenuItem>
-                      )
-                    )
-                      : isConnected ? (
-                        <DropdownMenuItem onClick={() => removeConnection({ variables: { userIdB: profileUser?.id } })} className="cursor-pointer">
-                          <UserMinus className="mr-2 h-4 w-4" />
-                          {dict.actions.disconnect}
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem onClick={() => sendRequest({ variables: { recipientId: profileUser?.id } })} className="cursor-pointer">
-                          <LinkIcon className="mr-2 h-4 w-4" />
-                          {dict.actions.connect}
-                        </DropdownMenuItem>
-                      )
-                    }
-                    <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              {renderConnectionButton()}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button aria-label={dict.common.actions} size="icon" variant="ghost" className="text-muted-foreground">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
+                  {isConnected && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={() => removeConnection({ variables: { userIdB: profileUser.id } })}>
+                        <UserMinus className="mr-2 h-4 w-4" /> {dict.actions.disconnect}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="about" className="mt-10">
-          <TabsList className="grid w-full grid-cols-4">
+        {/* Tabs — only About/Posts are implemented; Experience/Activity were
+            declared but rendered nothing, so they're dropped rather than left
+            as dead ends. */}
+        <Tabs defaultValue="about" className="mt-8">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="about">{dict.profile.tabs.about}</TabsTrigger>
             <TabsTrigger value="posts">{dict.profile.tabs.posts}</TabsTrigger>
-            <TabsTrigger value="experience">{dict.profile.tabs.experience}</TabsTrigger>
-            <TabsTrigger value="activity">{dict.profile.tabs.activity}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="about" className="mt-6">
-            {/* About Section */}
+          <TabsContent value="about" className="mt-6 space-y-8">
             <section>
-              <h2 className="text-md font-medium mb-2">{dict.profile.tabs.about}</h2>
+              <h2 className="text-sm font-semibold mb-2">{dict.profile.tabs.about}</h2>
               <p className="text-sm text-muted-foreground whitespace-pre-line">
                 {profileUser.bio || dict.profile.noBio}
               </p>
             </section>
 
-            {/* Stats */}
-            <section className="mt-8">
-              <h2 className="text-md font-medium mb-2">{dict.profile.stats.title}</h2>
-              <div className="grid grid-cols-4 gap-4">
-                <Card className="hover:bg-accent/50 transition-colors cursor-pointer border-none shadow-none bg-muted/30">
-                  <CardContent className="flex flex-col items-center p-4">
-                    <p className="text-lg font-bold text-foreground">{profileUser.connections.length}</p>
-                    <span className="text-sm text-muted-foreground font-medium">{dict.common.relations}</span>
-                  </CardContent>
-                </Card>
-                <Card className="hover:bg-accent/50 transition-colors cursor-pointer border-none shadow-none bg-muted/30">
-                  <CardContent className="flex flex-col items-center p-4">
-                    <p className="text-lg font-bold text-foreground">
-                      {statsLoading ? '...' : postsCount}
-                    </p>
-                    <span className="text-sm text-muted-foreground font-medium">{dict.profile.stats.posts}</span>
-                  </CardContent>
-                </Card>
-                <Card className="hover:bg-accent/50 transition-colors cursor-pointer border-none shadow-none bg-muted/30">
-                  <CardContent className="flex flex-col items-center p-4">
-                    <p className="text-lg font-bold text-foreground">
-                      {statsLoading ? '...' : followersCount}
-                    </p>
-                    <span className="text-sm text-muted-foreground font-medium">{dict.profile.stats.followers}</span>
-                  </CardContent>
-                </Card>
-                <Card className="hover:bg-accent/50 transition-colors cursor-pointer border-none shadow-none bg-muted/30">
-                  <CardContent className="flex flex-col items-center p-4">
-                    <p className="text-lg font-bold text-foreground">
-                      {statsLoading ? '...' : followingCount}
-                    </p>
-                    <span className="text-sm text-muted-foreground font-medium">{dict.profile.stats.following}</span>
-                  </CardContent>
-                </Card>
+            <section>
+              <h2 className="text-sm font-semibold mb-3">{dict.profile.stats.title}</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatTile value={profileUser.connections.length} label={dict.common.relations} />
+                <StatTile value={statsLoading ? '—' : postsCount} label={dict.profile.stats.posts} />
+                <StatTile value={statsLoading ? '—' : followersCount} label={dict.profile.stats.followers} />
+                <StatTile value={statsLoading ? '—' : followingCount} label={dict.profile.stats.following} />
               </div>
             </section>
           </TabsContent>
@@ -530,14 +424,23 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
   )
 }
 
+function StatTile({ value, label }: { value: number | string; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 rounded-2xl bg-muted/50 py-4">
+      <p className="text-lg font-bold text-foreground tabular-nums">{value}</p>
+      <span className="text-xs text-muted-foreground font-medium text-center">{label}</span>
+    </div>
+  );
+}
+
 function UserPostsFeed({ userId, dict }: { userId: string, dict: any }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const { posts, loading, loadMore } = useUserPosts(userId);
 
   if (loading && posts.length === 0) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <Skeleton key={i} className="h-40 w-full rounded-lg" />
+          <Skeleton key={i} className="h-32 w-full rounded-2xl" />
         ))}
       </div>
     )
@@ -554,11 +457,11 @@ function UserPostsFeed({ userId, dict }: { userId: string, dict: any }) { // esl
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {posts.map((post) => (
         <FeedItemCard key={post.id} item={post} />
       ))}
-      <div className="flex justify-center p-4">
+      <div className="flex justify-center pt-4">
         <Button variant="ghost" onClick={() => loadMore()} disabled={loading}>
           {loading ? dict.common.loading : dict.common.loadMore || "Load more"}
         </Button>

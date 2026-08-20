@@ -17,8 +17,6 @@ import {
     buildUnregisterFcmTokenMutation,
 } from '@/graphql/queries/index';
 import { CheckUserExistsResponse, FollowsUpdated, User, UpdateUserInput } from '@/types/User';
-// import { useAppSelector, useAppDispatch } from '@/lib/hooks';
-// import { setUser } from '@/redux/slices/userSlice';
 import { useEffect, useCallback } from 'react';
 
 // =============================================================================
@@ -34,12 +32,10 @@ interface UseUsersOptions {
  */
 export const useUsers = (options: UseUsersOptions = {}) => {
     const { limit = 5 } = options;
-    //   const { user } = useAppSelector((state) => state.user);
 
     const { data, loading, error, ...rest } = useQuery(buildGetAllUsersQuery(), {
         variables: { limit },
-        fetchPolicy: 'cache-and-network', // ✅ Added
-        // skip: !user,
+        fetchPolicy: 'cache-and-network',
     });
 
     const suggestions: User[] = data?.getAllUsers || [];
@@ -51,8 +47,6 @@ export const useUsers = (options: UseUsersOptions = {}) => {
  * Hook to get the current authenticated user's data.
  */
 export const useMe = (options?: { skip?: boolean }) => {
-    //   const { user } = useAppSelector((state) => state.user);
-    //   const dispatch = useAppDispatch();
     const { data, loading, error, refetch } = useQuery<{ me: User }>(buildGetMeQuery(), {
         skip: options?.skip,
         fetchPolicy: 'cache-and-network',
@@ -383,19 +377,6 @@ export const useFcmToken = () => {
         }
     };
 
-    // Helper to unregister token on logout
-    const handleLogout = async () => {
-        const token = localStorage.getItem(LAST_FCM_TOKEN_KEY);
-        if (token) {
-            try {
-                await unregisterToken({ variables: { token } });
-                localStorage.removeItem(LAST_FCM_TOKEN_KEY);
-            } catch (e) {
-                console.warn("Failed to unregister token on logout:", e);
-            }
-        }
-    };
-
     return {
         registerToken,
         registering,
@@ -405,6 +386,5 @@ export const useFcmToken = () => {
         unregisterError,
         requestPermission,
         permissionState: typeof window !== "undefined" ? Notification.permission : 'default',
-        handleLogout // Expose this for Logout buttons
     };
 };

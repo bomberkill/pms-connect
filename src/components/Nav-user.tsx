@@ -28,25 +28,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { User } from "@/types/User"
-import { useAppDispatch } from "@/hooks/use-redux"
 import { useDictionary } from "@/hooks/use-dictionary"
-import { logoutUser } from "@/redux/services/userService"
+import { logoutUser } from "@/graphql/authActions"
 import { useRouter } from "next/navigation"
 import { getUserDisplayName } from "@/lib/user-utils"
-import { useFcmToken } from "@/hooks/useData/index"
 import { useUnreadNotificationCount } from "@/hooks/useData/useNotificationData"
 import { useEffect } from "react"
 
 export function NavUser(
   { user }: { user: User }) {
   const { isMobile } = useSidebar()
-  const dispatch = useAppDispatch()
   const dict = useDictionary()
   const router = useRouter()
 
-  console.log("NavUser rendering...")
-
-  const { handleLogout: handleFcmLogout } = useFcmToken()
   const { unreadCount, subscribeToNewNotifications } = useUnreadNotificationCount()
 
   useEffect(() => {
@@ -55,9 +49,7 @@ export function NavUser(
   }, [subscribeToNewNotifications])
 
   const handleLogout = async () => {
-    console.log("Logging out user:", user.email)
-    await handleFcmLogout()
-    await dispatch(logoutUser()).unwrap().catch((err) => {
+    await logoutUser().catch((err) => {
       console.error("Logout failed:", err)
     })
   }
@@ -77,7 +69,7 @@ export function NavUser(
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 block h-3 w-3 rounded-full bg-red-500 ring-2 ring-sidebar-accent" />
+                  <span className="absolute -top-0.5 -right-0.5 block h-3 w-3 rounded-full bg-error ring-2 ring-sidebar-accent" />
                 )}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
@@ -122,7 +114,7 @@ export function NavUser(
                     {dict.appSideBar.navUser.notifications}
                   </div>
                   {unreadCount > 0 && (
-                    <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[1.25rem]">
+                    <span className="flex items-center justify-center bg-error text-error-foreground text-2xs font-bold px-1.5 py-0.5 rounded-full min-w-5">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}

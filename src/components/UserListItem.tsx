@@ -18,11 +18,11 @@ interface UserListItemProps {
 export function UserListItem({ user, action, subtitle, onClick, className }: UserListItemProps) {
     return (
         <div
-            className={cn("flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm", className)}
+            className={cn("flex items-center justify-between gap-2 p-3 rounded-2xl bg-muted/40", className)}
             onClick={onClick}
         >
-            <Link href={`/profile/${user.slug}`} className="flex items-center gap-3 overflow-hidden">
-                <Avatar className="h-10 w-10 border border-border shrink-0">
+            <Link href={`/profile/${user.slug}`} className="flex items-center gap-3 overflow-hidden min-w-0">
+                <Avatar className="h-11 w-11 shrink-0">
                     <AvatarImage src={user.profilePicUrl} alt={getUserDisplayName(user)} />
                     <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
                 </Avatar>
@@ -34,7 +34,7 @@ export function UserListItem({ user, action, subtitle, onClick, className }: Use
                 </div>
             </Link>
 
-            <div className="flex items-center gap-2 shrink-0 ml-2">
+            <div className="flex items-center gap-2 shrink-0">
                 {action}
             </div>
         </div>

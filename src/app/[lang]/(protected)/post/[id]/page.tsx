@@ -44,10 +44,8 @@ export default function PostDetailPage() {
   const params = useParams<{ id: string; lang: string }>();
   const router = useRouter();
   const postId = params?.id;
-  console.log("postId", postId);
   const searchParams = useSearchParams()
   const isComment = searchParams.get("isComment") === "true"
-  console.log("isComment", isComment);
   const dict = useDictionary();
   const { open } = useNotification();
   const locale = params?.lang === "fr" ? "fr-FR" : "en-US";
@@ -119,7 +117,7 @@ export default function PostDetailPage() {
         },
       });
     } catch (error) {
-      console.log("Error adding comment:", error);
+      console.error("Error adding comment:", error);
     }
   };
 
@@ -128,10 +126,10 @@ export default function PostDetailPage() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto max-w-3xl px-4 py-6 space-y-4">
           <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-96 w-full rounded-2xl" />
           <div className="space-y-4 pt-4">
-            <Skeleton className="h-32 w-full rounded-xl" />
-            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
           </div>
         </div>
       </div>
@@ -145,7 +143,7 @@ export default function PostDetailPage() {
           <Button variant="ghost" className="mb-4" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4 mr-2" /> {dict.common.back}
           </Button>
-          <div className="p-10 text-center border border-border rounded-xl bg-card">
+          <div className="p-10 text-center border border-border rounded-2xl bg-card">
             <h2 className="text-lg font-semibold mb-2">{dict.post.postNotFound}</h2>
             <p className="text-muted-foreground">{dict.post.deleted}</p>
           </div>
@@ -203,16 +201,21 @@ export default function PostDetailPage() {
         <span className="font-semibold text-lg">{isComment ? dict.profile.tabs.replies : dict.post.post}</span>
       </div>
 
-      <div className="container max-w-3xl mx-auto px-0 md:px-4 md:py-6">
+      <div className="container max-w-2xl mx-auto px-0 md:px-4 md:py-6">
         {/* Desktop Back Button */}
-        <div className="hidden md:block mb-4">
+        <div className="hidden md:flex items-center justify-between mb-4">
           <Button variant="ghost" onClick={() => router.back()} className="pl-0 hover:bg-transparent hover:text-primary transition-colors">
             <ArrowLeft className="h-4 w-4 mr-2" /> {dict.common.back}
           </Button>
+          {isComment && (
+            <span className="text-sm text-muted-foreground">
+              {dict.post.replyingTo} <span className="text-primary font-medium">@{getUserDisplayName(post.author)}</span>
+            </span>
+          )}
         </div>
 
         {/* Main Post Card */}
-        <Card className="rounded-none md:rounded-xl border-x-0 md:border-x border-t-0 md:border-t overflow-hidden">
+        <Card className="rounded-none md:rounded-2xl border-x-0 md:border border-t-0 md:border-t shadow-none md:shadow-xs overflow-hidden">
           {/* Author Header */}
           <div className="p-4 flex items-start justify-between">
             <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push(`/profile/${post.author.slug}`)}>
@@ -256,7 +259,7 @@ export default function PostDetailPage() {
           <div className="px-4 pb-2">
             <p className="text-base leading-relaxed whitespace-pre-wrap mb-4">{post.content}</p>
             {post.media && post.media.length > 0 && (
-              <div className="rounded-xl overflow-hidden border border-border">
+              <div className="rounded-2xl overflow-hidden border border-border">
                 <PostMedia media={post.media} />
               </div>
             )}
@@ -278,29 +281,29 @@ export default function PostDetailPage() {
 
             {/* Actions */}
             <div className="flex items-center justify-between text-muted-foreground md:px-2">
-              <Button variant="ghost" size="sm" className="flex-1 hover:text-primary hover:bg-primary/5 transition-colors" onClick={() => document.getElementById('comment-input')?.focus()}>
+              <Button variant="ghost" size="sm" className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors" onClick={() => document.getElementById('comment-input')?.focus()}>
                 <MessageCircle className="h-5 w-5 mr-2" />
                 {dict.profile.tabs.replies}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className={cn("flex-1 hover:text-destructive hover:bg-destructive/5 transition-colors", isLiked && "text-destructive")}
+                className={cn("flex-1 rounded-full hover:text-error hover:bg-error/5 transition-colors", isLiked && "text-error")}
                 onClick={() => (isLiked ? isComment ? unlikeComment() : unlikePost() : isComment ? likeComment() : likePost())}
               >
-                <Heart className={cn("h-5 w-5 mr-2", isLiked && "fill-current")} />
-                {isLiked ? "Liked" : dict.actions.likes}
+                <Heart className={cn("h-5 w-5 mr-2", isLiked && "fill-error")} />
+                {dict.actions.likes}
               </Button>
-              <Button variant="ghost" size="sm" className="flex-1 hover:text-primary hover:bg-primary/5 transition-colors">
-                <Bookmark className={cn("h-5 w-5 mr-2", post.isBookmarked && "fill-current text-primary")} />
-                Save
+              <Button variant="ghost" size="sm" className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors">
+                <Bookmark className={cn("h-5 w-5 mr-2", post.isBookmarked && "fill-primary text-primary")} />
+                {dict.actions.bookmark}
               </Button>
             </div>
           </div>
         </Card>
 
         {/* Comment Composer - Desktop only */}
-        <div className="hidden md:block mt-4 bg-card border border-border rounded-xl p-4">
+        <div className="hidden md:block mt-4 bg-card border border-border rounded-2xl p-4">
           <h4 className="text-sm font-medium mb-3 text-muted-foreground">{dict.post.replyingTo} <span className="text-primary">@{getUserDisplayName(post.author)}</span></h4>
           <div id="comment-input">
             <CommentComposer user={user} isSubmitting={isAddingComment} onSubmit={handleSubmit} placeholder={dict.post.postYourReply} />
@@ -314,7 +317,7 @@ export default function PostDetailPage() {
               <FeedItemCard key={c.id} item={c} isComment />
             ))
           ) : (
-            <div className="text-center py-10 bg-card border border-border rounded-xl">
+            <div className="text-center py-10 bg-card border border-border rounded-2xl">
               <MessageCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
               <p className="text-muted-foreground">{dict.post.noComments}</p>
             </div>
@@ -329,7 +332,7 @@ export default function PostDetailPage() {
       </div>
 
       {/* Mobile Sticky Composer */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border p-3 z-50 shadow-lg">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border p-3 z-50 shadow-md">
         <CommentComposer user={user} isSubmitting={isAddingComment} onSubmit={handleSubmit} placeholder={dict.post.postYourReply} />
       </div>
     </div>

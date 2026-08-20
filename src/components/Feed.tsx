@@ -12,7 +12,7 @@ import { NewPostsBadge } from "./feed/NewPostsBadge";
 import { useDictionary } from "@/hooks/use-dictionary";
 
 const PostSkeleton = () => (
-  <div className="border border-border rounded-xl bg-card shadow-sm p-4 mb-6">
+  <div className="border border-border rounded-card bg-card shadow-xs p-4 mb-3">
     <div className="flex items-center gap-3 mb-4">
       <Skeleton className="h-10 w-10 rounded-full" />
       <div className="space-y-2">

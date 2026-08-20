@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState } from "react";
+import { useFormik } from "formik";
+import * as yup from "yup";
 import { Loader2, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -31,15 +30,7 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -50,13 +41,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-const editGroupSchema = z.object({
-    name: z.string().min(3).max(100),
-    description: z.string().max(500).optional(),
-    privacy: z.nativeEnum(GroupPrivacy),
-});
-
-type EditGroupFormValues = z.infer<typeof editGroupSchema>;
+interface EditGroupFormValues {
+    name: string;
+    description: string;
+    privacy: GroupPrivacy;
+}
 
 interface EditGroupDialogProps {
     group: Group;
@@ -76,115 +65,94 @@ function EditGroupForm({
     const dict = useDictionary();
     const { updateGroup, updating } = useGroupMutations();
 
-    const form = useForm<EditGroupFormValues>({
-        resolver: zodResolver(editGroupSchema),
-        defaultValues: {
+    const editGroupSchema = yup.object({
+        name: yup.string().min(3).max(100).required(),
+        description: yup.string().max(500).optional(),
+        privacy: yup.mixed<GroupPrivacy>().oneOf(Object.values(GroupPrivacy)).required(),
+    });
+
+    const formik = useFormik<EditGroupFormValues>({
+        initialValues: {
             name: group.name,
             description: group.description || "",
             privacy: group.privacy,
         },
+        validationSchema: editGroupSchema,
+        enableReinitialize: true,
+        onSubmit: async (values) => {
+            try {
+                const result = await updateGroup({
+                    variables: {
+                        groupId: group._id,
+                        updateGroupInput: {
+                            name: values.name,
+                            description: values.description,
+                            privacy: values.privacy,
+                        },
+                    },
+                });
+
+                if (result.data?.updateGroup) {
+                    toast.success(dict.groups.form.updateSuccess);
+                    afterSubmit();
+                    router.push(`/groups/${result.data.updateGroup.slug}`);
+                    router.refresh();
+                }
+            } catch {
+                toast.error(dict.groups.form.updateError);
+            }
+        },
     });
 
-    useEffect(() => {
-        form.reset({
-            name: group.name,
-            description: group.description || "",
-            privacy: group.privacy,
-        });
-    }, [form, group]);
-
-    const onSubmit = async (data: EditGroupFormValues) => {
-        try {
-            const result = await updateGroup({
-                variables: {
-                    groupId: group._id,
-                    updateGroupInput: {
-                        name: data.name,
-                        description: data.description,
-                        privacy: data.privacy,
-                    },
-                },
-            });
-
-            if (result.data?.updateGroup) {
-                toast.success(dict.groups.form.updateSuccess);
-                afterSubmit();
-                router.push(`/groups/${result.data.updateGroup.slug}`);
-                router.refresh();
-            }
-        } catch {
-            toast.error(dict.groups.form.updateError);
-        }
-    };
+    const privacyDesc = formik.values.privacy === GroupPrivacy.PUBLIC
+        ? dict.groups.form.publicDesc
+        : formik.values.privacy === GroupPrivacy.PRIVATE
+            ? dict.groups.form.privateDesc
+            : dict.groups.form.secretDesc;
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className={cn("space-y-4", className)}>
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{dict.groups.form.name}</FormLabel>
-                            <FormControl>
-                                <Input placeholder={dict.groups.form.namePlaceholder} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+        <form onSubmit={formik.handleSubmit} className={cn("space-y-4", className)}>
+            <div className="grid gap-1">
+                <Label htmlFor="name">{dict.groups.form.name}</Label>
+                <Input id="name" placeholder={dict.groups.form.namePlaceholder} {...formik.getFieldProps("name")} />
+                {formik.touched.name && formik.errors.name && (
+                    <p className="text-destructive text-xs">{formik.errors.name}</p>
+                )}
+            </div>
+            <div className="grid gap-1">
+                <Label htmlFor="description">{dict.groups.form.description}</Label>
+                <Textarea
+                    id="description"
+                    placeholder={dict.groups.form.descriptionPlaceholder}
+                    className="resize-none"
+                    {...formik.getFieldProps("description")}
                 />
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{dict.groups.form.description}</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                    placeholder={dict.groups.form.descriptionPlaceholder}
-                                    className="resize-none"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="privacy"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{dict.groups.form.privacy}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={dict.groups.form.selectPrivacy} />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value={GroupPrivacy.PUBLIC}>{dict.groups.form.public}</SelectItem>
-                                    <SelectItem value={GroupPrivacy.PRIVATE}>{dict.groups.form.private}</SelectItem>
-                                    <SelectItem value={GroupPrivacy.SECRET}>{dict.groups.form.secret}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormDescription>
-                                {form.watch("privacy") === GroupPrivacy.PUBLIC
-                                    ? dict.groups.form.publicDesc
-                                    : form.watch("privacy") === GroupPrivacy.PRIVATE
-                                        ? dict.groups.form.privateDesc
-                                        : dict.groups.form.secretDesc}
-                            </FormDescription>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <Button type="submit" disabled={updating} className="w-full md:w-auto">
-                    {updating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {dict.groups.form.updateBtn}
-                </Button>
-            </form>
-        </Form>
+                {formik.touched.description && formik.errors.description && (
+                    <p className="text-destructive text-xs">{formik.errors.description}</p>
+                )}
+            </div>
+            <div className="grid gap-1">
+                <Label htmlFor="privacy">{dict.groups.form.privacy}</Label>
+                <Select
+                    value={formik.values.privacy}
+                    onValueChange={(value) => formik.setFieldValue("privacy", value)}
+                >
+                    <SelectTrigger id="privacy">
+                        <SelectValue placeholder={dict.groups.form.selectPrivacy} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={GroupPrivacy.PUBLIC}>{dict.groups.form.public}</SelectItem>
+                        <SelectItem value={GroupPrivacy.PRIVATE}>{dict.groups.form.private}</SelectItem>
+                        <SelectItem value={GroupPrivacy.SECRET}>{dict.groups.form.secret}</SelectItem>
+                    </SelectContent>
+                </Select>
+                <p className="text-muted-foreground text-xs">{privacyDesc}</p>
+            </div>
+            <Button type="submit" disabled={updating} className="w-full md:w-auto">
+                {updating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {dict.groups.form.updateBtn}
+            </Button>
+        </form>
     );
 }
 

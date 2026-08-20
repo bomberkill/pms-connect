@@ -8,14 +8,15 @@ import { useNotification } from "@/hooks/use-notification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TextareaAutosize from "react-textarea-autosize";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Trash2, Video, FileIcon, X, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Trash2, Video, FileIcon, Loader2 } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { usePostMutations } from "@/hooks/useData/index";
-import { MAX_FILE_SIZE, uploadFileToR2 } from "@/utils/fileUpload";
+import { MAX_FILE_SIZE, POST_CONTENT_MAX_LENGTH, uploadFileToR2 } from "@/utils/fileUpload";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MediaItem, MediaType } from "@/types/Post";
+import { UserTypeGQL } from "@/types/User";
 import { cn } from "@/lib/utils";
 import { useMediaHandler } from "@/hooks/use-media-handler";
 import { CreatePostComposerProps } from "./CreatePostComposer";
@@ -23,7 +24,6 @@ import { useMe } from "@/hooks/useData/useUserData";
 
 export default function CreatePostComposerMobile({ onCreated, onClose, placeholder, className, groupId }: CreatePostComposerProps & { groupId?: string }) {
   const dict = useDictionary();
-  // const { user } = useAppSelector((state) => state.user);
   const { me: user } = useMe();
   const { createPost, creating } = usePostMutations();
   const [isCreating, setIsCreating] = useState(false)
@@ -36,7 +36,7 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
     content: yup
       .string()
       .required(dict.validation.post.contentRequired)
-      .max(2000, dict.validation.post.contentMax),
+      .max(POST_CONTENT_MAX_LENGTH, dict.validation.post.contentMax),
     mediaFile: yup
       .array()
       .of(
@@ -137,35 +137,49 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
         className
       )}
     >
-      <div className="p-4 text-center relative">
-        <h2 className="text-sm font-bold">{dict.post.createPostTitle}</h2>
-        {onClose && (
-          <Button variant="ghost" size="icon" className="absolute top-2 right-2 rounded-full" onClick={onClose}>
-            <X className="h-5 w-5" />
+      <div className="flex items-center justify-between p-4">
+        {onClose ? (
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            {dict.button.cancel}
           </Button>
-        )}
+        ) : <span />}
+        <h2 className="text-sm font-semibold">{dict.post.createPostTitle}</h2>
+        <Button size="sm" onClick={() => formik.handleSubmit()} disabled={disabled}>
+          {creating || isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : dict.button.publish}
+        </Button>
       </div>
       <Separator />
       <div className="p-4 flex-grow">
         <div className="flex items-start gap-3">
-          <Avatar className="h-10 w-10">
+          <Avatar shape={user.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"} className="h-10 w-10">
             <AvatarImage className="object-cover" src={user.profilePicUrl} alt={getUserDisplayName(user)} />
             <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
           </Avatar>
-          <TextareaAutosize
-            id="content"
-            name="content"
-            placeholder={
-              placeholder || `${dict.post.whatsOnYourMind}, ${getUserDisplayName(user)}?`
-            }
-            className="min-h-[80px] w-full text-sm rounded-md bg-transparent placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none border-none shadow-none focus-visible:ring-0"
-            value={formik.values.content}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-          />
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-sm font-semibold leading-tight">{getUserDisplayName(user)}</span>
+            <TextareaAutosize
+              id="content"
+              name="content"
+              placeholder={
+                placeholder || `${dict.post.whatsOnYourMind}, ${getUserDisplayName(user)}?`
+              }
+              className="min-h-[80px] w-full text-sm rounded-md bg-transparent placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none border-none shadow-none focus-visible:ring-0 -ml-0 px-0"
+              value={formik.values.content}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            />
+          </div>
+        </div>
+        <div className="mt-1 flex justify-end">
+          <span className={cn(
+            "text-2xs tabular-nums text-muted-foreground",
+            formik.values.content.length > POST_CONTENT_MAX_LENGTH && "text-destructive"
+          )}>
+            {formik.values.content.length} / {POST_CONTENT_MAX_LENGTH}
+          </span>
         </div>
         {formik.touched.content && formik.errors.content && (
-          <p className="text-red-500 text-xs mt-1 ml-14">{formik.errors.content}</p>
+          <p className="text-destructive text-xs mt-1 ml-14">{formik.errors.content}</p>
         )}
       </div>
 
@@ -204,28 +218,19 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
       <div className="p-4 mt-auto border-t">
         <div className="flex items-center justify-around gap-2">
           <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-            <ImageIcon className="h-7 w-7 text-green-600 dark:text-green-400" />
+            <ImageIcon className="h-7 w-7 text-success-600 dark:text-success-400" />
             {/* <span className="text-xs">Photo</span> */}
           </label>
           <input id="media-upload-mobile" type="file" multiple className="hidden" accept="image/*,video/mp4,video/quicktime,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
           <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-            <Video className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+            <Video className="h-7 w-7 text-info-600 dark:text-info-400" />
             {/* <span className="text-sm">Vidéo</span> */}
           </label>
           <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-            <FileIcon className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+            <FileIcon className="h-7 w-7 text-warning-600 dark:text-warning-400" />
             {/* <span className="text-sm">Document</span> */}
           </label>
         </div>
-      </div>
-      <div className="p-4">
-        <Button type="submit" onClick={() => formik.handleSubmit()} disabled={disabled} className="w-full">
-          {creating || isCreating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            dict.button.publish
-          )}
-        </Button>
       </div>
     </div>
   );

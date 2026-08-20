@@ -3,6 +3,10 @@ import { GET_UPLOAD_URL, DELETE_UPLOADED_FILE } from "@/graphql/queries/storage"
 
 export const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
+// Not enforced server-side (no @MaxLength on the API's post content field);
+// this is purely a UI ceiling, chosen to match the mobile design system.
+export const POST_CONTENT_MAX_LENGTH = 3000;
+
 export type UploadPurpose =
     | "AVATAR"
     | "COVER_PICTURE"

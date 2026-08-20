@@ -14,6 +14,10 @@ const r2Hostname = (() => {
 
 const baseConfig: NextConfig = {
   reactStrictMode: true,
+  // Lets the dev server be reached from another device on the LAN (e.g.
+  // testing on a phone) — Next 15 otherwise rejects Server Actions whose
+  // request origin isn't localhost.
+  allowedDevOrigins: ["192.168.0.4", "flavourfully-unigniting-jamel.ngrok-free.dev", "pmsapp.share.zrok.io"],
   // experimental: {
   //   turbopack: {},
   // },

@@ -1,19 +1,18 @@
 "use client"
 
 import React, { useState } from "react";
-import { useAppDispatch } from "@/hooks/use-redux";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Menu, Bell, Settings, LogOut, Plus } from "lucide-react";
+import { Search, Menu, Bell, Settings, LogOut, Plus, Users2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTrigger, DrawerTitle } from "./ui/drawer";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
-import { logoutUser } from "@/redux/services/userService";
+import { logoutUser } from "@/graphql/authActions";
 import { getUserDisplayName } from "@/lib/user-utils";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import CreatePostComposer from "./CreatePostComposer";
@@ -39,19 +38,17 @@ export function useCleanPathname() {
 export default function Header() {
   const dict = useDictionary()
   const isMobile = useIsMobile();
-  // console.log("pathname",pathname)
-  // const { user } = useAppSelector((state) => state.user);
   const { me: user } = useMe();
-  const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
 
-  const shouldShowFab = !pathname?.includes("/post/") && !pathname?.includes("/comment/") && !pathname?.includes("/messages");
+  const shouldShowFab = !["/post/", "/comment/", "/messages", "/chat", "/jobs", "/marketplace"]
+    .some((path) => pathname?.includes(path));
 
   const handleLogout = async () => {
     if (!user) return;
-    await dispatch(logoutUser()).unwrap().catch((err) => {
+    await logoutUser().catch((err) => {
       console.error("Logout failed:", err)
     })
   }
@@ -59,6 +56,7 @@ export default function Header() {
   // Sur mobile, nous affichons une barre de navigation en bas
   if (isMobile) {
     const drawerNavItems = [
+      { href: "/groups", icon: Users2, label: dict.appSideBar.navMain.groups, onClick: () => router.push('/groups') },
       { href: "/settings", icon: Settings, label: dict.appSideBar.navUser.settings, onClick: () => router.push('/settings') },
       { icon: LogOut, label: dict.appSideBar.navUser.logout, onClick: handleLogout },
     ];

@@ -1,6 +1,5 @@
 "use client"
 
-import { useAppDispatch } from "@/hooks/use-redux"
 import { useDictionary } from "@/hooks/use-dictionary"
 import { useNotification } from "@/hooks/use-notification"
 import { Button } from "@/components/ui/button"
@@ -24,7 +23,7 @@ import * as yup from "yup"
 import { useEffect, useMemo, useState } from "react"
 import { User, UserTypeGQL, UpdateUserInput } from "@/types/User"
 import { Loader2 } from "lucide-react"
-import { updateUser } from "@/redux/services/userService"
+import { updateUser } from "@/graphql/authActions"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer"
 
@@ -35,7 +34,6 @@ interface UpdateProfileDialogProps {
 
 export default function UpdateProfileDialog({ children, user }: UpdateProfileDialogProps) {
   const dict = useDictionary()
-  const dispatch = useAppDispatch()
   const { open: openNotification } = useNotification()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -104,7 +102,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
       }
 
       try {
-        await dispatch(updateUser(changedValues)).unwrap()
+        await updateUser(changedValues)
         openNotification("success", dict.notifications.profileUpdated.title, { message: dict.notifications.profileUpdated.message })
         setOpen(false)
       } catch (error: unknown) {

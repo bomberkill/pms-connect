@@ -3,16 +3,16 @@
     "title": "et voyez vos changements instantanément."
   },
   "login": {
-    "title": "Connectez-vous à votre compte",
-    "description": "Entrez votre email ci-dessous pour vous connecter",
-    "emailLabel": "Email",
+    "title": "Bon retour",
+    "description": "Le réseau des professionnels de santé, des établissements et de l'industrie.",
+    "emailLabel": "Adresse e-mail",
     "passwordLabel": "Mot de passe",
-    "forgotPassword": "Mot de passe oublié ?",
+    "forgotPassword": "Oublié ?",
     "loginButton": "Se connecter",
-    "continueWith": "Ou continuer avec",
-    "googleButton": "Se connecter avec Google",
-    "noAccount": "Vous n'avez pas de compte ?",
-    "signUp": "S'inscrire"
+    "continueWith": "ou",
+    "googleButton": "Continuer avec Google",
+    "noAccount": "Pas encore de compte ?",
+    "signUp": "Créer un compte"
   },
   "auth": {
     "otp": {
@@ -41,12 +41,19 @@
     },
     "post": {
       "contentRequired": "Le contenu de la publication ne peut pas être vide.",
-      "contentMax": "Le contenu de la publication ne peut pas dépasser 2000 caractères."
+      "contentMax": "Le contenu de la publication ne peut pas dépasser 3000 caractères."
     },
     "password": {
-      "min": "Le mot de passe doit contenir au moins 6 caractères",
+      "min": "Le mot de passe doit contenir au moins 12 caractères, dont un chiffre",
       "required": "Le mot de passe est requis",
-      "weak": "Le mot de passe est trop faible, veuillez choisir un mot de passe plus fort"
+      "weak": "Le mot de passe est trop faible, veuillez choisir un mot de passe plus fort",
+      "strength": {
+        "0": "Faible",
+        "1": "Moyen",
+        "2": "Solide",
+        "3": "Très solide",
+        "hint": "Ajoutez un caractère spécial pour atteindre le niveau maximal"
+      }
     },
     "file": {
       "required": "Un fichier est requis",
@@ -196,8 +203,21 @@
   "register": {
     "title": "Créer votre compte",
     "description": "Commencez votre parcours avec nous !",
-    "step1Title": "Type de compte et identifiants",
-    "step1Description": "Choisissez votre type de compte et définissez vos identifiants.",
+    "stepCredentialsBadge": "Identifiants",
+    "stepCredentialsTitle": "Créons votre compte",
+    "stepCredentialsDescription": "Utilisez votre adresse professionnelle : elle accélère la vérification de votre titre.",
+    "stepAccountTypeBadge": "Type de compte",
+    "stepAccountTypeTitle": "Qui êtes-vous ?",
+    "stepAccountTypeDescription": "Ce choix détermine les informations demandées et la façon dont votre profil apparaît. Il n'est pas modifiable ensuite.",
+    "stepDetailsBadge": "Votre exercice",
+    "stepDetailsTitle": "Votre exercice",
+    "stepDetailsDescription": "Ces informations apparaissent sur votre profil et servent à vérifier votre titre.",
+    "stepDetailsBadgeEntity": "Votre structure",
+    "stepDetailsTitleEntity": "Votre structure",
+    "stepDetailsDescriptionEntity": "Ces informations sont vérifiées auprès du registre du commerce ou de l'autorité de santé compétente.",
+    "stepProfileBadge": "Profil",
+    "stepProfileTitle": "Complétez votre profil",
+    "stepProfileDescription": "Facultatif, mais un profil complet obtient trois fois plus de mises en relation.",
     "userTypeLabel": "Type d'utilisateur",
     "individual": "Personne physique",
     "legalEntity": "Entité légale",
@@ -207,16 +227,12 @@
     "phoneNmmberLabel": "Numéro de téléphone",
     "passwordLabel": "Mot de passe",
     "confirmPasswordLabel": "Confirmer le mot de passe",
-    "step2Title": "Détails personnels",
-    "step2Description": "Fournissez quelques informations sur vous-même.",
     "firstNameLabel": "Prénom",
     "lastNameLabel": "Nom",
     "specialityLabel": "Spécialité",
     "professionalTitleLabel": "Titre professionnel",
     "entityNameLabel": "Nom de l'entité",
     "entityTypeLabel": "Type d'entité",
-    "step3Title": "Détails du profil et localisation",
-    "step3Description": "Ajoutez des informations facultatives pour votre profil et votre adresse.",
     "bioLabel": "Biographie",
     "profilePicUrlLabel": "URL de la photo de profil",
     "coverPicUrlLabel": "URL de la photo de couverture",
@@ -227,10 +243,11 @@
     "stateOrProvinceLabel": "État/Province",
     "postalCodeLabel": "Code postal",
     "countryLabel": "Pays",
-    "next": "Suivant",
+    "next": "Continuer",
     "previous": "Précédent",
-    "registerButton": "S'inscrire",
-    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "registerButton": "Terminer l'inscription",
+    "skipStep": "Passer cette étape",
+    "alreadyHaveAccount": "Déjà inscrit ?",
     "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
     "uploadProfilePic": "Téléverser une photo de profil",
     "uploadCoverPic": "Téléverser une photo de couverture",
@@ -244,7 +261,8 @@
     "verifyEmailMessage": "Nous avons envoyé un lien de vérification à {email}. Veuillez consulter votre boîte de réception pour continuer.",
     "verifyEmailSpam": "Vous ne trouvez pas l'e-mail ? Vérifiez votre dossier de spam.",
     "googleAccountLinked": "Compte Google lié",
-    "noPasswordNeeded": "Aucun mot de passe requis pour l'inscription via Google."
+    "noPasswordNeeded": "Aucun mot de passe requis pour l'inscription via Google.",
+    "emailVerifiedByGoogle": "Adresse e-mail vérifiée par Google."
   },
   "specialities": {
     "MEDICAL_DOCTORS": "Médecins",
@@ -273,11 +291,12 @@
   },
   "appSideBar": {
     "navMain": {
-      "feed": "Fil d'actualité",
-      "friends": "Amis",
+      "feed": "Fil",
+      "friends": "Relations",
       "chat": "Discussions",
+      "messages": "Messages",
       "job": "Emplois",
-      "profile": "Profile",
+      "profile": "Profil",
       "settings": "Paramètres",
       "marketplace": "Marketplace",
       "library": "Bibliothèque",
@@ -353,7 +372,7 @@
     "description": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
     "emailLabel": "Adresse e-mail",
     "newPasswordTitle": "Choisir un nouveau mot de passe",
-    "newPasswordDescription": "Entrez votre nouveau mot de passe ci-dessous.",
+    "newPasswordDescription": "Vous serez déconnecté de vos autres appareils.",
     "newPasswordLabel": "Nouveau mot de passe",
     "confirmNewPasswordLabel": "Confirmer le nouveau mot de passe",
     "submitButton": "Réinitialiser le mot de passe",
@@ -407,19 +426,49 @@
     "likes": "J'aime",
     "loadMore": "Charger plus",
     "download": "Télécharger",
-    "like": "J'aime",
-    "unlike": "Je n'aime plus",
+    "like": "J'apprécie",
+    "unlike": "Je n'apprécie plus",
     "comment": "Commenter",
     "bookmark": "Enregistrer",
     "removeBookmark": "Retirer des enregistrements",
     "edit": "Modifier",
     "delete": "Supprimer"
   },
+  "comingSoon": {
+    "notifyMe": "Me prévenir au lancement",
+    "notified": "Vous serez prévenu",
+    "notifyConfirmedTitle": "Noté",
+    "notifyConfirmedMessage": "Nous vous préviendrons dès l'ouverture.",
+    "chat": {
+      "title": "Messagerie en préparation",
+      "description": "Les échanges directs entre professionnels arrivent au premier trimestre. En attendant, les commentaires et les groupes restent ouverts."
+    },
+    "marketplace": {
+      "title": "Marketplace en construction",
+      "description": "Équipements, consommables et prestations entre établissements et fournisseurs vérifiés. Ouverture au second semestre, d'abord aux établissements."
+    },
+    "jobs": {
+      "title": "Offres d'emploi",
+      "description": "Même échéance que la Marketplace — recrutement hospitalier et libéral au second semestre."
+    }
+  },
   "pendingApproval": {
     "title": "Compte en attente de validation",
     "description": "Votre e-mail a bien été vérifié, mais votre profil doit encore être validé par l'équipe PMSCONNECT avant de pouvoir accéder à la plateforme.",
     "reviewNotice": "Vous pourrez vous connecter dès qu'un administrateur aura validé votre compte.",
-    "backToLogin": "Retour à la connexion"
+    "backToLogin": "Retour à la connexion",
+    "statusLabel": "Validation en cours",
+    "securityTitle": "Pourquoi cette étape ?",
+    "securityDescription": "PMSCONNECT réserve l'accès aux professionnels et organisations de santé afin de garder un réseau fiable, utile et sécurisé.",
+    "timelineSubmitted": "Profil transmis",
+    "timelineSubmittedDescription": "Vos informations sont bien enregistrées.",
+    "timelineReview": "Revue administrative",
+    "timelineReviewDescription": "L'équipe vérifie les informations professionnelles.",
+    "timelineAccess": "Accès à la plateforme",
+    "timelineAccessDescription": "Vous pourrez vous connecter après validation.",
+    "nextStepTitle": "Ce que vous pouvez faire maintenant",
+    "nextStepDescription": "Gardez votre adresse e-mail accessible. Si une précision est nécessaire, l'équipe PMSCONNECT pourra vous contacter.",
+    "supportHint": "Besoin d'aide ? Contactez l'équipe PMSCONNECT avec l'adresse utilisée lors de l'inscription."
   },
   "changeEmail": {
     "title": "Changer votre adresse e-mail",

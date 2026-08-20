@@ -295,7 +295,7 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
     if (error || !group) {
         return (
             <div className="p-10 text-center">
-                <h2 className="text-xl font-bold text-red-500">{dict.groups.notFound}</h2>
+                <h2 className="text-xl font-bold text-destructive">{dict.groups.notFound}</h2>
                 <Button onClick={() => router.push("/groups")} variant="link">
                     {dict.common.back}
                 </Button>
@@ -310,7 +310,7 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                 {group.coverImageUrl ? (
                     <Image src={group.coverImageUrl} alt="Cover" fill className="object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                    <div className="w-full h-full bg-gradient-to-r from-primary-400 to-secondary-400" />
                 )}
 
                 {/* Profile Image Overlapping */}
@@ -364,14 +364,14 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                                 )}
                                 {isCreator && (
                                     <DropdownMenuItem
-                                        className="text-red-500 cursor-pointer"
+                                        className="text-destructive focus:text-destructive cursor-pointer"
                                         onClick={() => setDeleteDialogOpen(true)}
                                     >
                                         <Trash2 className="mr-2 h-4 w-4" /> {dict.groups.delete}
                                     </DropdownMenuItem>
                                 )}
                                 {!isCreator && (
-                                    <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={handleLeave}>
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={handleLeave}>
                                         <LogOut className="mr-2 h-4 w-4" /> {dict.groups.leave}
                                     </DropdownMenuItem>
                                 )}

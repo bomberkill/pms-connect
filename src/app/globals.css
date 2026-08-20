@@ -3,11 +3,51 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   Typography scale — mobile-first, 9 steps. Sizes keep Tailwind's default
+   names (xs..4xl) so every existing text-* usage in the app inherits the new
+   line-height/letter-spacing automatically; --text-2xs is new (badges,
+   counters — previously ad hoc text-[8px]/text-[10px]).
+   ========================================================================== */
+@theme {
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.45;
+  --text-2xs--letter-spacing: 0.01em;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.55;
+
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.55;
+
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.4;
+  --text-xl--letter-spacing: -0.005em;
+
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.3;
+  --text-2xl--letter-spacing: -0.01em;
+
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 1.25;
+  --text-3xl--letter-spacing: -0.015em;
+
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 1.15;
+  --text-4xl--letter-spacing: -0.02em;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter-sans);
-  --font-heading: var(--font-manrope-sans);
+  --font-sans: var(--font-archivo-sans);
+  --font-heading: var(--font-bricolage-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -26,6 +66,11 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  /* alias so error/success/warning/info/tertiary read as one consistent
+     semantic family; --destructive stays for shadcn component compatibility */
+  --color-error: var(--destructive);
+  --color-error-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -42,50 +87,316 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Per-component radii from the mobile design system — replaces the
+     "everything is a pill" pattern. Named after what they dress (chip,
+     field, button, card, sheet) rather than a generic size scale, so a
+     component picks the right one by reading its own name. Pills (badges,
+     avatars, handles) stay on Tailwind's built-in rounded-full. */
+  --radius-chip: 0.5rem;    /* 8px  — filter/specialty chips, small tags */
+  --radius-field: 0.625rem; /* 10px — text inputs, textareas, selects */
+  --radius-button: 0.75rem; /* 12px — buttons (one primary per screen) */
+  --radius-card: 1rem;      /* 16px — post cards, profile cards */
+  --radius-sheet: 1.5rem;   /* 24px — bottom sheets / modal feuilles */
+
+  /* Semantic roles not part of the original shadcn scaffold: status colors
+     (toasts/alerts/badges) and a warm "tertiary" for CTAs, likes, notifications.
+     Named "tertiary" rather than "accent" to avoid colliding with shadcn's
+     structural --accent (the subtle hover/selected surface below). */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-soft-foreground: var(--success-soft-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
+  --color-info-soft-foreground: var(--info-soft-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+
+  /* Full 50->950 scales, exposed as Tailwind utilities (bg-primary-100,
+     text-error-700, border-neutral-200, ...) so every hardcoded Tailwind
+     palette class in the codebase has a 1:1 token replacement. */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+  --color-secondary-50: var(--secondary-50);
+  --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200);
+  --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400);
+  --color-secondary-500: var(--secondary-500);
+  --color-secondary-600: var(--secondary-600);
+  --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800);
+  --color-secondary-900: var(--secondary-900);
+  --color-secondary-950: var(--secondary-950);
+  --color-tertiary-50: var(--tertiary-50);
+  --color-tertiary-100: var(--tertiary-100);
+  --color-tertiary-200: var(--tertiary-200);
+  --color-tertiary-300: var(--tertiary-300);
+  --color-tertiary-400: var(--tertiary-400);
+  --color-tertiary-500: var(--tertiary-500);
+  --color-tertiary-600: var(--tertiary-600);
+  --color-tertiary-700: var(--tertiary-700);
+  --color-tertiary-800: var(--tertiary-800);
+  --color-tertiary-900: var(--tertiary-900);
+  --color-tertiary-950: var(--tertiary-950);
+  --color-success-50: var(--success-50);
+  --color-success-100: var(--success-100);
+  --color-success-200: var(--success-200);
+  --color-success-300: var(--success-300);
+  --color-success-400: var(--success-400);
+  --color-success-500: var(--success-500);
+  --color-success-600: var(--success-600);
+  --color-success-700: var(--success-700);
+  --color-success-800: var(--success-800);
+  --color-success-900: var(--success-900);
+  --color-success-950: var(--success-950);
+  --color-warning-50: var(--warning-50);
+  --color-warning-100: var(--warning-100);
+  --color-warning-200: var(--warning-200);
+  --color-warning-300: var(--warning-300);
+  --color-warning-400: var(--warning-400);
+  --color-warning-500: var(--warning-500);
+  --color-warning-600: var(--warning-600);
+  --color-warning-700: var(--warning-700);
+  --color-warning-800: var(--warning-800);
+  --color-warning-900: var(--warning-900);
+  --color-warning-950: var(--warning-950);
+  --color-error-50: var(--error-50);
+  --color-error-100: var(--error-100);
+  --color-error-200: var(--error-200);
+  --color-error-300: var(--error-300);
+  --color-error-400: var(--error-400);
+  --color-error-500: var(--error-500);
+  --color-error-600: var(--error-600);
+  --color-error-700: var(--error-700);
+  --color-error-800: var(--error-800);
+  --color-error-900: var(--error-900);
+  --color-error-950: var(--error-950);
+  --color-info-50: var(--info-50);
+  --color-info-100: var(--info-100);
+  --color-info-200: var(--info-200);
+  --color-info-300: var(--info-300);
+  --color-info-400: var(--info-400);
+  --color-info-500: var(--info-500);
+  --color-info-600: var(--info-600);
+  --color-info-700: var(--info-700);
+  --color-info-800: var(--info-800);
+  --color-info-900: var(--info-900);
+  --color-info-950: var(--info-950);
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-950: var(--neutral-950);
 }
 
 :root {
-  --radius: 0.75rem;
-  /* 12px for more friendliness */
-  --background: oklch(0.99 0.003 247.84);
-  /* Slightly tinted white */
-  --foreground: oklch(0.141 0.005 285.8);
-  /* Dark slate */
+  --radius: 1rem;
+  /* 16px base — generous, fully-rounded pills on buttons/inputs/badges,
+     rounded-xl (20px) on cards. See "Style des composants" design doc. */
+
+  /* ==========================================================================
+     Raw color scales — 50 (lightest tint) -> 950 (darkest shade), OKLCH.
+     Theme-invariant: light/dark mode only changes which step the semantic
+     roles below point to, never these values. Primary/Secondary/Error/Neutral
+     keep the hues already in use across the app; Tertiary/Success/Warning/Info
+     are new. See the "Palette de couleurs" design-system proposal for the
+     rationale and WCAG contrast verification behind each step.
+     ========================================================================== */
+
+  /* primary: professional medical blue. Hue moved 245deg -> 264deg per the
+     mobile design system: at 245deg the blue read as violet and competed
+     with the logo's teal; 264deg keeps blue and teal as a clearly distinct
+     structuring pair. */
+  --primary-50: oklch(0.98 0.048 264);
+  --primary-100: oklch(0.95 0.0704 264);
+  --primary-200: oklch(0.9 0.0928 264);
+  --primary-300: oklch(0.83 0.1152 264);
+  --primary-400: oklch(0.74 0.1376 264);
+  --primary-500: oklch(0.64 0.16 264);
+  --primary-600: oklch(0.55 0.1376 264);
+  --primary-700: oklch(0.46 0.1152 264);
+  --primary-800: oklch(0.38 0.0928 264);
+  --primary-900: oklch(0.3 0.0704 264);
+  --primary-950: oklch(0.2 0.048 264);
+
+  /* secondary: soft sage/teal. Reserved for verification signals only —
+     verified badge, approved account, accreditation chips. Never a CTA:
+     that ambiguity is what made the previous version read as unclear. */
+  --secondary-50: oklch(0.98 0.027 170);
+  --secondary-100: oklch(0.95 0.0396 170);
+  --secondary-200: oklch(0.9 0.0522 170);
+  --secondary-300: oklch(0.83 0.0648 170);
+  --secondary-400: oklch(0.74 0.0774 170);
+  --secondary-500: oklch(0.64 0.09 170);
+  --secondary-600: oklch(0.55 0.0774 170);
+  --secondary-700: oklch(0.46 0.0648 170);
+  --secondary-800: oklch(0.38 0.0522 170);
+  --secondary-900: oklch(0.3 0.0396 170);
+  --secondary-950: oklch(0.2 0.027 170);
+
+  /* tertiary: warm amber — the one warm hue, reserved for pending/waiting
+     states only (account awaiting approval, unverified e-mail, expiring
+     document). Never a CTA or decorative gradient: a user should only see
+     amber when an action is being asked of them. */
+  --tertiary-50: oklch(0.98 0.045 45);
+  --tertiary-100: oklch(0.95 0.066 45);
+  --tertiary-200: oklch(0.9 0.087 45);
+  --tertiary-300: oklch(0.83 0.108 45);
+  --tertiary-400: oklch(0.74 0.129 45);
+  --tertiary-500: oklch(0.64 0.15 45);
+  --tertiary-600: oklch(0.55 0.129 45);
+  --tertiary-700: oklch(0.46 0.108 45);
+  --tertiary-800: oklch(0.38 0.087 45);
+  --tertiary-900: oklch(0.3 0.066 45);
+  --tertiary-950: oklch(0.2 0.045 45);
+
+  /* success */
+  --success-50: oklch(0.98 0.042 152);
+  --success-100: oklch(0.95 0.0616 152);
+  --success-200: oklch(0.9 0.0812 152);
+  --success-300: oklch(0.83 0.1008 152);
+  --success-400: oklch(0.74 0.1204 152);
+  --success-500: oklch(0.64 0.14 152);
+  --success-600: oklch(0.55 0.1204 152);
+  --success-700: oklch(0.46 0.1008 152);
+  --success-800: oklch(0.38 0.0812 152);
+  --success-900: oklch(0.3 0.0616 152);
+  --success-950: oklch(0.2 0.042 152);
+
+  /* warning */
+  --warning-50: oklch(0.98 0.045 80);
+  --warning-100: oklch(0.95 0.066 80);
+  --warning-200: oklch(0.9 0.087 80);
+  --warning-300: oklch(0.83 0.108 80);
+  --warning-400: oklch(0.74 0.129 80);
+  --warning-500: oklch(0.64 0.15 80);
+  --warning-600: oklch(0.55 0.129 80);
+  --warning-700: oklch(0.46 0.108 80);
+  --warning-800: oklch(0.38 0.087 80);
+  --warning-900: oklch(0.3 0.066 80);
+  --warning-950: oklch(0.2 0.045 80);
+
+  /* error: same hue as the previous --destructive */
+  --error-50: oklch(0.98 0.057 27.3);
+  --error-100: oklch(0.95 0.0836 27.3);
+  --error-200: oklch(0.9 0.1102 27.3);
+  --error-300: oklch(0.83 0.1368 27.3);
+  --error-400: oklch(0.74 0.1634 27.3);
+  --error-500: oklch(0.64 0.19 27.3);
+  --error-600: oklch(0.55 0.1634 27.3);
+  --error-700: oklch(0.46 0.1368 27.3);
+  --error-800: oklch(0.38 0.1102 27.3);
+  --error-900: oklch(0.3 0.0836 27.3);
+  --error-950: oklch(0.2 0.057 27.3);
+
+  /* info */
+  --info-50: oklch(0.98 0.039 230);
+  --info-100: oklch(0.95 0.0572 230);
+  --info-200: oklch(0.9 0.0754 230);
+  --info-300: oklch(0.83 0.0936 230);
+  --info-400: oklch(0.74 0.1118 230);
+  --info-500: oklch(0.64 0.13 230);
+  --info-600: oklch(0.55 0.1118 230);
+  --info-700: oklch(0.46 0.0936 230);
+  --info-800: oklch(0.38 0.0754 230);
+  --info-900: oklch(0.3 0.0572 230);
+  --info-950: oklch(0.2 0.039 230);
+
+  /* neutral: same hue as the previous background/border/muted grays */
+  --neutral-50: oklch(0.98 0.0036 240);
+  --neutral-100: oklch(0.95 0.0053 240);
+  --neutral-200: oklch(0.9 0.007 240);
+  --neutral-300: oklch(0.83 0.0086 240);
+  --neutral-400: oklch(0.74 0.0103 240);
+  --neutral-500: oklch(0.64 0.012 240);
+  --neutral-600: oklch(0.55 0.0103 240);
+  --neutral-700: oklch(0.46 0.0086 240);
+  --neutral-800: oklch(0.38 0.007 240);
+  --neutral-900: oklch(0.3 0.0053 240);
+  --neutral-950: oklch(0.2 0.0036 240);
+
+  /* ==========================================================================
+     Semantic roles (light) — pick a step from the scales above. This is the
+     only place theme picks a lightness; the scales themselves never change.
+     ========================================================================== */
+  --background: var(--neutral-50);
+  --foreground: var(--neutral-950);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.8);
+  --card-foreground: var(--neutral-950);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.8);
+  --popover-foreground: var(--neutral-950);
 
-  /* Primary: Professional Medical Blue (Deep Teal-Blue) */
-  --primary: oklch(0.55 0.16 245);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: var(--primary-600);
+  --primary-foreground: oklch(1 0 0);
 
-  /* Secondary: Soft Sage/Teal for accents */
-  --secondary: oklch(0.95 0.03 170);
-  --secondary-foreground: oklch(0.25 0.05 170);
+  --secondary: var(--secondary-100);
+  --secondary-foreground: var(--secondary-800);
 
-  --muted: oklch(0.96 0.01 240);
-  --muted-foreground: oklch(0.55 0.02 240);
+  --muted: var(--neutral-100);
+  --muted-foreground: var(--neutral-600);
 
-  --accent: oklch(0.95 0.03 245);
-  --accent-foreground: oklch(0.25 0.05 245);
+  /* shadcn's structural "accent": a subtle hover/selected surface, distinct
+     from the --tertiary brand color below */
+  --accent: var(--primary-100);
+  --accent-foreground: var(--primary-800);
 
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: var(--error-600);
+  --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.92 0.01 240);
-  --input: oklch(0.92 0.01 240);
-  --ring: oklch(0.55 0.16 245 / 0.5);
+  --border: var(--neutral-200);
+  --input: var(--neutral-200);
+  --ring: oklch(0.55 0.1376 264 / 0.5);
+
+  --success: var(--success-600);
+  --success-foreground: oklch(1 0 0);
+  --success-soft: var(--success-50);
+  --success-soft-foreground: var(--success-700);
+
+  --warning: var(--warning-600);
+  --warning-foreground: oklch(1 0 0);
+  --warning-soft: var(--warning-50);
+  --warning-soft-foreground: var(--warning-800);
+
+  --info: var(--info-600);
+  --info-foreground: oklch(1 0 0);
+  --info-soft: var(--info-50);
+  --info-soft-foreground: var(--info-700);
+
+  --tertiary: var(--tertiary-600);
+  --tertiary-foreground: oklch(1 0 0);
 
   --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.8);
-  --sidebar-primary: oklch(0.55 0.16 245);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.96 0.01 240);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.92 0.01 240);
-  --sidebar-ring: oklch(0.55 0.16 245);
+  --sidebar-foreground: var(--neutral-950);
+  --sidebar-primary: var(--primary-600);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: var(--neutral-100);
+  --sidebar-accent-foreground: var(--neutral-800);
+  --sidebar-border: var(--neutral-200);
+  --sidebar-ring: var(--primary-600);
 
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -106,34 +417,53 @@
   --popover: oklch(0.15 0.02 240);
   --popover-foreground: oklch(0.985 0 0);
 
-  /* Primary: Slightly brighter in dark mode */
-  --primary: oklch(0.65 0.16 245);
-  --primary-foreground: oklch(0.14 0.05 245);
+  /* Buttons flip to a brighter fill + dark ink, since a mid-lightness brand
+     color needs dark text (not white) to hold 4.5:1 against a dark page */
+  --primary: var(--primary-400);
+  --primary-foreground: var(--neutral-950);
 
-  --secondary: oklch(0.25 0.05 170);
-  --secondary-foreground: oklch(0.95 0.03 170);
+  --secondary: var(--secondary-800);
+  --secondary-foreground: var(--secondary-100);
 
-  --muted: oklch(0.20 0.02 240);
-  --muted-foreground: oklch(0.70 0.02 240);
+  --muted: var(--neutral-900);
+  --muted-foreground: var(--neutral-400);
 
-  --accent: oklch(0.20 0.04 245);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: var(--primary-900);
+  --accent-foreground: var(--neutral-50);
 
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.14 0.05 22.216);
+  --destructive: var(--error-400);
+  --destructive-foreground: var(--neutral-950);
 
-  --border: oklch(0.25 0.02 240);
-  --input: oklch(0.25 0.02 240);
-  --ring: oklch(0.65 0.16 245 / 0.5);
+  --border: var(--neutral-800);
+  --input: var(--neutral-800);
+  --ring: oklch(0.74 0.1376 264 / 0.5);
+
+  --success: var(--success-400);
+  --success-foreground: var(--neutral-950);
+  --success-soft: var(--success-950);
+  --success-soft-foreground: var(--success-300);
+
+  --warning: var(--warning-400);
+  --warning-foreground: var(--neutral-950);
+  --warning-soft: var(--warning-950);
+  --warning-soft-foreground: var(--warning-300);
+
+  --info: var(--info-400);
+  --info-foreground: var(--neutral-950);
+  --info-soft: var(--info-950);
+  --info-soft-foreground: var(--info-300);
+
+  --tertiary: var(--tertiary-400);
+  --tertiary-foreground: var(--neutral-950);
 
   --sidebar: oklch(0.13 0.02 240);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.65 0.16 245);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.20 0.02 240);
+  --sidebar-primary: var(--primary-400);
+  --sidebar-primary-foreground: var(--neutral-950);
+  --sidebar-accent: var(--neutral-800);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.25 0.02 240);
-  --sidebar-ring: oklch(0.65 0.16 245);
+  --sidebar-border: var(--neutral-800);
+  --sidebar-ring: var(--primary-400);
 
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -145,35 +475,35 @@
 /* globals.css */
 
 .toaster .sonner-success {
-  --sonner-background: theme(colors.green.500);
-  --sonner-border: theme(colors.green.700);
-  --sonner-close-background: theme(colors.green.700);
-  --sonner-close-foreground: theme(colors.green.100);
-  --sonner-foreground: theme(colors.white);
+  --sonner-background: var(--success);
+  --sonner-border: var(--success-700);
+  --sonner-close-background: var(--success-700);
+  --sonner-close-foreground: var(--success-100);
+  --sonner-foreground: oklch(1 0 0);
 }
 
 .toaster .sonner-error {
-  --sonner-background: theme(colors.red.500);
-  --sonner-border: theme(colors.red.700);
-  --sonner-close-background: theme(colors.red.700);
-  --sonner-close-foreground: theme(colors.red.100);
-  --sonner-foreground: theme(colors.white);
+  --sonner-background: var(--destructive);
+  --sonner-border: var(--error-700);
+  --sonner-close-background: var(--error-700);
+  --sonner-close-foreground: var(--error-100);
+  --sonner-foreground: oklch(1 0 0);
 }
 
 .toaster .sonner-info {
-  --sonner-background: theme(colors.blue.500);
-  --sonner-border: theme(colors.blue.700);
-  --sonner-close-background: theme(colors.blue.700);
-  --sonner-close-foreground: theme(colors.blue.100);
-  --sonner-foreground: theme(colors.white);
+  --sonner-background: var(--info);
+  --sonner-border: var(--info-700);
+  --sonner-close-background: var(--info-700);
+  --sonner-close-foreground: var(--info-100);
+  --sonner-foreground: oklch(1 0 0);
 }
 
 .toaster .sonner-warning {
-  --sonner-background: theme(colors.yellow.500);
-  --sonner-border: theme(colors.yellow.700);
-  --sonner-close-background: theme(colors.yellow.700);
-  --sonner-close-foreground: theme(colors.yellow.100);
-  --sonner-foreground: theme(colors.gray.900);
+  --sonner-background: var(--warning);
+  --sonner-border: var(--warning-700);
+  --sonner-close-background: var(--warning-700);
+  --sonner-close-foreground: var(--warning-100);
+  --sonner-foreground: oklch(1 0 0);
 }
 
 .sr-only {
@@ -201,20 +531,31 @@
   h2,
   h3,
   h4,
-  h5,
-  h6 {
+  h5 {
     @apply font-heading tracking-tight;
   }
 
   h1 {
-    @apply text-3xl font-bold;
+    @apply text-4xl font-bold;
   }
 
   h2 {
-    @apply text-2xl font-bold;
+    @apply text-3xl font-bold;
   }
 
   h3 {
-    @apply text-xl font-semibold;
+    @apply text-2xl font-bold;
+  }
+
+  h4 {
+    @apply text-lg font-semibold;
+  }
+
+  h5 {
+    @apply text-base font-semibold;
+  }
+
+  h6 {
+    @apply font-sans text-sm font-semibold uppercase tracking-wide text-muted-foreground;
   }
 }
