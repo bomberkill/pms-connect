@@ -59,6 +59,33 @@ const CHECK_USER_FIELDS = `
   providers
   `;
 
+/**
+ * Trimmed field set for viewing another user's public profile (e.g.
+ * profile/[slug] when not the authenticated user). Deliberately excludes
+ * everything the API already nulls for non-self viewers (email,
+ * phoneNumber, authUserId, blockedUsers, fcmTokens, location) so the
+ * client stops asking for data it can't use.
+ */
+export const PUBLIC_PROFILE_FIELDS = `
+  id
+  slug
+  userType
+  profilePicUrl
+  coverPicUrl
+  bio
+  websiteUrl
+  connections
+  ... on IndividualUserObject {
+    firstName
+    lastName
+    professionalTitle
+  }
+  ... on LegalEntityUserObject {
+    entityName
+    entityType
+  }
+`;
+
 // =============================================================================
 // == USER QUERIES & MUTATIONS
 // =============================================================================

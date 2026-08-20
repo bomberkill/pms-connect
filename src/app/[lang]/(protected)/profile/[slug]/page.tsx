@@ -14,10 +14,9 @@ import React, { useEffect, useMemo, useState } from "react"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import UpdateProfileDialog from "@/components/UpdateProfileDialog"
 import CustomLoader from "@/components/Loader"
-import { User, UserTypeGQL } from "@/types/User"
+import { UserTypeGQL } from "@/types/User"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { apolloClient } from "@/graphql/apolloClient";
-import { buildGetUserBySlugQuery } from "@/graphql/queries/user"
+import { PUBLIC_PROFILE_FIELDS } from "@/graphql/queries/user"
 
 function extractR2Key(publicUrl: string): string {
   const base = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? "").replace(/\/$/, "");
@@ -26,7 +25,7 @@ function extractR2Key(publicUrl: string): string {
   }
   return publicUrl.slice(base.length + 1);
 }
-import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useFollowsSubscription, useMe } from "@/hooks/useData/index"
+import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useFollowsSubscription, useMe, useUserBySlug } from "@/hooks/useData/index"
 import { ConnectionRequestStatus } from "@/types/ConnectionRequest"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useUserPosts } from "@/hooks/useData/usePostData"
@@ -39,11 +38,17 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
   const { open } = useNotification()
   const { slug } = React.use(params);
 
-  const [profileUser, setProfileUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const { loading: authUserLoading, me: authUser, refetch: refetchMe } = useMe();
   const isOwnProfile = useMemo(() => !!slug && slug === authUser?.slug, [slug, authUser?.slug]);
+  const shouldFetchOtherProfile = !!slug && !authUserLoading && !isOwnProfile;
+
+  const { user: otherUser, loading: otherUserLoading } = useUserBySlug(
+    shouldFetchOtherProfile ? slug : '',
+    { fields: PUBLIC_PROFILE_FIELDS }
+  );
+
+  const profileUser = isOwnProfile ? authUser : (otherUser ?? null);
+  const loading = authUserLoading || (shouldFetchOtherProfile && otherUserLoading);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const statsUserId = profileUser?.id || (profileUser as any)?._id || authUser?.id || (authUser as any)?._id || '';
@@ -52,40 +57,6 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
     statsUserId,
     userPostsForCount?.length || 0
   );
-
-  useEffect(() => {
-    if (!slug || authUserLoading) return;
-
-    if (slug === authUser?.slug) {
-      setProfileUser(authUser);
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    apolloClient.query({
-      query: buildGetUserBySlugQuery(),
-      variables: { slug },
-      fetchPolicy: 'network-only',
-    }).then(({ data, errors }) => {
-      if (cancelled) return;
-      if (errors && errors.length > 0) {
-        console.error("GraphQL errors:", errors);
-        setProfileUser(null);
-      } else {
-        setProfileUser(data.getUserBySlug);
-      }
-    }).catch((error) => {
-      if (cancelled) return;
-      console.error("GraphQL errors:", error);
-      setProfileUser(null);
-    }).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-
-    return () => { cancelled = true; };
-  }, [slug, authUser, authUserLoading]);
 
   const [isUploading, setIsUploading] = useState(false)
   const [dialogConfig, setDialogConfig] = useState<{

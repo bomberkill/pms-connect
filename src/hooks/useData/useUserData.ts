@@ -85,11 +85,14 @@ export const useUser = (userId: string) => {
 };
 
 /**
- * Hook to fetch a user by slug.
+ * Hook to fetch a user by slug. Pass `fields` to override the default
+ * USER_FIELDS selection (e.g. PUBLIC_PROFILE_FIELDS when viewing another
+ * user's profile, to avoid requesting fields the API nulls for non-self
+ * viewers anyway).
  */
-export const useUserBySlug = (slug: string) => {
+export const useUserBySlug = (slug: string, options?: { fields?: string }) => {
     const { data, loading, error, refetch } = useQuery<{ getUserBySlug: User }>(
-        buildGetUserBySlugQuery(),
+        buildGetUserBySlugQuery({ fields: options?.fields }),
         {
             variables: { slug },
             skip: !slug,
