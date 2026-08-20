@@ -42,6 +42,7 @@ next-env.d.ts
 
 # Auto Generated PWA files
 **/public/sw.js
+**/public/swe-worker-*.js
 **/public/workbox-*.js
 .gstack/
 
