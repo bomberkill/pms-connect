@@ -9,6 +9,7 @@ import { Loader2, WifiOff } from "lucide-react";
 import { Button } from "./ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import { NewPostsBadge } from "./feed/NewPostsBadge";
+import { FeedComposerEntry } from "./feed/FeedComposerEntry";
 import { useDictionary } from "@/hooks/use-dictionary";
 
 const PostSkeleton = () => (
@@ -176,6 +177,8 @@ export const Feed = () => {
       >
         <Loader2 className={`animate-spin ${isRefreshing ? 'opacity-100' : 'opacity-0'}`} />
       </div>
+
+      <FeedComposerEntry />
 
       {/* Feed posts */}
       <AnimatePresence initial={false}>

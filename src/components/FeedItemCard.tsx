@@ -168,24 +168,30 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
           ? "bg-muted/40 rounded-2xl border-l-2 border-l-primary/25 px-3 py-3 mb-2"
           : "rounded-card border border-border bg-card px-4 py-4 shadow-xs mb-3"
       )}>
-        <div className="flex items-center justify-between">
-          <div onClick={() => router.push(`/profile/${item.author.slug}`)} className="flex items-center gap-2.5 cursor-pointer">
-            <Avatar className={isComment ? "h-7 w-7" : "h-9 w-9"}>
+        <div className="flex items-start justify-between">
+          <div onClick={() => router.push(`/profile/${item.author.slug}`)} className="flex items-start gap-2.5 cursor-pointer min-w-0">
+            <Avatar
+              shape={!isComment && item.author.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"}
+              className={isComment ? "h-7 w-7 shrink-0" : "h-10 w-10 shrink-0"}
+            >
               <AvatarImage className="object-cover" src={item.author.profilePicUrl} />
               <AvatarFallback>{getUserInitials(item.author)}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
+            {isComment ? (
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold text-sm leading-tight">{getUserDisplayName(item.author)}</span>
                 <span className="text-muted-foreground text-xs">·</span>
                 <span className="text-xs text-muted-foreground">{formatTimeAgo(item.createdAt, dict)}</span>
               </div>
-              {!isComment && (
-                <p className="text-xs text-muted-foreground truncate">
+            ) : (
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold text-[15px] leading-tight truncate">{getUserDisplayName(item.author)}</span>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
                   {item.author.userType === UserTypeGQL.INDIVIDUAL ? (item.author as IndividualUser).professionalTitle : dict.entityTypes[(item.author as LegalEntityUser).entityType]}
                 </p>
-              )}
-            </div>
+                <span className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(item.createdAt, dict)}</span>
+              </div>
+            )}
           </div>
           {isComment ? (
             isOwnItem && (
@@ -221,6 +227,10 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem className="cursor-pointer" onClick={handleBookmarkToggle} disabled={addingBookmark || removingBookmark}>
+                  <Bookmark className={cn("mr-2 h-4 w-4", item.isBookmarked && "fill-primary text-primary")} />
+                  {item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
+                </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
                 {authorId && authorId !== me?.id && (
@@ -237,8 +247,8 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
           {'media' in item && <PostMedia media={item.media} />}
         </div>
 
-        <div className={cn("flex items-center justify-between text-muted-foreground", isComment ? "pl-9 pt-1" : "pt-2 -ml-3")}>
-          <div className="flex items-center justify-start gap-1">
+        {isComment ? (
+          <div className="flex items-center justify-start gap-1 pl-9 pt-1 text-muted-foreground">
             <Button variant="ghost" onClick={handleLikeToggle} disabled={liking || unliking} className="h-auto rounded-full gap-2 px-3 py-2 hover:bg-muted/80" aria-label={isLiked ? dict.actions.unlike : dict.actions.like} aria-pressed={!!isLiked}>
               <Heart className={cn("size-4.5", isLiked && "fill-error text-error")} />
               <span className="text-sm font-medium tabular-nums">{'likesCount' in item ? item.likesCount : 0}</span>
@@ -247,24 +257,30 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
               <MessageCircle className="size-4.5" />
               <span className="text-sm font-medium tabular-nums">{'commentsCount' in item ? item.commentsCount : 0}</span>
             </Button>
-            {!isComment && (
-              <Button variant="ghost" className="h-auto rounded-full gap-2 px-3 py-2 hover:bg-muted/80" aria-label={dict.actions.share}>
-                <Share2 className="size-4.5" />
-              </Button>
-            )}
           </div>
-          {!isComment && (
-            <Button
-              variant="ghost"
-              onClick={handleBookmarkToggle}
-              disabled={addingBookmark || removingBookmark}
-              className="h-auto rounded-full gap-2 px-3 py-2 hover:bg-muted/80"
-              aria-label={item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
-            >
-              <Bookmark className={cn("size-4.5", item.isBookmarked && "fill-primary text-primary")} />
-            </Button>
-          )}
-        </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5 pt-3 text-muted-foreground">
+              <Heart className="size-3.5" />
+              <span className="text-xs">{item.likesCount} {dict.post.reactions}</span>
+              <span className="ml-auto text-xs">{item.commentsCount} {dict.post.comments}</span>
+            </div>
+            <div className="-mx-1 mt-1 flex border-t border-border pt-1">
+              <Button variant="ghost" onClick={handleLikeToggle} disabled={liking || unliking} className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80" aria-pressed={!!isLiked}>
+                <Heart className={cn("size-4", isLiked && "fill-error text-error")} />
+                {isLiked ? dict.actions.unlike : dict.actions.like}
+              </Button>
+              <Button variant="ghost" onClick={goToDetail} className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80">
+                <MessageCircle className="size-4" />
+                {dict.actions.comment}
+              </Button>
+              <Button variant="ghost" className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80" aria-label={dict.actions.share}>
+                <Share2 className="size-4" />
+                {dict.actions.share}
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </>
   );

@@ -621,7 +621,9 @@
     "deleteDescription": "Cette action va archiver la publication et la retirer de votre fil.",
     "deleteSuccess": "Votre publication a été supprimée.",
     "clickToView": "Cliquer pour voir",
-    "speed": "Vitesse"
+    "speed": "Vitesse",
+    "reactions": "réactions",
+    "comments": "commentaires"
   },
   "common": {
     "loading": "Chargement...",

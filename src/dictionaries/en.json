@@ -621,7 +621,9 @@
     "deleteDescription": "This action will archive the post and remove it from your feed.",
     "deleteSuccess": "Your post has been deleted.",
     "clickToView": "Click to view",
-    "speed": "Speed"
+    "speed": "Speed",
+    "reactions": "reactions",
+    "comments": "comments"
   },
   "common": {
     "loading": "Loading...",
