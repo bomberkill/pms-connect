@@ -2,10 +2,11 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useConnectionActions } from "@/hooks/useData/index";
+import { useConnectionActions, useMe } from "@/hooks/useData/index";
 import { UserListItem } from "@/components/UserListItem";
 import { ConnectionRequest } from "@/types/ConnectionRequest";
 import { User } from "@/types/User";
+import { getMutualConnectionsCount } from "@/lib/user-utils";
 import { Check, X, UserMinus, Loader2 } from "lucide-react";
 import { useDictionary } from "@/hooks/use-dictionary";
 
@@ -16,12 +17,14 @@ type ConnectionItemCardProps =
 
 export function ConnectionItemCard(props: ConnectionItemCardProps) {
     const dict = useDictionary();
+    const { me } = useMe();
     const { acceptRequest, declineRequest, removeConnection, removing } = useConnectionActions();
 
     if (props.variant === "connected") {
         return (
             <UserListItem
                 user={props.user}
+                mutualCount={getMutualConnectionsCount(me, props.user)}
                 action={
                     <Button
                         variant="ghost"
@@ -45,6 +48,7 @@ export function ConnectionItemCard(props: ConnectionItemCardProps) {
     return (
         <UserListItem
             user={friend}
+            mutualCount={getMutualConnectionsCount(me, friend)}
             action={
                 props.variant === "sent" ? (
                     <Button

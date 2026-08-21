@@ -393,6 +393,7 @@
     "connectionRequests": "My Connection Requests",
     "suggestions": "Suggestions",
     "noSuggestions": "No suggestions at the moment.",
+    "mutualConnections": "{count} mutual",
     "title": "Connections",
     "subtitle": "Manage your professional network.",
     "searchPlaceholder": "Search for a connection...",

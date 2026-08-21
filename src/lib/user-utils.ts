@@ -59,3 +59,14 @@ export function getUserInitials(user: Partial<User>): string {
   }
   return '';
 }
+
+/**
+ * Nombre de connexions communes entre l'utilisateur courant et un autre —
+ * calculé côté client à partir des tableaux `connections` déjà chargés
+ * (aucune requête dédiée n'existe côté API pour ce compte).
+ */
+export function getMutualConnectionsCount(me: Partial<User> | null | undefined, other: Partial<User> | null | undefined): number {
+  if (!me?.connections || !other?.connections) return 0;
+  const mine = new Set(me.connections);
+  return other.connections.filter((id) => mine.has(id)).length;
+}

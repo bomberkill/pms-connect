@@ -8,7 +8,9 @@ export const CONNECTION_REQUEST_FIELDS = `
   requester {
     id
     slug
+    userType
     profilePicUrl
+    connections
     ... on IndividualUserObject {
       firstName
       lastName
@@ -22,7 +24,9 @@ export const CONNECTION_REQUEST_FIELDS = `
   recipient {
     id
     slug
+    userType
     profilePicUrl
+    connections
     ... on IndividualUserObject {
       firstName
       lastName

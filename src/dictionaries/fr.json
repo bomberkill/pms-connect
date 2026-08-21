@@ -393,6 +393,7 @@
     "connectionRequests": "Mes demandes de connexion",
     "suggestions": "Suggestions",
     "noSuggestions": "Aucune suggestion pour le moment.",
+    "mutualConnections": "{count} en commun",
     "title": "Relations",
     "subtitle": "Gérez votre réseau professionnel.",
     "searchPlaceholder": "Rechercher une relation...",

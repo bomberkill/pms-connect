@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "../ui/empty-state";
 import { UserListItem } from "../UserListItem";
 import { useConnectionActions } from "@/hooks/useData/index";
+import { getMutualConnectionsCount } from "@/lib/user-utils";
 
 interface FriendsTabsProps {
     requests: ConnectionRequest[];
@@ -53,9 +54,8 @@ export default function FriendsTabs({ requests, suggestions, connections = [], m
                         <UserCheck className="w-4 h-4" />
                         <span className="hidden sm:inline">{dict.friends.tabs.requests}</span>
                         {pendingRequests.length > 0 && (
-                            <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error-400 opacity-75" />
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-error" />
+                            <span className="min-w-[16px] h-4 px-1 rounded-full bg-error text-white text-2xs font-bold flex items-center justify-center">
+                                {pendingRequests.length}
                             </span>
                         )}
                     </TabsTrigger>
@@ -128,7 +128,7 @@ export default function FriendsTabs({ requests, suggestions, connections = [], m
                     {suggestions.length > 0 ? (
                         <div className="space-y-2">
                             {suggestions.map(user => (
-                                <SuggestionRow key={user.id} user={user} />
+                                <SuggestionRow key={user.id} user={user} me={me} />
                             ))}
                         </div>
                     ) : (
@@ -144,13 +144,14 @@ export default function FriendsTabs({ requests, suggestions, connections = [], m
     );
 }
 
-function SuggestionRow({ user }: { user: User }) {
+function SuggestionRow({ user, me }: { user: User; me?: User }) {
     const { sendRequest, sending } = useConnectionActions();
     const dict = useDictionary();
 
     return (
         <UserListItem
             user={user}
+            mutualCount={getMutualConnectionsCount(me, user)}
             action={
                 <Button
                     size="sm"
