@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Combobox } from "@/components/Combobox";
 import { Trash2, Plus, File as FileIcon } from "lucide-react";
 import Image from "next/image";
 import { StepProps, AccreditationPreviewItem } from "../types";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { City, Country, State } from "@/types/Location";
+import { Country } from "@/types/Location";
 import data from "../../../../public/countries.json";
 import { getIn } from "formik";
 
@@ -32,31 +31,14 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
 }) => {
     const dict = useDictionary();
     const countries = useMemo(() => data as Country[], []);
-    const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
-    const [selectedState, setSelectedState] = useState<State | null>(null);
 
     const countryError = getIn(formik.errors, "location.country");
     const countryTouched = getIn(formik.touched, "location.country");
-    const stateError = getIn(formik.errors, "location.stateOrProvince");
-    const stateTouched = getIn(formik.touched, "location.stateOrProvince");
     const cityError = getIn(formik.errors, "location.city");
     const cityTouched = getIn(formik.touched, "location.city");
 
-    useEffect(() => {
-        const country = countries.find((item) => item.name === formik.values.location?.country) ?? null;
-        const state = country?.states?.find((item) => item.name === formik.values.location?.stateOrProvince) ?? null;
-
-        setSelectedCountry(country);
-        setSelectedState(state);
-    }, [countries, formik.values.location?.country, formik.values.location?.stateOrProvince]);
-
     return (
         <div className="w-full flex flex-col gap-6 xs:max-w-4/5 sm:max-w-3/5 md:max-w-5/10">
-            <div className="grid gap-2">
-                <Label htmlFor="bio">{dict.register.bioLabel}</Label>
-                <Textarea id="bio" name="bio" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.bio} />
-            </div>
-
             {/* Profile Picture */}
             <div className="grid gap-2">
                 <Label>{dict.register.uploadProfilePic}</Label>
@@ -148,12 +130,6 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                 {formik.touched.coverPicFile && formik.errors.coverPicFile && <p className="text-destructive text-xs">{formik.errors.coverPicFile}</p>}
             </div>
 
-            <div className="grid gap-2">
-                <Label htmlFor="websiteUrl">{dict.register.websiteUrlLabel}</Label>
-                <Input id="websiteUrl" name="websiteUrl" type="url" onChange={formik.handleChange} onBlur={formik.handleBlur} value={formik.values.websiteUrl} />
-                {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-destructive text-xs">{formik.errors.websiteUrl}</p>}
-            </div>
-
             {/* Accreditations */}
             <div className="grid gap-2">
                 <Label >{dict.register.professionalAccreditations}</Label>
@@ -224,7 +200,26 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                 {formik.touched.accreditationsFile && formik.errors.accreditationsFile && <p className="text-destructive text-xs">{formik.errors.accreditationsFile.toString()}</p>}
             </div>
 
-            {/* Location */}
+            {/* Location — kept deliberately light (city + country only, no
+                state/province or full address): this step is optional, and
+                the mockup shows a single "Ville d'exercice" field. Country
+                stays a searchable Combobox since the API requires it the
+                moment a location is sent at all; city is free text rather
+                than a cascading picker to avoid forcing state selection
+                first for a field the mockup treats as one simple input. */}
+            <div className="grid gap-1 w-full">
+                <Label htmlFor="city">{dict.register.cityLabel}</Label>
+                <Input
+                    id="city"
+                    name="location.city"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.location?.city}
+                />
+                {cityTouched && cityError && (
+                    <p className="text-destructive text-xs">{cityError}</p>
+                )}
+            </div>
             <div className="grid gap-1 w-full">
                 <Label htmlFor="country">{dict.register.countryLabel}</Label>
                 <Combobox<Country>
@@ -236,60 +231,14 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                     onBlur={formik.handleBlur}
                     value={formik.values.location?.country}
                     onChange={(country) => {
-                        setSelectedCountry(country);
-                        setSelectedState(null);
                         formik.setFieldValue('location.country', country.name);
-                        formik.setFieldValue('location.stateOrProvince', "");
-                        formik.setFieldValue('location.city', "");
                     }}
-                    placeholder="Select Country"
+                    placeholder={dict.combobox.selectCountry}
                     searchable={false}
                 />
                 {countryTouched && countryError && (
                     <p className="text-destructive text-xs">{countryError}</p>
                 )}
-            </div>
-            <div className="flex items-start justify-between gap-3 w-full">
-                <div className="grid gap-1 w-full">
-                    <Label htmlFor="stateOrProvince">{dict.register.stateOrProvinceLabel}</Label>
-                    <Combobox<State>
-                        data={selectedCountry ? selectedCountry.states || [] : []}
-                        placeholder="Select State"
-                        id="stateOrProvince"
-                        name="location.stateOrProvince"
-                        value={formik.values.location?.stateOrProvince}
-                        onBlur={formik.handleBlur}
-                        disabled={!selectedCountry}
-                        onChange={(state) => {
-                            setSelectedState(state);
-                            formik.setFieldValue("location.stateOrProvince", state.name);
-                            formik.setFieldValue('location.city', "");
-                        }}
-                        searchable={false}
-                    />
-                    {stateTouched && stateError && (
-                        <p className="text-destructive text-xs">{stateError}</p>
-                    )}
-                </div>
-                <div className="grid gap-1 w-full">
-                    <Label htmlFor="city">{dict.register.cityLabel}</Label>
-                    <Combobox<City>
-                        data={selectedState ? selectedState.cities || [] : []}
-                        onBlur={formik.handleBlur}
-                        id="city"
-                        name="location.city"
-                        value={formik.values.location?.city}
-                        disabled={!selectedState}
-                        onChange={(city) => {
-                            formik.setFieldValue('location.city', city.name)
-                        }}
-                        placeholder="Select City"
-                        searchable={false}
-                    />
-                    {cityTouched && cityError && (
-                        <p className="text-destructive text-xs">{cityError}</p>
-                    )}
-                </div>
             </div>
         </div>
     );

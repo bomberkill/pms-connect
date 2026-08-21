@@ -167,10 +167,16 @@ export const useRegisterForm = () => {
                 .notRequired(),
             bio: yup.string().notRequired(),
             websiteUrl: yup.string().url(dict.validation.websiteUrl.invalidUrl).notRequired(),
+            // Genuinely optional, matching the "Facultatif" framing this step
+            // shows — country is only meaningful once a city is given, so it's
+            // the one case here worth cross-validating.
             location: yup.object().shape({
-                country: yup.string().required(dict.validation.country.required),
-                stateOrProvince: yup.string().required(dict.validation.state.required),
-                city: yup.string().required(dict.validation.city.required),
+                country: yup.string().when('city', {
+                    is: (city: string) => !!city,
+                    then: (schema) => schema.required(dict.validation.country.required),
+                    otherwise: (schema) => schema.notRequired(),
+                }),
+                city: yup.string().notRequired(),
             }),
         }),
     ], [googleUser, dict]);
@@ -231,7 +237,12 @@ export const useRegisterForm = () => {
                     submission.set("userType", userType);
                     if (bio) submission.set("bio", bio);
                     if (websiteUrl) submission.set("websiteUrl", websiteUrl);
-                    submission.set("location", JSON.stringify(location));
+                    // Registration's location step is optional (see StepAdditionalInfo) —
+                    // only send it on if the user actually filled something in, so an
+                    // empty-strings object doesn't get stored as a real Location.
+                    if (location?.city || location?.country) {
+                        submission.set("location", JSON.stringify(location));
+                    }
                     submission.set("providers", JSON.stringify(googleUser ? ["google.com"] : ["password"]));
                     if (userType === UserTypeGQL.INDIVIDUAL) {
                         if (firstName) submission.set("firstName", firstName);

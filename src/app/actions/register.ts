@@ -259,7 +259,9 @@ export async function completeRegistration(
       userType: formData.get("userType") as string,
       bio: (formData.get("bio") as string) || undefined,
       websiteUrl: (formData.get("websiteUrl") as string) || undefined,
-      location: JSON.parse(formData.get("location") as string),
+      location: formData.has("location")
+        ? JSON.parse(formData.get("location") as string)
+        : undefined,
       profilePicUrl,
       coverPicUrl,
       providers: JSON.parse((formData.get("providers") as string) || "[]"),
