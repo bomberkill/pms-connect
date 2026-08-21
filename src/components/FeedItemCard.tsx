@@ -29,7 +29,7 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
-import { Comment } from "@/types/Comment";
+import { Comment, CommentStatus } from "@/types/Comment";
 import { Post } from "@/types/Post";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { useRouter } from "next/navigation";
@@ -73,7 +73,11 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
   const { followUser, unfollowUser, following: followingReq, unfollowing } = useFollowActions();
   const { addBookmark, removeBookmark, adding: addingBookmark, removing: removingBookmark } = useBookmarkActions(item.id, isComment ? 'Comment' : 'Post');
   const postItem = !isComment ? item as Post : null;
+  const commentItem = isComment ? item as Comment : null;
   const isOwnItem = authorId === me?.id;
+  const isDeletedComment = commentItem?.status === CommentStatus.DELETED;
+  const isPostAuthorComment = !!commentItem && commentItem.post?.author?.id === commentItem.author?.id;
+  const isEditedComment = !!commentItem && commentItem.updatedAt !== commentItem.createdAt;
 
   const isLiked = 'isLiked' in item ? item.isLiked : false;
   const isFollowing = !!(authorId && me?.following?.includes(authorId));
@@ -178,10 +182,20 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
               <AvatarFallback>{getUserInitials(item.author)}</AvatarFallback>
             </Avatar>
             {isComment ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="font-semibold text-sm leading-tight">{getUserDisplayName(item.author)}</span>
+                {isPostAuthorComment && (
+                  <span className="text-2xs font-semibold text-primary-800 bg-primary-100 rounded-full px-1.5 py-0.5">
+                    {dict.post.authorBadge}
+                  </span>
+                )}
                 <span className="text-muted-foreground text-xs">·</span>
                 <span className="text-xs text-muted-foreground">{formatTimeAgo(item.createdAt, dict)}</span>
+                {isEditedComment && !isDeletedComment && (
+                  <span className="text-2xs text-muted-foreground border border-border rounded-full px-1.5 py-0.5">
+                    {dict.post.edited}
+                  </span>
+                )}
               </div>
             ) : (
               <div className="flex flex-col min-w-0">
@@ -194,7 +208,7 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
             )}
           </div>
           {isComment ? (
-            isOwnItem && (
+            isOwnItem && !isDeletedComment && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -243,11 +257,17 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
         </div>
 
         <div className={cn(isComment ? "pl-9 pt-1" : "pt-2")}>
-          <p className="text-base leading-relaxed whitespace-pre-wrap">{item.content}</p>
-          {'media' in item && <PostMedia media={item.media} />}
+          {isDeletedComment ? (
+            <p className="text-sm italic text-muted-foreground">{dict.post.commentDeleted}</p>
+          ) : (
+            <>
+              <p className="text-base leading-relaxed whitespace-pre-wrap">{item.content}</p>
+              {'media' in item && <PostMedia media={item.media} />}
+            </>
+          )}
         </div>
 
-        {isComment ? (
+        {isDeletedComment ? null : isComment ? (
           <div className="flex items-center justify-start gap-1 pl-9 pt-1 text-muted-foreground">
             <Button variant="ghost" onClick={handleLikeToggle} disabled={liking || unliking} className="h-auto rounded-full gap-2 px-3 py-2 hover:bg-muted/80" aria-label={isLiked ? dict.actions.unlike : dict.actions.like} aria-pressed={!!isLiked}>
               <Heart className={cn("size-4.5", isLiked && "fill-error text-error")} />

@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useComments, usePost, useCommentActions, useLikePostActions, useLikeCommentActions, useComment, useCommentReplies, useMe } from "@/hooks/useData/index";
+import { useComments, usePost, useCommentActions, useLikePostActions, useLikeCommentActions, useComment, useCommentReplies, useMe, useBookmarkActions } from "@/hooks/useData/index";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, MessageCircle, Bookmark, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Bookmark, MoreHorizontal, Pencil, Trash2, Share2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -73,8 +73,29 @@ export default function PostDetailPage() {
   const { addComment, adding: isAddingComment } = useCommentActions();
   const { me: user } = useMe();
   const { removePost, removing } = usePostMutations();
+  const { addBookmark, removeBookmark } = useBookmarkActions(postId ?? '', isComment ? 'Comment' : 'Post');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const handleShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ url });
+      } catch {
+        // User cancelled the native share sheet — not an error.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      open("success", dict.notifications.linkCopied.title, {
+        message: dict.notifications.linkCopied.message,
+      });
+    } catch (err) {
+      console.error("Clipboard write failed:", err);
+    }
+  };
 
   useEffect(() => {
     document.body.classList.add("post-detail-page");
@@ -294,9 +315,18 @@ export default function PostDetailPage() {
                 <Heart className={cn("h-5 w-5 mr-2", isLiked && "fill-error")} />
                 {dict.actions.likes}
               </Button>
-              <Button variant="ghost" size="sm" className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors"
+                onClick={() => (post.isBookmarked ? removeBookmark() : addBookmark())}
+              >
                 <Bookmark className={cn("h-5 w-5 mr-2", post.isBookmarked && "fill-primary text-primary")} />
                 {dict.actions.bookmark}
+              </Button>
+              <Button variant="ghost" size="sm" className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors" onClick={handleShare}>
+                <Share2 className="h-5 w-5 mr-2" />
+                {dict.actions.share}
               </Button>
             </div>
           </div>
