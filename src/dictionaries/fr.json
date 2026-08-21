@@ -91,6 +91,9 @@
     "title": "Notifications",
     "markAllRead": "Tout marquer comme lu",
     "noNotifications": "Aucune notification pour le moment",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "earlier": "Plus tôt",
     "error": "Erreur lors du chargement des notifications.",
     "warning": "Attention",
     "linkCopied": {
@@ -490,6 +493,14 @@
     "network": "Erreur de connexion",
     "networkDescription": "Impossible de joindre le serveur. Vérifiez votre connexion."
   },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Rechercher un groupe...",
+    "groupsSectionLabel": "Groupes",
+    "noResults": "Aucun résultat pour cette recherche.",
+    "startTyping": "Commencez à taper pour rechercher un groupe.",
+    "peoplePostsComingSoon": "La recherche de personnes et de publications arrive bientôt."
+  },
   "groups": {
     "title": "Groupes",
     "subtitle": "Découvrez et rejoignez des communautés.",
@@ -541,6 +552,9 @@
     "leftError": "Échec lors de la tentative de quitter le groupe.",
     "members": "Membres du groupe",
     "privacy": "Groupe",
+    "myGroups": "Mes groupes",
+    "discover": "Découvrir",
+    "noDiscoverGroups": "Aucun groupe public à découvrir pour le moment.",
     "roles": {
       "admin": "Admin",
       "moderator": "Modérateur",
@@ -607,7 +621,11 @@
       "enable": "Activer",
       "enabled": "Activé",
       "deniedError": "Notifications refusées. Veuillez les activer dans les paramètres du navigateur.",
-      "enabledSuccess": "Notifications activées !"
+      "enabledSuccess": "Notifications activées !",
+      "verificationDocuments": "Documents et vérification",
+      "verified": "Vérifié",
+      "notVerified": "Non vérifié",
+      "version": "PMSCONNECT {version}"
     }
   },
   "post": {

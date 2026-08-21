@@ -91,6 +91,9 @@
     "title": "Notifications",
     "markAllRead": "Mark all as read",
     "noNotifications": "No notifications yet",
+    "today": "Today",
+    "thisWeek": "This week",
+    "earlier": "Earlier",
     "error": "Error loading notifications.",
     "warning": "Warning",
     "linkCopied": {
@@ -490,6 +493,14 @@
     "network": "Network Error",
     "networkDescription": "Unable to reach the server. Check your connection."
   },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search for a group...",
+    "groupsSectionLabel": "Groups",
+    "noResults": "No results for this search.",
+    "startTyping": "Start typing to search for a group.",
+    "peoplePostsComingSoon": "Searching people and posts is coming soon."
+  },
   "groups": {
     "title": "Groups",
     "subtitle": "Discover and join communities.",
@@ -541,6 +552,9 @@
     "leftError": "Failed to leave group.",
     "members": "Group members",
     "privacy": "Group",
+    "myGroups": "My groups",
+    "discover": "Discover",
+    "noDiscoverGroups": "No public groups to discover right now.",
     "roles": {
       "admin": "Admin",
       "moderator": "Moderator",
@@ -607,7 +621,11 @@
       "enable": "Enable",
       "enabled": "Enabled",
       "deniedError": "Notifications denied. Please enable them in browser settings.",
-      "enabledSuccess": "Notifications enabled!"
+      "enabledSuccess": "Notifications enabled!",
+      "verificationDocuments": "Documents and verification",
+      "verified": "Verified",
+      "notVerified": "Not verified",
+      "version": "PMSCONNECT {version}"
     }
   },
   "post": {
