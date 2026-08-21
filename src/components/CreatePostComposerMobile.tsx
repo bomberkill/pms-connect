@@ -8,7 +8,7 @@ import { useNotification } from "@/hooks/use-notification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TextareaAutosize from "react-textarea-autosize";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Trash2, Video, FileIcon, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Trash2, Video, FileIcon, Loader2, Plus } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { usePostMutations } from "@/hooks/useData/index";
 import { MAX_FILE_SIZE, POST_CONTENT_MAX_LENGTH, uploadFileToR2 } from "@/utils/fileUpload";
@@ -170,14 +170,6 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
             />
           </div>
         </div>
-        <div className="mt-1 flex justify-end">
-          <span className={cn(
-            "text-2xs tabular-nums text-muted-foreground",
-            formik.values.content.length > POST_CONTENT_MAX_LENGTH && "text-destructive"
-          )}>
-            {formik.values.content.length} / {POST_CONTENT_MAX_LENGTH}
-          </span>
-        </div>
         {formik.touched.content && formik.errors.content && (
           <p className="text-destructive text-xs mt-1 ml-14">{formik.errors.content}</p>
         )}
@@ -185,52 +177,61 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
 
       {mediaPreviews.length > 0 && (
         <div className="px-4 mb-4 flex-shrink-0">
-          <div className={cn("grid gap-2 rounded-lg border p-2", mediaPreviews.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
+          <div className="flex gap-2">
             {mediaPreviews.map((preview, index) => (
-              <div key={preview.url} className="relative aspect-video">
+              <div key={preview.url} className="relative size-24 shrink-0">
                 {preview.type === MediaType.VIDEO ? (
-                  <video src={preview.url} className="w-full h-full object-cover rounded-md" controls />
+                  <video src={preview.url} className="w-full h-full object-cover rounded-field" controls />
                 ) : preview.type === MediaType.IMAGE ? (
-                  <Image src={preview.url} alt={`${dict.post.mediaPreviewAlt} ${index + 1}`} fill className="object-cover rounded-md" />
+                  <Image src={preview.url} alt={`${dict.post.mediaPreviewAlt} ${index + 1}`} fill className="object-cover rounded-field" />
                 ) : (
-                  <div className="w-full h-full bg-muted rounded-md flex flex-col items-center justify-center p-2">
-                    <FileIcon className="h-10 w-10 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground text-center break-all mt-2">
+                  <div className="w-full h-full bg-muted rounded-field border border-border flex flex-col items-center justify-center p-1">
+                    <FileIcon className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-2xs text-muted-foreground text-center break-all mt-1 line-clamp-2">
                       {preview.name}
                     </span>
                   </div>
                 )}
-                <Button
+                <button
                   type="button"
-                  variant="destructive"
-                  size="icon"
-                  className="absolute top-1 right-1 h-7 w-7 rounded-full bg-black/50 hover:bg-black/70"
+                  aria-label={dict.actions.delete}
+                  className="absolute top-1 right-1 size-5.5 rounded-full bg-black/60 hover:bg-black/75 flex items-center justify-center"
                   onClick={() => removeMedia(index)}
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <Trash2 className="h-3 w-3 text-white" />
+                </button>
               </div>
             ))}
+            {mediaPreviews.length < 4 && (
+              <label
+                htmlFor="media-upload-mobile"
+                className="flex size-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-field border border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                <span className="text-2xs font-medium">{dict.button.add}</span>
+              </label>
+            )}
           </div>
         </div>
       )}
 
-      <div className="p-4 mt-auto border-t">
-        <div className="flex items-center justify-around gap-2">
-          <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-            <ImageIcon className="h-7 w-7 text-success-600 dark:text-success-400" />
-            {/* <span className="text-xs">Photo</span> */}
-          </label>
-          <input id="media-upload-mobile" type="file" multiple className="hidden" accept="image/*,video/mp4,video/quicktime,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
-          <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-            <Video className="h-7 w-7 text-info-600 dark:text-info-400" />
-            {/* <span className="text-sm">Vidéo</span> */}
-          </label>
-          <label htmlFor="media-upload-mobile" className="cursor-pointer flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-            <FileIcon className="h-7 w-7 text-warning-600 dark:text-warning-400" />
-            {/* <span className="text-sm">Document</span> */}
-          </label>
-        </div>
+      <div className="mt-auto border-t p-1.5 flex items-center gap-1">
+        <label htmlFor="media-upload-mobile" className="flex size-10.5 cursor-pointer items-center justify-center rounded-button text-primary hover:bg-muted transition-colors">
+          <ImageIcon className="h-5 w-5" />
+        </label>
+        <input id="media-upload-mobile" type="file" multiple className="hidden" accept="image/*,video/mp4,video/quicktime,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
+        <label htmlFor="media-upload-mobile" className="flex size-10.5 cursor-pointer items-center justify-center rounded-button text-primary hover:bg-muted transition-colors">
+          <Video className="h-5 w-5" />
+        </label>
+        <label htmlFor="media-upload-mobile" className="flex size-10.5 cursor-pointer items-center justify-center rounded-button text-primary hover:bg-muted transition-colors">
+          <FileIcon className="h-5 w-5" />
+        </label>
+        <span className={cn(
+          "ml-auto font-mono text-xs tabular-nums text-muted-foreground",
+          formik.values.content.length > POST_CONTENT_MAX_LENGTH && "text-destructive"
+        )}>
+          {formik.values.content.length} / {POST_CONTENT_MAX_LENGTH}
+        </span>
       </div>
     </div>
   );

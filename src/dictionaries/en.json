@@ -348,7 +348,8 @@
     "sending": "Sending...",
     "resend": "Resend Email",
     "changeEmail": "Change email address",
-    "continue": "Continue"
+    "continue": "Continue",
+    "add": "Add"
   },
   "updateProfile": {
     "title": "Edit Profile",
@@ -602,7 +603,7 @@
     }
   },
   "post": {
-    "createPostTitle": "Create Post",
+    "createPostTitle": "New post",
     "whatsOnYourMind": "What's on your mind",
     "addToPost": "Add to your post",
     "mediaPreviewAlt": "Media preview",

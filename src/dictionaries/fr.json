@@ -348,7 +348,8 @@
     "sending": "Envoi en cours...",
     "resend": "Renvoyer l'e-mail",
     "changeEmail": "Changer l'adresse e-mail",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "add": "Ajouter"
   },
   "updateProfile": {
     "title": "Modifier le profil",
@@ -602,7 +603,7 @@
     }
   },
   "post": {
-    "createPostTitle": "Créer une publication",
+    "createPostTitle": "Nouvelle publication",
     "whatsOnYourMind": "Quoi de neuf",
     "addToPost": "Ajouter à votre publication",
     "mediaPreviewAlt": "Aperçu du média",
