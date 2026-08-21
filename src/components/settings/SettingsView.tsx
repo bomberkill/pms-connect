@@ -36,11 +36,18 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserInitials, getUserDisplayName } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import SettingsViewMobile from "./SettingsViewMobile";
 
 export default function SettingsView() {
     const dict = useDictionary();
     const { me, loading } = useMe();
     const router = useRouter();
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return <SettingsViewMobile />;
+    }
 
     if (loading || !me) {
         return (
