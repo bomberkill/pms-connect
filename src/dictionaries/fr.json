@@ -93,6 +93,10 @@
     "noNotifications": "Aucune notification pour le moment",
     "error": "Erreur lors du chargement des notifications.",
     "warning": "Attention",
+    "linkCopied": {
+      "title": "Lien copié",
+      "message": "Le lien du profil a été copié dans le presse-papiers."
+    },
     "verification": {
       "resentTitle": "E-mail renvoyé",
       "resentMessage": "Un nouveau lien de vérification a été envoyé à votre adresse e-mail.",
@@ -335,7 +339,10 @@
       "posts": "Publications",
       "followers": "Abonnés",
       "following": "Abonnements"
-    }
+    },
+    "verifiedIndividual": "Titre vérifié",
+    "verifiedOrganization": "Établissement vérifié",
+    "accreditations": "Accréditations"
   },
   "button": {
     "edit": "Modifier le profil",
@@ -423,6 +430,7 @@
     "acceptRequest": "Accepter la demande",
     "disconnect": "Se déconnecter",
     "connect": "Se connecter",
+    "contact": "Contacter",
     "back": "Retour",
     "likes": "J'aime",
     "loadMore": "Charger plus",

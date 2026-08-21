@@ -75,10 +75,21 @@ export const PUBLIC_PROFILE_FIELDS = `
   bio
   websiteUrl
   connections
+  accountStatus
+  location {
+    city
+    country
+  }
+  professionalAccreditation {
+    accreditationType
+    issuingAuthority
+    referenceNumber
+  }
   ... on IndividualUserObject {
     firstName
     lastName
     professionalTitle
+    speciality
   }
   ... on LegalEntityUserObject {
     entityName

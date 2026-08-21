@@ -93,6 +93,10 @@
     "noNotifications": "No notifications yet",
     "error": "Error loading notifications.",
     "warning": "Warning",
+    "linkCopied": {
+      "title": "Link copied",
+      "message": "The profile link was copied to your clipboard."
+    },
     "verification": {
       "resentTitle": "Email Resent",
       "resentMessage": "A new verification link has been sent to your email address.",
@@ -335,7 +339,10 @@
       "posts": "Posts",
       "followers": "Followers",
       "following": "Following"
-    }
+    },
+    "verifiedIndividual": "Verified title",
+    "verifiedOrganization": "Verified organization",
+    "accreditations": "Accreditations"
   },
   "button": {
     "edit": "Edit Profile",
@@ -423,6 +430,7 @@
     "acceptRequest": "Accept Request",
     "disconnect": "Disconnect",
     "connect": "Connect",
+    "contact": "Contact",
     "back": "Back",
     "likes": "Likes",
     "loadMore": "Load more",
