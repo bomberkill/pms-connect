@@ -9,7 +9,7 @@ import {
     useMyGroupMembership,
 } from "@/hooks/useData/useGroups";
 import { useGroupMembers } from "@/hooks/useData/useGroupMembers";
-import { GroupJoinRequestStatus, GroupMemberRole, GroupMembership } from "@/types/Group";
+import { GroupJoinRequestStatus, GroupMemberRole, GroupMembership, GroupPrivacy } from "@/types/Group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +34,14 @@ import GroupMembersPanel from "@/components/groups/GroupMembersPanel";
 import GroupJoinRequestsPanel from "@/components/groups/GroupJoinRequestsPanel";
 import EditGroupDialog from "@/components/groups/EditGroupDialog";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+
+function privacyLabel(privacy: GroupPrivacy, dict: ReturnType<typeof useDictionary>) {
+    switch (privacy) {
+        case GroupPrivacy.PUBLIC: return dict.groups.form.public;
+        case GroupPrivacy.PRIVATE: return dict.groups.form.private;
+        case GroupPrivacy.SECRET: return dict.groups.form.secret;
+    }
+}
 
 function GroupFeed({ groupId }: { groupId: string }) {
     const dict = useDictionary();
@@ -314,37 +322,37 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                 )}
 
                 {/* Profile Image Overlapping */}
-                <div className="absolute -bottom-10 left-6 md:left-10">
-                    <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-background shadow-lg">
+                <div className="absolute -bottom-8 md:-bottom-10 left-4 md:left-10">
+                    <Avatar shape="establishment" className="w-16 h-16 md:w-32 md:h-32 border-4 border-background shadow-lg">
                         <AvatarImage src={group.profileImageUrl} />
-                        <AvatarFallback className="text-3xl">{group.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="text-xl md:text-3xl">{group.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 </div>
             </div>
 
-            <div className="px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="px-4 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div className="pt-2">
-                    <h1 className="text-2xl md:text-3xl font-bold">{group.name}</h1>
+                    <h1 className="text-xl md:text-3xl font-bold">{group.name}</h1>
                     <div className="flex items-center text-muted-foreground mt-1">
                         <span className="flex items-center mr-4">
                             <Users className="w-4 h-4 mr-1" />
-                            {dict.groups.privacy} &bull; {membersLoading ? '...' : membersCount} {dict.groups.members.toLowerCase()}
+                            {privacyLabel(group.privacy, dict)} &bull; {membersLoading ? '...' : membersCount} {dict.groups.members.toLowerCase()}
                         </span>
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full md:w-auto">
                     {isInvitation ? (
                         <>
-                            <Button variant="outline" onClick={handleDeclineInvitation} disabled={actionLoading}>
+                            <Button variant="outline" className="flex-1 md:flex-none" onClick={handleDeclineInvitation} disabled={actionLoading}>
                                 {dict.groups.declineInvitation}
                             </Button>
-                            <Button onClick={handleAcceptInvitation} disabled={actionLoading}>
+                            <Button className="flex-1 md:flex-none" onClick={handleAcceptInvitation} disabled={actionLoading}>
                                 {dict.groups.acceptInvitation}
                             </Button>
                         </>
                     ) : isPendingRequest ? (
-                        <Button variant="outline" onClick={handleCancelRequest} disabled={actionLoading}>
+                        <Button variant="outline" className="flex-1 md:flex-none" onClick={handleCancelRequest} disabled={actionLoading}>
                             {dict.groups.cancelRequest}
                         </Button>
                     ) : isMember ? (
@@ -378,7 +386,7 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <Button onClick={handleJoin} disabled={actionLoading}>
+                        <Button className="flex-1 md:flex-none" onClick={handleJoin} disabled={actionLoading}>
                             {dict.groups.join}
                         </Button>
                     )}

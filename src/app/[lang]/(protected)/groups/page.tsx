@@ -11,10 +11,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupCardSkeletonList } from "@/components/skeletons/GroupCardSkeleton";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useIsMobile } from "@/hooks/use-mobile";
+import GroupsListMobile from "@/components/groups/GroupsListMobile";
 
 export default function GroupsPage() {
     const dict = useDictionary();
     const { groups, loading, error } = useGroups({ limit: 20 });
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return <GroupsListMobile />;
+    }
 
     if (error) {
         return (
