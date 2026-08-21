@@ -213,12 +213,15 @@ export async function completeRegistration(
       token = tokenResult.token;
     } catch (err) {
       console.error("Failed to bootstrap email registration session:", err);
+      // `body.code` is only present for Better Auth's own APIError shape
+      // (e.g. USER_ALREADY_EXISTS, invalid input) — those messages are
+      // written for end users. Anything else (a raw Prisma/DB error, a
+      // network failure) is an internal error whose message can contain
+      // driver/schema internals, so it's logged above but never shown.
       const code = (err as { body?: { code?: string } })?.body?.code;
       return {
         success: false,
-        error:
-          code ??
-          ((err as Error | undefined)?.message || "UNKNOWN_ERROR"),
+        error: code ?? "FAILED_TO_CREATE_SESSION",
       };
     }
   }
