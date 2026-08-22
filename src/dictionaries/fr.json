@@ -640,8 +640,25 @@
       "verificationDocuments": "Documents et vérification",
       "verified": "Vérifié",
       "notVerified": "Non vérifié",
+      "notificationPreferences": "Préférences de notifications",
       "version": "PMSCONNECT {version}"
     }
+  },
+  "notificationPreferences": {
+    "title": "Préférences de notifications",
+    "typesSection": "Types de notifications",
+    "notifyReplies": "Réponses à mes publications",
+    "notifyMentions": "Mentions",
+    "notifyConnectionRequests": "Demandes de relation",
+    "notifyReactions": "Réactions",
+    "notifyGroupActivity": "Activité de groupes",
+    "notifyEstablishmentAnnouncements": "Annonces d'établissements",
+    "quietHoursSection": "Heures calmes",
+    "quietHoursEnabled": "Activer les heures calmes",
+    "quietHoursStart": "Début",
+    "quietHoursEnd": "Fin",
+    "emailSection": "E-mail",
+    "weeklyEmailDigest": "Résumé hebdomadaire par e-mail"
   },
   "post": {
     "createPostTitle": "Nouvelle publication",

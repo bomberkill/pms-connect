@@ -640,8 +640,25 @@
       "verificationDocuments": "Documents and verification",
       "verified": "Verified",
       "notVerified": "Not verified",
+      "notificationPreferences": "Notification preferences",
       "version": "PMSCONNECT {version}"
     }
+  },
+  "notificationPreferences": {
+    "title": "Notification preferences",
+    "typesSection": "Notification types",
+    "notifyReplies": "Replies to my posts",
+    "notifyMentions": "Mentions",
+    "notifyConnectionRequests": "Connection requests",
+    "notifyReactions": "Reactions",
+    "notifyGroupActivity": "Group activity",
+    "notifyEstablishmentAnnouncements": "Establishment announcements",
+    "quietHoursSection": "Quiet hours",
+    "quietHoursEnabled": "Enable quiet hours",
+    "quietHoursStart": "Start",
+    "quietHoursEnd": "End",
+    "emailSection": "Email",
+    "weeklyEmailDigest": "Weekly email digest"
   },
   "post": {
     "createPostTitle": "New post",

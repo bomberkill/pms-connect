@@ -8,7 +8,7 @@ import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { formatDistanceToNow, isToday, isThisWeek } from "date-fns";
 import { fr, enUS } from "date-fns/locale";
 import { useDictionary } from "@/hooks/use-dictionary";
-import { Loader2, Bell, CheckCheck, Heart, MessageCircle, UserPlus, Users } from "lucide-react";
+import { Loader2, Bell, CheckCheck, Heart, MessageCircle, UserPlus, Users, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,8 @@ const ICON_BY_TYPE: Record<NotificationType, { icon: React.ElementType; classNam
     [NotificationType.GROUP_INVITATION]: { icon: Users, className: "bg-tertiary-600 text-white" },
     [NotificationType.GROUP_JOIN_REQUEST]: { icon: Users, className: "bg-tertiary-600 text-white" },
     [NotificationType.GROUP_JOIN_REQUEST_ACCEPTED]: { icon: Users, className: "bg-tertiary-600 text-white" },
+    [NotificationType.POST_APPROVED]: { icon: CheckCircle2, className: "bg-secondary-600 text-white" },
+    [NotificationType.POST_REJECTED]: { icon: XCircle, className: "bg-muted text-muted-foreground" },
 };
 
 // Where a notification's own entityId actually points, per notification type
@@ -43,6 +45,8 @@ function resolveNotificationHref(notification: Notification): string {
     switch (notification.type) {
         case NotificationType.POST_LIKE:
         case NotificationType.POST_COMMENT:
+        case NotificationType.POST_APPROVED:
+        case NotificationType.POST_REJECTED:
             return `/post/${notification.entityId}`;
         case NotificationType.NEW_FOLLOWER:
         case NotificationType.CONNECTION_ACCEPTED:

@@ -166,6 +166,11 @@ export default function SettingsViewMobile() {
                         </span>
                     }
                 />
+                <Row
+                    icon={Bell}
+                    label={dict.settings.labels.notificationPreferences}
+                    onClick={() => router.push("/settings/notifications")}
+                />
             </div>
 
             <div className="mt-4 bg-card border-y border-border">
