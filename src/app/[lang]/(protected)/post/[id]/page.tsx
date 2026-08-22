@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useComments, usePost, useCommentActions, useLikePostActions, useLikeCommentActions, useComment, useCommentReplies, useMe, useBookmarkActions } from "@/hooks/useData/index";
+import { usePost, useMe, useBookmarkActions, useLikePostActions } from "@/hooks/useData/index";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Heart, MessageCircle, Bookmark, MoreHorizontal, Pencil, Trash2, Share2 } from "lucide-react";
@@ -11,10 +11,7 @@ import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
-import CommentComposer from "../../../../../components/CommentComposer";
-import { uploadFileToR2 } from "@/utils/fileUpload";
-import { MediaItem, MediaType } from "@/types/Post";
-import FeedItemCard from "@/components/FeedItemCard";
+import CommentThread from "@/components/CommentThread";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { PostMedia } from "@/components/PostMedia";
 import { Card } from "@/components/ui/card";
@@ -45,35 +42,17 @@ export default function PostDetailPage() {
   const router = useRouter();
   const postId = params?.id;
   const searchParams = useSearchParams()
-  const isComment = searchParams.get("isComment") === "true"
+  const highlightCommentId = searchParams.get("highlightComment") || undefined;
   const dict = useDictionary();
   const { open } = useNotification();
   const locale = params?.lang === "fr" ? "fr-FR" : "en-US";
 
-  const { post: postFromHook, loading: loadingPost, error: errorPost } = usePost(postId, isComment);
-  const { comment, loading: commentLoading, error: commentError } = useComment(postId, isComment);
-
-  // Determine the actual post and its ID
-  const post = isComment ? comment : postFromHook
-  const actualPostId = (isComment && comment && 'post' in comment ? comment.post.id : postId) || '';
-
-  // Fetch comments or replies based on what we're viewing
-  // If viewing a COMMENT (isComment=true): fetch replies to that comment, skip post comments
-  // If viewing a POST (isComment=false): fetch comments for that post, skip comment replies
-  const { comments: commentsFromHook, loadMore: fetchMoreComments } = useComments(actualPostId, isComment);
-  const { replies, loadMore: fetchMoreReplies } = useCommentReplies(postId, isComment);
-
-  const comments = isComment ? replies : commentsFromHook
-  const loading = isComment ? commentLoading : loadingPost
-  const error = isComment ? commentError : errorPost
-  const fetchMore = isComment ? fetchMoreReplies : fetchMoreComments
+  const { post, loading, error } = usePost(postId);
 
   const { likePost, unlikePost } = useLikePostActions(postId);
-  const { likeComment, unlikeComment } = useLikeCommentActions(postId);
-  const { addComment, adding: isAddingComment } = useCommentActions();
   const { me: user } = useMe();
   const { removePost, removing } = usePostMutations();
-  const { addBookmark, removeBookmark } = useBookmarkActions(postId ?? '', isComment ? 'Comment' : 'Post');
+  const { addBookmark, removeBookmark } = useBookmarkActions(postId ?? '', 'Post');
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
@@ -105,42 +84,6 @@ export default function PostDetailPage() {
       document.body.classList.remove("hide-fab");
     };
   }, []);
-
-  const handleSubmit = async (content: string, files?: File[]) => {
-    if (!user) return;
-
-    let media: MediaItem[] = [];
-    try {
-      if (files && files.length > 0) {
-        const uploadResults = await Promise.all(
-          files.map((file) =>
-            uploadFileToR2(file, "POST_MEDIA")
-          )
-        );
-
-        media = files.reduce<MediaItem[]>((acc, file, idx) => {
-          const res = uploadResults[idx];
-          if (res?.publicUrl) {
-            const type = file.type.startsWith("video/")
-              ? MediaType.VIDEO
-              : file.type.startsWith("image/")
-                ? MediaType.IMAGE
-                : MediaType.DOCUMENT;
-            acc.push({ url: res.publicUrl, type });
-          }
-          return acc;
-        }, []);
-      }
-
-      await addComment({
-        variables: {
-          createCommentInput: { postId: actualPostId ?? '', content, media, parentId: isComment ? postId : undefined },
-        },
-      });
-    } catch (error) {
-      console.error("Error adding comment:", error);
-    }
-  };
 
   if (loading) {
     return (
@@ -174,12 +117,10 @@ export default function PostDetailPage() {
   }
 
   const isLiked = post.isLiked;
-  const canManagePost = !isComment && post.author.id === user?.id;
+  const canManagePost = post.author.id === user?.id;
   const { time, date } = formatDateTime(post.createdAt, locale);
 
   const handleDeletePost = async () => {
-    if (isComment) return;
-
     try {
       await removePost({ variables: { id: post.id } });
       open("success", dict.post.deleteTitle, { message: dict.post.deleteSuccess });
@@ -193,13 +134,11 @@ export default function PostDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6">
-      {!isComment && (
-        <EditPostDialog
-          open={isEditOpen}
-          onOpenChange={setIsEditOpen}
-          post={post as import("@/types/Post").Post}
-        />
-      )}
+      <EditPostDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        post={post}
+      />
       <ConfirmationDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
@@ -219,7 +158,7 @@ export default function PostDetailPage() {
         <button onClick={() => router.back()} className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="font-semibold text-lg">{isComment ? dict.profile.tabs.replies : dict.post.post}</span>
+        <span className="font-semibold text-lg">{dict.post.post}</span>
       </div>
 
       <div className="container max-w-2xl mx-auto px-0 md:px-4 md:py-6">
@@ -228,11 +167,6 @@ export default function PostDetailPage() {
           <Button variant="ghost" onClick={() => router.back()} className="pl-0 hover:bg-transparent hover:text-primary transition-colors">
             <ArrowLeft className="h-4 w-4 mr-2" /> {dict.common.back}
           </Button>
-          {isComment && (
-            <span className="text-sm text-muted-foreground">
-              {dict.post.replyingTo} <span className="text-primary font-medium">@{getUserDisplayName(post.author)}</span>
-            </span>
-          )}
         </div>
 
         {/* Main Post Card */}
@@ -310,7 +244,7 @@ export default function PostDetailPage() {
                 variant="ghost"
                 size="sm"
                 className={cn("flex-1 rounded-full hover:text-error hover:bg-error/5 transition-colors", isLiked && "text-error")}
-                onClick={() => (isLiked ? isComment ? unlikeComment() : unlikePost() : isComment ? likeComment() : likePost())}
+                onClick={() => (isLiked ? unlikePost() : likePost())}
               >
                 <Heart className={cn("h-5 w-5 mr-2", isLiked && "fill-error")} />
                 {dict.actions.likes}
@@ -332,38 +266,11 @@ export default function PostDetailPage() {
           </div>
         </Card>
 
-        {/* Comment Composer - Desktop only */}
-        <div className="hidden md:block mt-4 bg-card border border-border rounded-2xl p-4">
-          <h4 className="text-sm font-medium mb-3 text-muted-foreground">{dict.post.replyingTo} <span className="text-primary">@{getUserDisplayName(post.author)}</span></h4>
-          <div id="comment-input">
-            <CommentComposer user={user} isSubmitting={isAddingComment} onSubmit={handleSubmit} placeholder={dict.post.postYourReply} />
-          </div>
-        </div>
-
-        {/* Comments Section */}
-        <div className="mt-6 space-y-4">
-          {comments?.length ? (
-            comments.map((c) => (
-              <FeedItemCard key={c.id} item={c} isComment />
-            ))
-          ) : (
-            <div className="text-center py-10 bg-card border border-border rounded-2xl">
-              <MessageCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground">{dict.post.noComments}</p>
-            </div>
-          )}
-
-          {comments?.length ? (
-            <div className="flex justify-center pt-4 pb-8">
-              <Button variant="outline" onClick={() => fetchMore()}>{dict.actions.loadMore}</Button>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Mobile Sticky Composer */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border p-3 z-50 shadow-md">
-        <CommentComposer user={user} isSubmitting={isAddingComment} onSubmit={handleSubmit} placeholder={dict.post.postYourReply} />
+        <CommentThread
+          postId={post.id}
+          postAuthorLabel={`@${getUserDisplayName(post.author)}`}
+          highlightCommentId={highlightCommentId}
+        />
       </div>
     </div>
   );

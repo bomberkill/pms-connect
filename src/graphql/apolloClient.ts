@@ -217,6 +217,27 @@ export const apolloClient = new ApolloClient({
               return [...existing, ...incoming];
             },
           },
+
+          // ========== COMMENTS ==========
+          getCommentsByPost: {
+            keyArgs: ['postId'], // Cache séparé par post
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
+          getCommentReplies: {
+            keyArgs: ['parentId'], // Cache séparé par commentaire parent
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
         },
       },
     },

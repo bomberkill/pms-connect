@@ -155,12 +155,12 @@ export const useFeed = (options: { limit?: number; enablePolling?: boolean } = {
 /**
  * Hook for fetching a single post by its ID.
  */
-export const usePost = (postId: string, isComment?: boolean) => {
+export const usePost = (postId: string) => {
   const { data, loading, error } = useQuery<{ getPostById: Post }>(
     buildGetPostByIdQuery(),
     {
       variables: { id: postId },
-      skip: !postId || isComment,
+      skip: !postId,
     }
   );
 

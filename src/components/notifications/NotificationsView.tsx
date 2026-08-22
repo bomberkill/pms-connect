@@ -14,6 +14,9 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserTypeGQL } from "@/types/User";
+import { apolloClient } from "@/graphql/apolloClient";
+import { buildGetCommentByIdQuery } from "@/graphql/queries/comment";
+import { Comment } from "@/types/Comment";
 
 const ICON_BY_TYPE: Record<NotificationType, { icon: React.ElementType; className: string }> = {
     [NotificationType.POST_LIKE]: { icon: Heart, className: "bg-primary text-primary-foreground" },
@@ -30,17 +33,17 @@ const ICON_BY_TYPE: Record<NotificationType, { icon: React.ElementType; classNam
 // Where a notification's own entityId actually points, per notification type
 // — verified against the API's own notification-creation call sites (not
 // guessed): POST_LIKE/POST_COMMENT carry a post id, COMMENT_LIKE a comment
-// id, group types a group id (no slug lookup wired client-side yet, so
-// those land on the groups list rather than a specific group), and
-// CONNECTION_REQUEST carries no entityId at all (the API never passes one
-// when creating it) so it can only route to the requests list.
+// id (resolved separately in handleNotificationClick, since routing it
+// requires an async lookup of its parent post), group types a group id (no
+// slug lookup wired client-side yet, so those land on the groups list
+// rather than a specific group), and CONNECTION_REQUEST carries no
+// entityId at all (the API never passes one when creating it) so it can
+// only route to the requests list.
 function resolveNotificationHref(notification: Notification): string {
     switch (notification.type) {
         case NotificationType.POST_LIKE:
         case NotificationType.POST_COMMENT:
             return `/post/${notification.entityId}`;
-        case NotificationType.COMMENT_LIKE:
-            return `/post/${notification.entityId}?isComment=true`;
         case NotificationType.NEW_FOLLOWER:
         case NotificationType.CONNECTION_ACCEPTED:
             return `/profile/${notification.sender.slug}`;
@@ -93,6 +96,24 @@ export default function NotificationsView() {
         if (!notification.read) {
             await markAsRead({ variables: { notificationIds: [notification.id] } });
             setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+        }
+
+        if (notification.type === NotificationType.COMMENT_LIKE && notification.entityId) {
+            try {
+                const { data } = await apolloClient.query<{ getCommentById: Comment }>({
+                    query: buildGetCommentByIdQuery(),
+                    variables: { id: notification.entityId },
+                });
+                const postId = data?.getCommentById?.post?.id;
+                if (postId) {
+                    router.push(`/post/${postId}?highlightComment=${notification.entityId}`);
+                    return;
+                }
+            } catch (e) {
+                console.error("Failed to resolve comment notification target", e);
+            }
+            router.push("/notifications");
+            return;
         }
 
         router.push(resolveNotificationHref(notification));

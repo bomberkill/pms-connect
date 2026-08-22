@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { FileIcon, Loader2, Paperclip, Send, SmilePlus, Trash2 } from "lucide-react";
+import { FileIcon, Loader2, Paperclip, Send, SmilePlus, Trash2, X } from "lucide-react";
 import { User } from "@/types/User";
 import { getUserInitials } from "@/lib/user-utils";
 import TextareaAutosize from "react-textarea-autosize";
@@ -19,9 +19,11 @@ type CommentComposerProps = {
   placeholder?: string;
   isSubmitting?: boolean;
   onSubmit: (content: string, files?: File[]) => Promise<void>;
+  replyingTo?: { label: string };
+  onCancelReply?: () => void;
 };
 
-export default function CommentComposer({ user, placeholder, isSubmitting, onSubmit }: CommentComposerProps) {
+export default function CommentComposer({ user, placeholder, isSubmitting, onSubmit, replyingTo, onCancelReply }: CommentComposerProps) {
   const dict = useDictionary();
   const [content, setContent] = useState("");
   const { mediaFiles, mediaPreviews, handleFileChange, removeMedia, resetMedia } = useMediaHandler(4);
@@ -45,6 +47,21 @@ export default function CommentComposer({ user, placeholder, isSubmitting, onSub
       </Avatar>
       <form onSubmit={handleSubmit} className="flex-1">
         <div className="bg-muted/40 border rounded-2xl px-3 py-2">
+          {replyingTo && (
+            <div className="flex items-center gap-1.5 mb-1.5 text-xs text-muted-foreground">
+              <span>{dict.post.replyingTo} <span className="text-primary font-medium">{replyingTo.label}</span></span>
+              {onCancelReply && (
+                <button
+                  type="button"
+                  onClick={onCancelReply}
+                  aria-label={dict.post.cancelReply}
+                  className="rounded-full p-0.5 hover:bg-muted"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          )}
           {mediaPreviews.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
               {mediaPreviews.map((preview, index) => (

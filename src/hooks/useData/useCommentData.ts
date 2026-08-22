@@ -17,15 +17,15 @@ import { Comment, CreateCommentInput } from '@/types/Comment';
 /**
  * Hook to fetch comments for a post.
  */
-export const useComments = (postId: string, isComment?: boolean, options: { limit?: number } = {}) => {
+export const useComments = (postId: string, options: { limit?: number } = {}) => {
   const { limit = 10 } = options;
   const safePostId = postId?.trim();
-  const { data, loading, error, fetchMore } = useQuery<{ getCommentsByPost: Comment[] }>(
+  const { data, loading, error, fetchMore, refetch } = useQuery<{ getCommentsByPost: Comment[] }>(
     buildGetCommentsByPostQuery(),
     {
       variables: safePostId ? { postId: safePostId, limit, skip: 0 } : undefined,
       fetchPolicy: 'cache-and-network',
-      skip: !safePostId || isComment,
+      skip: !safePostId,
     }
   );
 
@@ -39,18 +39,21 @@ export const useComments = (postId: string, isComment?: boolean, options: { limi
       variables: {
         skip: comments.length,
       },
-    })
+    }),
+    refetch,
   };
 };
 
-
-export const useComment = (commentId: string, isComment?: boolean) => {
+/**
+ * Hook to fetch a single comment by id (e.g. to resolve a notification's target).
+ */
+export const useComment = (commentId?: string, enabled: boolean = true) => {
   const { data, loading, error } = useQuery<{ getCommentById: Comment }>(
     buildGetCommentByIdQuery(),
     {
       variables: { id: commentId },
       fetchPolicy: 'cache-and-network',
-      skip: !commentId || commentId.trim() === '' || !isComment,
+      skip: !commentId || commentId.trim() === '' || !enabled,
     }
   );
 
@@ -113,7 +116,10 @@ export const useCommentActions = () => {
         if (!parentId) {
           cache.modify({
             fields: {
-              getCommentsByPost(existingComments = []) {
+              getCommentsByPost(existingComments = [], { storeFieldName }) {
+                // keyArgs: ['postId'] splits this field per postId in the cache —
+                // only touch the entry matching the post we just commented on.
+                if (!storeFieldName.includes(postId)) return existingComments;
                 const newCommentRef = cache.writeFragment({
                   data: newComment,
                   fragment: gql`
@@ -127,10 +133,11 @@ export const useCommentActions = () => {
             }
           });
         } else {
-          // Add reply to the replies list
+          // Add reply to the replies list of its direct parent only
           cache.modify({
             fields: {
-              getCommentReplies(existingReplies = []) {
+              getCommentReplies(existingReplies = [], { storeFieldName }) {
+                if (!storeFieldName.includes(parentId)) return existingReplies;
                 const newCommentRef = cache.writeFragment({
                   data: newComment,
                   fragment: gql`
@@ -141,6 +148,13 @@ export const useCommentActions = () => {
                 });
                 return [newCommentRef, ...existingReplies];
               }
+            }
+          });
+          // Keep the parent comment's own replies count in sync too.
+          cache.modify({
+            id: `Comment:${parentId}`,
+            fields: {
+              commentsCount(currentCount = 0) { return currentCount + 1; }
             }
           });
         }
@@ -164,17 +178,19 @@ export const useCommentActions = () => {
 };
 
 /**
- * Hook to fetch replies for a comment.
+ * Hook to fetch replies for a comment. `enabled` gates the query on local UI
+ * expansion state (whether the reply thread is currently expanded), not on
+ * page/route context.
  */
-export const useCommentReplies = (parentId: string, isComment?: boolean, options: { limit?: number } = {}) => {
+export const useCommentReplies = (parentId: string, enabled?: boolean, options: { limit?: number } = {}) => {
   const { limit = 10 } = options;
   const safeParentId = parentId?.trim();
 
-  const { data, loading, error, fetchMore } = useQuery<{ getCommentReplies: Comment[] }>(
+  const { data, loading, error, fetchMore, refetch } = useQuery<{ getCommentReplies: Comment[] }>(
     buildGetCommentRepliesQuery(),
     {
       variables: safeParentId ? { parentId: safeParentId, limit, skip: 0 } : undefined,
-      skip: !safeParentId || !isComment,
+      skip: !safeParentId || !enabled,
       fetchPolicy: 'cache-and-network',
     }
   );
@@ -190,6 +206,7 @@ export const useCommentReplies = (parentId: string, isComment?: boolean, options
         skip: replies.length,
       },
     }),
+    refetch,
   };
 };
 
