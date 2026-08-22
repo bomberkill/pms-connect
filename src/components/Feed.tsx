@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { useFeed } from "@/hooks/useData/index";
+import { useFeed, useMe } from "@/hooks/useData/index";
 import { Skeleton } from "./ui/skeleton";
 import FeedItemCard from "./FeedItemCard";
 import { Loader2, WifiOff } from "lucide-react";
@@ -47,9 +47,11 @@ export const Feed = () => {
   const { ref, inView } = useInView({ threshold: 0.5 });
 
   const mutedAuthorIds = useMutedAuthorIds();
-  const visiblePosts = mutedAuthorIds.length === 0
-    ? posts
-    : posts.filter((post) => !mutedAuthorIds.includes(post.author.id));
+  const { me } = useMe();
+  const blockedAuthorIds = me?.blockedUsers ?? [];
+  const visiblePosts = posts.filter(
+    (post) => !mutedAuthorIds.includes(post.author.id) && !blockedAuthorIds.includes(post.author.id)
+  );
 
   // Badge state
   const [showBadge, setShowBadge] = useState(false);

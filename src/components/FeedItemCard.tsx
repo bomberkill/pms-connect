@@ -10,6 +10,7 @@ import {
   MoreVertical,
   Pencil,
   Share2,
+  ShieldOff,
   Trash2,
   UserMinus,
   UserPlus,
@@ -24,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useBookmarkActions, useFollowActions, useMe, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
+import { useBookmarkActions, useFollowActions, useBlockActions, useMe, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
@@ -65,17 +66,20 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [isReportOpen, setIsReportOpen] = React.useState(false);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = React.useState(false);
 
   const authorId = item.author?.id;
   const { likePost, unlikePost, liking, unliking } = useLikePostActions(item.id);
   useLikesSubscription(item.id, 'Post');
   const { followUser, unfollowUser, following: followingReq, unfollowing } = useFollowActions();
+  const { blockUser, unblockUser, blocking, unblocking } = useBlockActions();
   const { addBookmark, removeBookmark, adding: addingBookmark, removing: removingBookmark } = useBookmarkActions(item.id, 'Post');
   const postItem = item;
   const isOwnItem = authorId === me?.id;
 
   const isLiked = item.isLiked ?? false;
   const isFollowing = !!(authorId && me?.following?.includes(authorId));
+  const isBlocked = !!(authorId && me?.blockedUsers?.includes(authorId));
 
   const handleLikeToggle = () => {
     if (isLiked) unlikePost();
@@ -121,6 +125,26 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
     open("success", dict.post.mutedTitle, { message: dict.post.mutedMessage });
   };
 
+  const handleBlockConfirm = async () => {
+    if (!authorId) return;
+    try {
+      await blockUser({ variables: { userId: authorId } });
+      setIsBlockConfirmOpen(false);
+      open("success", dict.post.blockedTitle, { message: dict.post.blockedMessage });
+    } catch (e) {
+      console.error("Block failed", e);
+    }
+  };
+
+  const handleUnblock = async () => {
+    if (!authorId) return;
+    try {
+      await unblockUser({ variables: { userId: authorId } });
+    } catch (e) {
+      console.error("Unblock failed", e);
+    }
+  };
+
   const handleDelete = async () => {
     try {
       await removePost({ variables: { id: postItem.id } });
@@ -148,6 +172,15 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
         />
       )}
       <ReportDialog open={isReportOpen} onOpenChange={setIsReportOpen} postId={item.id} />
+      <ConfirmationDialog
+        open={isBlockConfirmOpen}
+        onOpenChange={setIsBlockConfirmOpen}
+        onConfirm={handleBlockConfirm}
+        title={dict.post.blockConfirmTitle}
+        message={dict.post.blockConfirmDescription}
+        confirmText={dict.actions.block}
+        cancelText={dict.common.cancel}
+      />
       <ConfirmationDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
@@ -202,8 +235,17 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
               <DropdownMenuItem className="cursor-pointer" onClick={handleMute}><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
               {authorId && authorId !== me?.id && (
-                <DropdownMenuItem className="cursor-pointer" onClick={handleFollowToggle} disabled={followingReq || unfollowing}>{isFollowing ? <><UserMinus className="mr-2 h-4 w-4" /> {dict.actions.unfollow}</> : <><UserPlus className="mr-2 h-4 w-4" /> {dict.actions.follow}</>}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem className="cursor-pointer" onClick={handleFollowToggle} disabled={followingReq || unfollowing}>{isFollowing ? <><UserMinus className="mr-2 h-4 w-4" /> {dict.actions.unfollow}</> : <><UserPlus className="mr-2 h-4 w-4" /> {dict.actions.follow}</>}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={isBlocked ? handleUnblock : () => setIsBlockConfirmOpen(true)}
+                    disabled={blocking || unblocking}
+                  >
+                    <ShieldOff className="mr-2 h-4 w-4" /> {isBlocked ? dict.actions.unblock : dict.actions.block}
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

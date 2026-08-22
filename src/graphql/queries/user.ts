@@ -231,6 +231,36 @@ export const buildUnfollowMutation = () => {
   `;
 };
 
+// =============================================================================
+// == BLOCK QUERIES & MUTATIONS
+// =============================================================================
+
+/**
+ * Builds a GraphQL mutation for blocking a user.
+ * Corresponds to 'blockUser' resolver in users.resolver.ts.
+ * @returns A gql object.
+ */
+export const buildBlockUserMutation = () => {
+  return gql`
+    mutation BlockUser($userId: ID!) {
+      blockUser(userId: $userId)
+    }
+  `;
+};
+
+/**
+ * Builds a GraphQL mutation for unblocking a user.
+ * Corresponds to 'unblockUser' resolver in users.resolver.ts.
+ * @returns A gql object.
+ */
+export const buildUnblockUserMutation = () => {
+  return gql`
+    mutation UnblockUser($userId: ID!) {
+      unblockUser(userId: $userId)
+    }
+  `;
+};
+
 /**
  * Builds a GraphQL query for fetching a user's followers.
  * Corresponds to 'getFollowers' resolver in users.resolver.ts.

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useSubscription, useLazyQuery } from '@apollo/client';
+import { useQuery, useMutation, useSubscription, useLazyQuery, Reference } from '@apollo/client';
 import {
     buildGetAllUsersQuery,
     buildGetMeQuery,
@@ -10,6 +10,8 @@ import {
     buildUpdateMyEmailMutation,
     buildFollowMutation,
     buildUnfollowMutation,
+    buildBlockUserMutation,
+    buildUnblockUserMutation,
     buildFollowsUpdatedSubscription,
     buildCheckUserExistsByEmailQuery,
     buildCheckUserExistsByPhoneNumberQuery,
@@ -212,6 +214,52 @@ export const useFollowActions = () => {
     });
 
     return { followUser, following, followError, unfollowUser, unfollowing, unfollowError };
+};
+
+/**
+ * Hook that provides block/unblock actions. Blocking hides content in
+ * both directions server-side (see PostsService.blockedAuthorsFilter);
+ * client-side we only need to keep `me.blockedUsers` in sync so the
+ * "Bloqué"/"Bloquer" UI state and any local filtering reflect the change
+ * immediately without a refetch.
+ */
+export const useBlockActions = () => {
+    const { me } = useMe();
+    const [blockUser, { loading: blocking, error: blockError }] = useMutation<{ blockUser: boolean }, { userId: string }>(buildBlockUserMutation(), {
+        optimisticResponse: { blockUser: true },
+        update(cache, { data }, { variables }) {
+            if (data?.blockUser && variables?.userId && me) {
+                cache.modify({
+                    id: cache.identify({ __typename: 'User', id: me.id }),
+                    fields: {
+                        blockedUsers: (existing: string[] | Reference = []) => {
+                            const ids = Array.isArray(existing) ? existing : [];
+                            return ids.includes(variables.userId) ? ids : [...ids, variables.userId];
+                        },
+                    }
+                });
+            }
+        }
+    });
+
+    const [unblockUser, { loading: unblocking, error: unblockError }] = useMutation<{ unblockUser: boolean }, { userId: string }>(buildUnblockUserMutation(), {
+        optimisticResponse: { unblockUser: true },
+        update(cache, { data }, { variables }) {
+            if (data?.unblockUser && variables?.userId && me) {
+                cache.modify({
+                    id: cache.identify({ __typename: 'User', id: me.id }),
+                    fields: {
+                        blockedUsers: (existing: string[] | Reference = []) => {
+                            const ids = Array.isArray(existing) ? existing : [];
+                            return ids.filter((id) => id !== variables.userId);
+                        },
+                    }
+                });
+            }
+        }
+    });
+
+    return { blockUser, blocking, blockError, unblockUser, unblocking, unblockError };
 };
 
 export const useFollowsSubscription = (userId: string) => {

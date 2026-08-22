@@ -458,7 +458,9 @@
     "bookmark": "Bookmark",
     "removeBookmark": "Remove Bookmark",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "block": "Block",
+    "unblock": "Unblock"
   },
   "report": {
     "title": "Report this post",
@@ -713,6 +715,10 @@
     "authorBadge": "Author",
     "mutedTitle": "Author muted",
     "mutedMessage": "You won't see their posts in your feed on this device anymore.",
+    "blockedTitle": "User blocked",
+    "blockedMessage": "You won't see their content anymore, and they won't see yours.",
+    "blockConfirmTitle": "Block this user?",
+    "blockConfirmDescription": "You won't see their content and they won't see yours, on all your devices. You can unblock them at any time.",
     "edited": "Edited",
     "commentDeleted": "This comment was deleted by its author.",
     "replyingTo": "Replying to",

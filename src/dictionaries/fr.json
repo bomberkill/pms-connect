@@ -458,7 +458,9 @@
     "bookmark": "Enregistrer",
     "removeBookmark": "Retirer des enregistrements",
     "edit": "Modifier",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "block": "Bloquer",
+    "unblock": "Débloquer"
   },
   "report": {
     "title": "Signaler cette publication",
@@ -713,6 +715,10 @@
     "authorBadge": "Auteur",
     "mutedTitle": "Auteur masqué",
     "mutedMessage": "Vous ne verrez plus ses publications dans votre fil sur cet appareil.",
+    "blockedTitle": "Utilisateur bloqué",
+    "blockedMessage": "Vous ne verrez plus son contenu, et il ne verra plus le vôtre.",
+    "blockConfirmTitle": "Bloquer cet utilisateur ?",
+    "blockConfirmDescription": "Vous ne verrez plus son contenu et il ne verra plus le vôtre, sur tous vos appareils. Vous pourrez le débloquer à tout moment.",
     "edited": "Modifié",
     "commentDeleted": "Ce commentaire a été supprimé par son auteur.",
     "replyingTo": "En réponse à",

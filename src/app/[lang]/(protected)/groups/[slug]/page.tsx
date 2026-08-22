@@ -51,9 +51,11 @@ function GroupFeed({ groupId }: { groupId: string }) {
     const dict = useDictionary();
     const { posts, loading, loadMore } = useGroupPosts(groupId);
     const mutedAuthorIds = useMutedAuthorIds();
-    const visiblePosts = mutedAuthorIds.length === 0
-        ? posts
-        : posts.filter((post) => !mutedAuthorIds.includes(post.author.id));
+    const { me } = useMe();
+    const blockedAuthorIds = me?.blockedUsers ?? [];
+    const visiblePosts = posts.filter(
+        (post) => !mutedAuthorIds.includes(post.author.id) && !blockedAuthorIds.includes(post.author.id)
+    );
 
     if (loading && posts.length === 0) {
         return (

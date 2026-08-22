@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Camera, MessageCircle, UserMinus, MoreHorizontal, Ban, Flag, ArrowLeft, Share2, CheckCircle2, UserPlus } from "lucide-react"
+import { Camera, MessageCircle, UserMinus, MoreHorizontal, Ban, Flag, ArrowLeft, Share2, CheckCircle2, UserPlus, ShieldOff } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { MAX_FILE_SIZE, uploadFileToR2, deleteUploadedFile } from "@/utils/fileUpload"
 import { updateUser } from "@/graphql/authActions"
@@ -29,7 +29,7 @@ function extractR2Key(publicUrl: string): string {
   }
   return publicUrl.slice(base.length + 1);
 }
-import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useFollowsSubscription, useMe, useUserBySlug } from "@/hooks/useData/index"
+import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useBlockActions, useFollowsSubscription, useMe, useUserBySlug } from "@/hooks/useData/index"
 import { ConnectionRequestStatus } from "@/types/ConnectionRequest"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useUserPosts } from "@/hooks/useData/usePostData"
@@ -65,6 +65,7 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
 
   const [isUploading, setIsUploading] = useState(false)
   const [isReportOpen, setIsReportOpen] = useState(false)
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false)
   const [dialogConfig, setDialogConfig] = useState<{
     isOpen: boolean;
     title: string;
@@ -169,10 +170,32 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
   // --- LOGIQUE DE SUIVI ET DE CONNEXION ---
   const isFollowing = authUser?.following?.includes(profileUser?.id ?? '');
   const isConnected = authUser?.connections?.includes(profileUser?.id ?? '');
+  const isBlocked = !!(profileUser?.id && authUser?.blockedUsers?.includes(profileUser.id));
   const { requests, refetch: refetchRequests } = useConnectionRequests(ConnectionRequestStatus.PENDING);
   const pendingRequest = requests?.find(req => (req.requester.id === profileUser?.id || req.recipient.id === profileUser?.id));
   const { followUser, unfollowUser } = useFollowActions();
+  const { blockUser, unblockUser, blocking, unblocking } = useBlockActions();
   const { sendRequest, removeConnection, acceptRequest, declineRequest } = useConnectionActions();
+
+  const handleBlockConfirm = async () => {
+    if (!profileUser) return;
+    try {
+      await blockUser({ variables: { userId: profileUser.id } });
+      setIsBlockConfirmOpen(false);
+      open("success", dict.post.blockedTitle, { message: dict.post.blockedMessage });
+    } catch (e) {
+      console.error("Block failed", e);
+    }
+  };
+
+  const handleUnblock = async () => {
+    if (!profileUser) return;
+    try {
+      await unblockUser({ variables: { userId: profileUser.id } });
+    } catch (e) {
+      console.error("Unblock failed", e);
+    }
+  };
   const { followsUpdated } = useFollowsSubscription(profileUser?.id ?? '');
   const { updatedRequest } = useConnectionRequestUpdatedSubscription();
 
@@ -324,6 +347,13 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
                     <Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
+                <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={isBlocked ? handleUnblock : () => setIsBlockConfirmOpen(true)}
+                    disabled={blocking || unblocking}
+                >
+                    <ShieldOff className="mr-2 h-4 w-4" /> {isBlocked ? dict.actions.unblock : dict.actions.block}
+                </DropdownMenuItem>
                 {isConnected && (
                   <>
                     <DropdownMenuSeparator />
@@ -531,6 +561,15 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
       {profileUser && (
         <ReportDialog open={isReportOpen} onOpenChange={setIsReportOpen} reportedUserId={profileUser.id} />
       )}
+      <ConfirmationDialog
+        open={isBlockConfirmOpen}
+        onOpenChange={setIsBlockConfirmOpen}
+        onConfirm={handleBlockConfirm}
+        title={dict.post.blockConfirmTitle}
+        message={dict.post.blockConfirmDescription}
+        confirmText={dict.actions.block}
+        cancelText={dict.common.cancel}
+      />
     </div>
   )
 }
