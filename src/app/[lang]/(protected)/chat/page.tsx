@@ -1,17 +1,7 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
-import WorkInProgress from "@/components/WorkInProgress";
-import { useDictionary } from "@/hooks/use-dictionary";
+import ConversationsListView from "@/components/chat/ConversationsListView";
 
 export default function ChatPage() {
-    const dict = useDictionary();
-    return (
-        <WorkInProgress
-            icon={MessageCircle}
-            title={dict.comingSoon.chat.title}
-            description={dict.comingSoon.chat.description}
-            notifyKey="pmsconnect-notify-chat"
-        />
-    )
+    return <ConversationsListView />;
 }

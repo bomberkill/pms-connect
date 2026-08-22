@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Users, MessageCircle } from "lucide-react";
@@ -11,6 +11,7 @@ import { useSmartFeedNavigation } from "@/hooks/useSmartFeedNavigation";
 import { useScrollDirection } from "@/hooks/use-scroll-direction";
 import { useMe } from "@/hooks/useData/useUserData";
 import { useConnectionRequests } from "@/hooks/useData/useConnectionData";
+import { useUnreadConversationsCount } from "@/hooks/useData/useMessageData";
 import { ConnectionRequestStatus } from "@/types/ConnectionRequest";
 import { getUserDisplayName } from "@/lib/user-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,15 +47,22 @@ export function BottomNav() {
     (r) => r.status === ConnectionRequestStatus.PENDING && r.recipient.id === me?.id
   ).length;
 
-  // Post detail pages have their own sticky reply composer pinned to the
-  // bottom of the screen; showing the tab bar too would stack two
-  // fixed-bottom bars on top of each other.
-  if (!isMobile || pathname?.includes("/post/")) return null;
+  const { unreadCount: unreadConversations, subscribeToNewMessages } = useUnreadConversationsCount();
+  useEffect(() => {
+    const unsubscribe = subscribeToNewMessages();
+    return () => unsubscribe();
+  }, [subscribeToNewMessages]);
+
+  // Post detail pages and open conversation threads have their own sticky
+  // composer pinned to the bottom of the screen; showing the tab bar too
+  // would stack two fixed-bottom bars on top of each other. The bare /chat
+  // list page has no composer, so it keeps the tab bar.
+  if (!isMobile || pathname?.includes("/post/") || pathname?.includes("/chat/")) return null;
 
   const items = [
     { key: "feed", href: "/", icon: Home, label: dict.appSideBar.navMain.feed, isActive: pathname === "/", onClick: navigateToFeed },
     { key: "friends", href: "/friends", icon: Users, label: dict.appSideBar.navMain.friends, isActive: pathname === "/friends", dot: pendingIncoming > 0 ? ("teal" as const) : undefined },
-    { key: "chat", href: "/chat", icon: MessageCircle, label: dict.appSideBar.navMain.messages, isActive: pathname === "/chat", dot: "amber" as const },
+    { key: "chat", href: "/chat", icon: MessageCircle, label: dict.appSideBar.navMain.messages, isActive: pathname?.startsWith("/chat") ?? false, dot: unreadConversations > 0 ? ("teal" as const) : undefined },
   ];
 
   return (

@@ -460,7 +460,8 @@
     "edit": "Edit",
     "delete": "Delete",
     "block": "Block",
-    "unblock": "Unblock"
+    "unblock": "Unblock",
+    "message": "Message"
   },
   "report": {
     "title": "Report this post",
@@ -483,10 +484,6 @@
     "notified": "We'll notify you",
     "notifyConfirmedTitle": "Noted",
     "notifyConfirmedMessage": "We'll let you know as soon as it opens.",
-    "chat": {
-      "title": "Messaging is coming",
-      "description": "Direct messages between professionals arrive next quarter. In the meantime, comments and groups stay open."
-    },
     "marketplace": {
       "title": "Marketplace is under construction",
       "description": "Equipment, supplies, and services between institutions and verified suppliers. Opening in the second half of the year, starting with institutions."
@@ -772,5 +769,17 @@
     "iosTapShare": "Tap the share button",
     "iosAndSelect": "and select",
     "iosAddHome": "Add to Home Screen"
+  },
+  "chat": {
+    "title": "Messages",
+    "noConversationsTitle": "No conversations yet",
+    "noConversationsDescription": "Message a professional from their profile to start a conversation.",
+    "noMessagesYet": "No messages yet. Say hello!",
+    "messageDeletedPreview": "Message deleted",
+    "messageDeleted": "This message was deleted.",
+    "composerPlaceholder": "Write a message...",
+    "send": "Send",
+    "online": "Online",
+    "typing": "Typing..."
   }
 }

@@ -17,6 +17,8 @@ import { UserTypeGQL } from "@/types/User";
 import { apolloClient } from "@/graphql/apolloClient";
 import { buildGetCommentByIdQuery } from "@/graphql/queries/comment";
 import { Comment } from "@/types/Comment";
+import { buildGetOrCreateConversationWithUserMutation } from "@/graphql/queries/message";
+import { Conversation } from "@/types/Message";
 
 const ICON_BY_TYPE: Record<NotificationType, { icon: React.ElementType; className: string }> = {
     [NotificationType.POST_LIKE]: { icon: Heart, className: "bg-primary text-primary-foreground" },
@@ -30,6 +32,7 @@ const ICON_BY_TYPE: Record<NotificationType, { icon: React.ElementType; classNam
     [NotificationType.GROUP_JOIN_REQUEST_ACCEPTED]: { icon: Users, className: "bg-tertiary-600 text-white" },
     [NotificationType.POST_APPROVED]: { icon: CheckCircle2, className: "bg-secondary-600 text-white" },
     [NotificationType.POST_REJECTED]: { icon: XCircle, className: "bg-muted text-muted-foreground" },
+    [NotificationType.MESSAGE]: { icon: MessageCircle, className: "bg-primary text-primary-foreground" },
 };
 
 // Where a notification's own entityId actually points, per notification type
@@ -100,6 +103,27 @@ export default function NotificationsView() {
         if (!notification.read) {
             await markAsRead({ variables: { notificationIds: [notification.id] } });
             setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+        }
+
+        if (notification.type === NotificationType.MESSAGE && notification.entityId) {
+            // entityId is the sender's user id (targetUserId, same shape as
+            // NEW_FOLLOWER) — resolve/create the conversation with them,
+            // idempotent if one already exists.
+            try {
+                const { data } = await apolloClient.mutate<{ getOrCreateConversationWithUser: Conversation }>({
+                    mutation: buildGetOrCreateConversationWithUserMutation(),
+                    variables: { userId: notification.entityId },
+                });
+                const conversationId = data?.getOrCreateConversationWithUser?.id;
+                if (conversationId) {
+                    router.push(`/chat/${conversationId}`);
+                    return;
+                }
+            } catch (e) {
+                console.error("Failed to resolve message notification target", e);
+            }
+            router.push("/chat");
+            return;
         }
 
         if (notification.type === NotificationType.COMMENT_LIKE && notification.entityId) {

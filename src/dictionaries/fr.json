@@ -460,7 +460,8 @@
     "edit": "Modifier",
     "delete": "Supprimer",
     "block": "Bloquer",
-    "unblock": "Débloquer"
+    "unblock": "Débloquer",
+    "message": "Message"
   },
   "report": {
     "title": "Signaler cette publication",
@@ -483,10 +484,6 @@
     "notified": "Vous serez prévenu",
     "notifyConfirmedTitle": "Noté",
     "notifyConfirmedMessage": "Nous vous préviendrons dès l'ouverture.",
-    "chat": {
-      "title": "Messagerie en préparation",
-      "description": "Les échanges directs entre professionnels arrivent au premier trimestre. En attendant, les commentaires et les groupes restent ouverts."
-    },
     "marketplace": {
       "title": "Marketplace en construction",
       "description": "Équipements, consommables et prestations entre établissements et fournisseurs vérifiés. Ouverture au second semestre, d'abord aux établissements."
@@ -772,5 +769,17 @@
     "iosTapShare": "Appuyez sur le bouton de partage",
     "iosAndSelect": "et sélectionnez",
     "iosAddHome": "Sur l'écran d'accueil"
+  },
+  "chat": {
+    "title": "Messages",
+    "noConversationsTitle": "Aucune conversation",
+    "noConversationsDescription": "Envoyez un message depuis le profil d'un professionnel pour démarrer une conversation.",
+    "noMessagesYet": "Aucun message pour le moment. Dites bonjour !",
+    "messageDeletedPreview": "Message supprimé",
+    "messageDeleted": "Ce message a été supprimé.",
+    "composerPlaceholder": "Écrire un message...",
+    "send": "Envoyer",
+    "online": "En ligne",
+    "typing": "En train d'écrire..."
   }
 }

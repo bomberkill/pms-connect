@@ -29,7 +29,7 @@ function extractR2Key(publicUrl: string): string {
   }
   return publicUrl.slice(base.length + 1);
 }
-import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useBlockActions, useFollowsSubscription, useMe, useUserBySlug } from "@/hooks/useData/index"
+import { useConnectionActions, useConnectionRequests, useConnectionRequestUpdatedSubscription, useFollowActions, useBlockActions, useFollowsSubscription, useMe, useUserBySlug, useGetOrCreateConversationWithUser } from "@/hooks/useData/index"
 import { ConnectionRequestStatus } from "@/types/ConnectionRequest"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useUserPosts } from "@/hooks/useData/usePostData"
@@ -175,6 +175,18 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
   const pendingRequest = requests?.find(req => (req.requester.id === profileUser?.id || req.recipient.id === profileUser?.id));
   const { followUser, unfollowUser } = useFollowActions();
   const { blockUser, unblockUser, blocking, unblocking } = useBlockActions();
+  const { getOrCreateConversationWithUser } = useGetOrCreateConversationWithUser();
+
+  const handleMessage = async () => {
+    if (!profileUser) return;
+    try {
+      const { data } = await getOrCreateConversationWithUser({ variables: { userId: profileUser.id } });
+      const conversationId = data?.getOrCreateConversationWithUser?.id;
+      if (conversationId) router.push(`/chat/${conversationId}`);
+    } catch (e) {
+      console.error("Failed to open conversation", e);
+    }
+  };
   const { sendRequest, removeConnection, acceptRequest, declineRequest } = useConnectionActions();
 
   const handleBlockConfirm = async () => {
@@ -481,7 +493,7 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
                   {dict.actions.follow}
                 </Button>
               )}
-              <Button variant="outline" className="flex-1 h-11 rounded-button" onClick={() => router.push('/chat')}>
+              <Button variant="outline" className="flex-1 h-11 rounded-button" onClick={handleMessage}>
                 {dict.actions.contact}
               </Button>
             </>
@@ -497,6 +509,9 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
                 }}
               >
                 {isFollowing ? dict.actions.unfollow : dict.actions.follow}
+              </Button>
+              <Button variant="outline" className="flex-1 h-11 rounded-button" onClick={handleMessage}>
+                {dict.actions.message}
               </Button>
             </>
           )}
