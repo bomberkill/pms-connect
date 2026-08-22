@@ -277,6 +277,7 @@ function SecuritySettings({ email }: { email: string }) {
 
 function PreferencesSettings() {
     const dict = useDictionary();
+    const router = useRouter();
     const currentLang = typeof window !== 'undefined' && window.location.pathname.startsWith('/fr') ? 'fr' : 'en';
     const { requestPermission, permissionState } = useFcmToken();
     const [notifState, setNotifState] = useState(permissionState);
@@ -319,6 +320,12 @@ function PreferencesSettings() {
                             disabled={notifState === 'granted'}
                         >
                             {notifState === 'granted' ? dict.settings.labels.enabled : dict.settings.labels.enable}
+                        </Button>
+                    </div>
+                    <div className="flex items-center justify-between p-4 border rounded-xl bg-card mt-3">
+                        <span className="font-medium">{dict.settings.labels.notificationPreferences}</span>
+                        <Button variant="outline" onClick={() => router.push("/settings/notifications")}>
+                            {dict.settings.labels.manage}
                         </Button>
                     </div>
                 </CardContent>

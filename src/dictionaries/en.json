@@ -657,6 +657,7 @@
       "verified": "Verified",
       "notVerified": "Not verified",
       "notificationPreferences": "Notification preferences",
+      "manage": "Manage",
       "version": "PMSCONNECT {version}"
     }
   },
