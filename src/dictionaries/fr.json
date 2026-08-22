@@ -364,7 +364,12 @@
   },
   "updateProfile": {
     "title": "Modifier le profil",
-    "description": "Mettez à jour vos informations. Cliquez sur \"Enregistrer\" lorsque vous avez terminé."
+    "description": "Mettez à jour vos informations. Cliquez sur \"Enregistrer\" lorsque vous avez terminé.",
+    "accreditations": {
+      "title": "Accréditations professionnelles",
+      "addButton": "Ajouter un document",
+      "document": "Document"
+    }
   },
   "combobox": {
     "selectCountry": "Sélectionnez un pays",
