@@ -6,3 +6,4 @@ export * from './useLikeData';
 export * from './useBookmarkData';
 export * from './useGroups';
 export * from './useNotificationData';
+export * from './useMessageData';

@@ -101,6 +101,12 @@ export const apolloClient = new ApolloClient({
       Comment: {
         keyFields: ['id'],
       },
+      Message: {
+        keyFields: ['id'],
+      },
+      Conversation: {
+        keyFields: ['id'],
+      },
 
       Query: {
         fields: {
@@ -242,6 +248,27 @@ export const apolloClient = new ApolloClient({
 
           getCommentReplies: {
             keyArgs: ['parentId'], // Cache séparé par commentaire parent
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
+          // ========== MESSAGES ==========
+          getMessages: {
+            keyArgs: ['conversationId'], // Cache séparé par conversation
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
+          getMyConversations: {
+            keyArgs: false,
             merge(existing = [], incoming = [], { args }) {
               if (args?.skip === 0 || args?.skip === undefined) {
                 return incoming;

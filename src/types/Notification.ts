@@ -12,6 +12,7 @@ export enum NotificationType {
     GROUP_JOIN_REQUEST_ACCEPTED = 'GROUP_JOIN_REQUEST_ACCEPTED',
     POST_APPROVED = 'POST_APPROVED',
     POST_REJECTED = 'POST_REJECTED',
+    MESSAGE = 'MESSAGE',
 }
 
 export interface Notification {
