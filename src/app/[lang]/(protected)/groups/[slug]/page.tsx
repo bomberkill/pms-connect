@@ -32,6 +32,7 @@ import FeedItemCard from "@/components/FeedItemCard";
 import { MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GroupMembersPanel from "@/components/groups/GroupMembersPanel";
+import InviteMemberDialog from "@/components/groups/InviteMemberDialog";
 import GroupJoinRequestsPanel from "@/components/groups/GroupJoinRequestsPanel";
 import PendingGroupPostsPanel from "@/components/groups/PendingGroupPostsPanel";
 import EditGroupDialog from "@/components/groups/EditGroupDialog";
@@ -461,6 +462,13 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {canManageMembers && (
+                        <InviteMemberDialog
+                            groupId={group._id}
+                            existingMemberIds={members.map((m) => m.user.id).filter(Boolean) as string[]}
+                        />
+                    )}
 
                     <GroupMembersPanel
                         members={members}

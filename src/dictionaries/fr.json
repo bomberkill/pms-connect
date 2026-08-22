@@ -621,7 +621,13 @@
       "dialogTitle": "Créer un groupe",
       "dialogDesc": "Créez une nouvelle communauté pour vous connecter.",
       "editDialogTitle": "Modifier le groupe",
-      "editDialogDesc": "Mettez à jour les informations de cette communauté."
+      "editDialogDesc": "Mettez à jour les informations de cette communauté.",
+      "invite": "Inviter",
+      "inviteDialogTitle": "Inviter des membres",
+      "inviteDialogDesc": "Recherchez une personne à inviter dans ce groupe.",
+      "inviteSentSuccess": "Invitation envoyée.",
+      "inviteSentError": "Échec de l'envoi de l'invitation.",
+      "noInviteCandidates": "Aucun utilisateur à inviter."
     }
   },
   "settings": {

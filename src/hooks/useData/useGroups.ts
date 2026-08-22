@@ -21,6 +21,7 @@ import {
     buildGetPendingGroupPostsQuery,
     buildApproveGroupPostMutation,
     buildRejectGroupPostMutation,
+    buildAddOrInviteGroupMemberMutation,
 } from '@/graphql/queries/index';
 import {
     Group,
@@ -170,6 +171,10 @@ export const useGroupMutations = () => {
         { rejectGroupPost: boolean }, { postId: string }
     >(buildRejectGroupPostMutation());
 
+    const [addOrInviteGroupMember, { loading: inviting, error: inviteError }] = useMutation<
+        { addOrInviteGroupMember: { id: string; status: string } | null }, { groupId: string; userId: string }
+    >(buildAddOrInviteGroupMemberMutation());
+
     return {
         createGroup,
         creating,
@@ -213,6 +218,9 @@ export const useGroupMutations = () => {
         rejectGroupPost,
         rejectingPost,
         rejectPostError,
+        addOrInviteGroupMember,
+        inviting,
+        inviteError,
     };
 };
 

@@ -221,6 +221,17 @@ export const buildRemoveGroupMemberMutation = () => {
   `;
 };
 
+export const buildAddOrInviteGroupMemberMutation = () => {
+  return gql`
+    mutation addOrInviteGroupMember($groupId: ID!, $userId: ID!) {
+      addOrInviteGroupMember(groupId: $groupId, userId: $userId) {
+        id
+        status
+      }
+    }
+  `;
+};
+
 export const buildGetPendingGroupPostsQuery = () => {
   return gql`
     query getPendingGroupPosts($groupId: ID!, $skip: Int, $limit: Int) {
