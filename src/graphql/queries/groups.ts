@@ -1,5 +1,6 @@
 import { gql } from "@apollo/client";
 import { USER_FIELDS } from "./user";
+import { POST_FIELDS } from "./post";
 
 export const GROUP_FIELDS = `
   _id
@@ -9,6 +10,9 @@ export const GROUP_FIELDS = `
   privacy
   profileImageUrl
   coverImageUrl
+  postsRequireApproval
+  restrictToVerifiedTitles
+  rules
   createdAt
   updatedAt
   creator {
@@ -213,6 +217,32 @@ export const buildRemoveGroupMemberMutation = () => {
       removeGroupMember(groupId: $groupId, userId: $userId) {
         ${GROUP_FIELDS}
       }
+    }
+  `;
+};
+
+export const buildGetPendingGroupPostsQuery = () => {
+  return gql`
+    query getPendingGroupPosts($groupId: ID!, $skip: Int, $limit: Int) {
+      getPendingGroupPosts(groupId: $groupId, skip: $skip, limit: $limit) {
+        ${POST_FIELDS}
+      }
+    }
+  `;
+};
+
+export const buildApproveGroupPostMutation = () => {
+  return gql`
+    mutation approveGroupPost($postId: ID!) {
+      approveGroupPost(postId: $postId)
+    }
+  `;
+};
+
+export const buildRejectGroupPostMutation = () => {
+  return gql`
+    mutation rejectGroupPost($postId: ID!) {
+      rejectGroupPost(postId: $postId)
     }
   `;
 };

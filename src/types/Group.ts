@@ -42,6 +42,9 @@ export interface Group {
     coverImageUrl?: string;
     creator: User;
     members: GroupMember[];
+    postsRequireApproval: boolean;
+    restrictToVerifiedTitles: boolean;
+    rules: string[];
     createdAt: string;
     updatedAt: string;
 }
@@ -50,6 +53,9 @@ export interface CreateGroupInput {
     name: string;
     description?: string;
     privacy: GroupPrivacy;
+    postsRequireApproval?: boolean;
+    restrictToVerifiedTitles?: boolean;
+    rules?: string[];
 }
 
 export interface GroupJoinRequest {

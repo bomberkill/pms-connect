@@ -4,6 +4,8 @@ import { User } from './User';
 export enum PostStatus {
   PUBLISHED = 'PUBLISHED',
   ARCHIVED = 'ARCHIVED',
+  PENDING = 'PENDING',
+  REJECTED = 'REJECTED',
 }
 
 export enum MediaType {

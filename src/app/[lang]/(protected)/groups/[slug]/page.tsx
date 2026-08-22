@@ -7,6 +7,7 @@ import {
     useGroupJoinRequests,
     useMyGroupJoinRequests,
     useMyGroupMembership,
+    usePendingGroupPosts,
 } from "@/hooks/useData/useGroups";
 import { useGroupMembers } from "@/hooks/useData/useGroupMembers";
 import { GroupJoinRequestStatus, GroupMemberRole, GroupMembership, GroupPrivacy } from "@/types/Group";
@@ -32,6 +33,7 @@ import { MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GroupMembersPanel from "@/components/groups/GroupMembersPanel";
 import GroupJoinRequestsPanel from "@/components/groups/GroupJoinRequestsPanel";
+import PendingGroupPostsPanel from "@/components/groups/PendingGroupPostsPanel";
 import EditGroupDialog from "@/components/groups/EditGroupDialog";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 
@@ -111,6 +113,10 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
         removingMember,
         updatingMemberRole,
         deleting,
+        approveGroupPost,
+        rejectGroupPost,
+        approvingPost,
+        rejectingPost,
     } = useGroupMutations();
     const router = useRouter();
     const { me } = useMe();
@@ -121,6 +127,10 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
         groupId: group?._id,
         status: GroupJoinRequestStatus.PENDING,
     });
+    const canModeratePosts =
+        membership?.role === GroupMemberRole.ADMIN ||
+        membership?.role === GroupMemberRole.MODERATOR;
+    const { posts: pendingPosts, refresh: refreshPendingPosts } = usePendingGroupPosts(group?._id, canModeratePosts);
 
     const activeRequest = requests.find((request) =>
         request.status === GroupJoinRequestStatus.PENDING ||
@@ -151,7 +161,9 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
         rejectingJoinRequest ||
         removingMember ||
         updatingMemberRole ||
-        deleting;
+        deleting ||
+        approvingPost ||
+        rejectingPost;
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
     const refreshGroupState = async () => {
@@ -160,6 +172,7 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
             refreshRequests(),
             refreshJoinRequests(),
             refreshMembers(),
+            refreshPendingPosts(),
         ]);
         router.refresh();
     };
@@ -240,6 +253,26 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
             await refreshGroupState();
         } catch {
             toast.error(dict.groups.requestRejectedError);
+        }
+    };
+
+    const handleApprovePost = async (postId: string) => {
+        try {
+            await approveGroupPost({ variables: { postId } });
+            toast.success(dict.groups.postApprovedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.postApprovedError);
+        }
+    };
+
+    const handleRejectPost = async (postId: string) => {
+        try {
+            await rejectGroupPost({ variables: { postId } });
+            toast.success(dict.groups.postRejectedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.postRejectedError);
         }
     };
 
@@ -445,6 +478,15 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                             actionLoading={actionLoading}
                             onApprove={handleApproveRequest}
                             onReject={handleRejectRequest}
+                        />
+                    )}
+
+                    {canModeratePosts && (
+                        <PendingGroupPostsPanel
+                            posts={pendingPosts}
+                            actionLoading={actionLoading}
+                            onApprove={handleApprovePost}
+                            onReject={handleRejectPost}
                         />
                     )}
                 </div>

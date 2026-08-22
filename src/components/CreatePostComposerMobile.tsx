@@ -90,7 +90,7 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
           if (media.length !== mediaFiles.length) throw new Error(dict.notifications.postCreationFailed.message.uploadFailed);
         }
 
-        await createPost({
+        const result = await createPost({
           variables: {
             createPostInput: {
               content: values.content,
@@ -100,7 +100,11 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
           },
         });
 
-        open("success", dict.notifications.postCreated.title, { message: dict.notifications.postCreated.message });
+        if (result.data?.createPost.status === "PENDING") {
+          open("success", dict.groups.postPendingApprovalTitle, { message: dict.groups.postPendingApprovalMessage });
+        } else {
+          open("success", dict.notifications.postCreated.title, { message: dict.notifications.postCreated.message });
+        }
         resetMedia();
         formik.resetForm();
         onCreated?.();

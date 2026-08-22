@@ -18,6 +18,9 @@ import {
     buildRejectGroupJoinRequestMutation,
     buildRemoveGroupMemberMutation,
     buildUpdateGroupMemberRoleMutation,
+    buildGetPendingGroupPostsQuery,
+    buildApproveGroupPostMutation,
+    buildRejectGroupPostMutation,
 } from '@/graphql/queries/index';
 import {
     Group,
@@ -27,6 +30,7 @@ import {
     GroupJoinRequestStatus,
     GroupMembership,
 } from '@/types/Group';
+import { Post } from '@/types/Post';
 
 /**
  * Hook for fetching a list of groups with pagination and filtering.
@@ -158,6 +162,14 @@ export const useGroupMutations = () => {
         { groupId: string; updateGroupMemberRoleInput: { userId: string; role: string } }
     >(buildUpdateGroupMemberRoleMutation());
 
+    const [approveGroupPost, { loading: approvingPost, error: approvePostError }] = useMutation<
+        { approveGroupPost: boolean }, { postId: string }
+    >(buildApproveGroupPostMutation());
+
+    const [rejectGroupPost, { loading: rejectingPost, error: rejectPostError }] = useMutation<
+        { rejectGroupPost: boolean }, { postId: string }
+    >(buildRejectGroupPostMutation());
+
     return {
         createGroup,
         creating,
@@ -195,6 +207,34 @@ export const useGroupMutations = () => {
         updateGroupMemberRole,
         updatingMemberRole,
         updateMemberRoleError,
+        approveGroupPost,
+        approvingPost,
+        approvePostError,
+        rejectGroupPost,
+        rejectingPost,
+        rejectPostError,
+    };
+};
+
+/**
+ * Hook for fetching posts pending moderation in a group. Caller must be an
+ * admin/moderator — the API enforces this and throws otherwise.
+ */
+export const usePendingGroupPosts = (groupId?: string, enabled: boolean = true) => {
+    const { data, loading, error, refetch } = useQuery<{ getPendingGroupPosts: Post[] }>(
+        buildGetPendingGroupPostsQuery(),
+        {
+            variables: { groupId, skip: 0, limit: 20 },
+            skip: !groupId || !enabled,
+            fetchPolicy: "cache-and-network",
+        }
+    );
+
+    return {
+        posts: data?.getPendingGroupPosts ?? [],
+        loading,
+        error,
+        refresh: refetch,
     };
 };
 
