@@ -1,6 +1,6 @@
 import {
+    Bookmark,
     Home,
-    LibraryBig,
     Users,
 } from "lucide-react";
 
@@ -43,9 +43,9 @@ export const getNavItems = (dict: any, pathname: string) => [
         isActive: pathname === "/groups" || pathname?.startsWith("/groups"),
     },
     {
-        title: dict.appSideBar.navMain.library,
-        url: "/library",
-        icon: LibraryBig,
-        isActive: pathname === "/library",
+        title: dict.appSideBar.navMain.bookmarks,
+        url: "/bookmarks",
+        icon: Bookmark,
+        isActive: pathname === "/bookmarks",
     },
 ];

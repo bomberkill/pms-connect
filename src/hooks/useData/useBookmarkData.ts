@@ -9,19 +9,24 @@ import { useMutation, useQuery } from "@apollo/client";
 /**
  * Hook to fetch the current user's bookmarks.
  */
-export const useMyBookmarks = () => {
-  const { data, loading, error, refetch } = useQuery<{ myBookmarks: Bookmark[] }>(
+export const useMyBookmarks = (options: { limit?: number } = {}) => {
+  const { limit = 10 } = options;
+  const { data, loading, error, refetch, fetchMore } = useQuery<{ myBookmarks: Bookmark[] }>(
     buildGetMyBookmarksQuery(),
     {
+      variables: { skip: 0, limit },
       fetchPolicy: 'cache-and-network',
     }
   );
 
+  const bookmarks: Bookmark[] = data?.myBookmarks || [];
+
   return {
-    bookmarks: data?.myBookmarks || [],
+    bookmarks,
     loading,
     error,
     refetch,
+    loadMore: () => fetchMore({ variables: { skip: bookmarks.length } }),
   };
 };
 

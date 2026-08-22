@@ -218,6 +218,17 @@ export const apolloClient = new ApolloClient({
             },
           },
 
+          // ========== BOOKMARKS ==========
+          myBookmarks: {
+            keyArgs: false,
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
           // ========== COMMENTS ==========
           getCommentsByPost: {
             keyArgs: ['postId'], // Cache séparé par post

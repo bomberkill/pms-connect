@@ -1,4 +1,5 @@
 import { gql } from "@apollo/client";
+import { POST_FIELDS } from "./post";
 
 // const BOOKMARK_FIELDS = `
 //   id
@@ -94,29 +95,7 @@ export const buildGetMyBookmarksQuery = () => {
         createdAt
         item {
           ... on Post {
-            id
-            content
-            media {
-              url
-              type
-            }
-            author {
-              id
-              slug
-              profilePicUrl
-              ... on IndividualUserObject {
-                firstName
-                lastName
-                professionalTitle
-              }
-              ... on LegalEntityUserObject {
-                entityName
-                entityType
-              }
-            }
-            likesCount
-            commentsCount
-            createdAt
+            ${POST_FIELDS}
           }
           ... on Comment {
             id

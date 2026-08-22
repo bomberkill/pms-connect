@@ -307,6 +307,7 @@
       "settings": "Paramètres",
       "marketplace": "Marketplace",
       "library": "Bibliothèque",
+      "bookmarks": "Enregistrements",
       "more": "Plus",
       "groups": "Groupes"
     },
@@ -388,6 +389,13 @@
     "confirmNewPasswordLabel": "Confirmer le nouveau mot de passe",
     "submitButton": "Réinitialiser le mot de passe",
     "invalidToken": "Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau."
+  },
+  "bookmarks": {
+    "title": "Mes enregistrements",
+    "subtitle": "Publications et commentaires que vous avez enregistrés.",
+    "emptyTitle": "Aucun enregistrement",
+    "emptyDescription": "Les publications et commentaires que vous enregistrez apparaîtront ici.",
+    "commentBadge": "Commentaire"
   },
   "friends": {
     "connectionRequests": "Mes demandes de connexion",

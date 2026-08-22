@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import {
+  Bookmark,
   BriefcaseBusiness,
-  LibraryBig,
   MessageCircle,
   Newspaper,
   Settings,
@@ -83,10 +83,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
-        title: dict.appSideBar.navMain.library,
-        url: "/library",
-        icon: LibraryBig,
-        isActive: pathname === "/library",
+        title: dict.appSideBar.navMain.bookmarks,
+        url: "/bookmarks",
+        icon: Bookmark,
+        isActive: pathname === "/bookmarks",
         items: [
         ],
       },

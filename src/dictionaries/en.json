@@ -307,6 +307,7 @@
       "settings": "Settings",
       "marketplace": "Marketplace",
       "library": "Library",
+      "bookmarks": "Saved",
       "more": "More",
       "groups": "Groups"
     },
@@ -388,6 +389,13 @@
     "confirmNewPasswordLabel": "Confirm new password",
     "submitButton": "Reset password",
     "invalidToken": "This reset link is invalid or has expired. Please request a new one."
+  },
+  "bookmarks": {
+    "title": "My bookmarks",
+    "subtitle": "Posts and comments you've saved.",
+    "emptyTitle": "No bookmarks yet",
+    "emptyDescription": "Posts and comments you save will show up here.",
+    "commentBadge": "Comment"
   },
   "friends": {
     "connectionRequests": "My Connection Requests",
