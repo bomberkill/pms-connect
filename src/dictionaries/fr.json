@@ -677,6 +677,9 @@
       "notVerified": "Non vérifié",
       "notificationPreferences": "Préférences de notifications",
       "manage": "Gérer",
+      "deactivateAccount": "Désactiver mon compte",
+      "deactivateAccountConfirm": "Votre compte sera désactivé et vous serez déconnecté(e). Vos publications et données existantes ne sont pas supprimées immédiatement — contactez le support pour une suppression définitive.",
+      "deactivating": "Désactivation…",
       "version": "PMSCONNECT {version}"
     }
   },

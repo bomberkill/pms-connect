@@ -383,6 +383,18 @@ export const buildUnregisterFcmTokenMutation = () => {
 };
 
 /**
+ * Builds a GraphQL mutation to deactivate the current user's own account
+ * (soft delete — sets accountStatus to DEACTIVATED, no data is erased).
+ */
+export const buildRemoveUserMutation = () => {
+  return gql`
+    mutation RemoveUser {
+      removeUser
+    }
+  `;
+};
+
+/**
  * Builds a GraphQL query for getting followers count.
  * @returns A gql object.
  */

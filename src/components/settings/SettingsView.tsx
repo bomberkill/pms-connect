@@ -12,7 +12,8 @@ import { useMutation } from "@apollo/client";
 import { buildUpdateMyEmailMutation } from "@/graphql/queries/user";
 import { useNotification } from "@/hooks/use-notification";
 import { resetPassword } from "@/graphql/betterAuth";
-import { logoutUser } from "@/graphql/authActions";
+import { logoutUser, deactivateAccount } from "@/graphql/authActions";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 import {
     Loader2,
     User,
@@ -27,7 +28,8 @@ import {
     Monitor,
     Camera,
     Check,
-    Bell
+    Bell,
+    UserX
 } from "lucide-react";
 import { User as UserType } from "@/types/User";
 import { useFcmToken } from "@/hooks/useData/index";
@@ -119,12 +121,28 @@ export default function SettingsView() {
 
 function AccountSettings({ me }: { me: UserType }) {
     const dict = useDictionary();
+    const router = useRouter();
     const [email, setEmail] = useState(me.email);
     const [isEditing, setIsEditing] = useState(false);
+    const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
 
     const UPDATE_EMAIL_MUTATION = buildUpdateMyEmailMutation();
     const [updateEmail, { loading }] = useMutation(UPDATE_EMAIL_MUTATION);
     const notification = useNotification();
+
+    const handleDeactivate = async () => {
+        setDeactivating(true);
+        try {
+            await deactivateAccount();
+            router.push("/login");
+        } catch (e: unknown) {
+            notification.open("error", (e as Error).message || dict.globalErrors.default);
+        } finally {
+            setDeactivating(false);
+            setDeactivateDialogOpen(false);
+        }
+    };
 
     const handleUpdateEmail = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -225,6 +243,31 @@ function AccountSettings({ me }: { me: UserType }) {
                     </form>
                 </CardContent>
             </Card>
+
+            <Card className="border-destructive/30">
+                <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="flex items-center gap-2 text-destructive">
+                        <UserX className="w-5 h-5" />
+                        {dict.settings.labels.deactivateAccount}
+                    </CardTitle>
+                    <CardDescription>{dict.settings.labels.deactivateAccountConfirm}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6">
+                    <Button variant="destructive" onClick={() => setDeactivateDialogOpen(true)}>
+                        {dict.settings.labels.deactivateAccount}
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <ConfirmationDialog
+                open={deactivateDialogOpen}
+                onOpenChange={setDeactivateDialogOpen}
+                onConfirm={handleDeactivate}
+                title={dict.settings.labels.deactivateAccount}
+                message={dict.settings.labels.deactivateAccountConfirm}
+                confirmText={deactivating ? dict.settings.labels.deactivating : dict.settings.labels.deactivateAccount}
+                cancelText={dict.button.cancel}
+            />
         </div>
     );
 }

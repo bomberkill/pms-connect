@@ -38,6 +38,16 @@ export default function ProtectedLayout({
     }
   }, [uid, me?.accountStatus, router]);
 
+  // Deactivating a device's own session forces a logout right after the
+  // mutation (see SettingsView), but removeUser itself never invalidates
+  // the Better Auth session server-side — this is the safety net for any
+  // other session already open elsewhere (another tab, another device).
+  useEffect(() => {
+    if (uid && me?.accountStatus === AccountStatusGQL.DEACTIVATED) {
+      router.replace("/login");
+    }
+  }, [uid, me?.accountStatus, router]);
+
   useEffect(() => {
     if (uid && !meLoading && !me && !meError) {
       router.replace("/register");

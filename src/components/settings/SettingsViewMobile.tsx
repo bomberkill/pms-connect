@@ -9,7 +9,8 @@ import { useFcmToken } from "@/hooks/useData/index";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { resetPassword } from "@/graphql/betterAuth";
-import { logoutUser } from "@/graphql/authActions";
+import { logoutUser, deactivateAccount } from "@/graphql/authActions";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 import { AccountStatusGQL, UserTypeGQL } from "@/types/User";
 import { cn } from "@/lib/utils";
 import {
@@ -20,6 +21,7 @@ import {
     Bell,
     LogOut,
     Loader2,
+    UserX,
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
@@ -72,6 +74,8 @@ export default function SettingsViewMobile() {
     const { requestPermission, permissionState } = useFcmToken();
     const [notifState, setNotifState] = useState(permissionState);
     const [sendingReset, setSendingReset] = useState(false);
+    const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
     const currentLang = typeof window !== "undefined" && window.location.pathname.startsWith("/fr") ? "fr" : "en";
 
     if (meLoading || !me) {
@@ -106,6 +110,19 @@ export default function SettingsViewMobile() {
     const handleLogout = async () => {
         await logoutUser();
         router.push("/login");
+    };
+
+    const handleDeactivate = async () => {
+        setDeactivating(true);
+        try {
+            await deactivateAccount();
+            router.push("/login");
+        } catch (e: unknown) {
+            open("error", (e as Error).message || dict.globalErrors.default);
+        } finally {
+            setDeactivating(false);
+            setDeactivateDialogOpen(false);
+        }
     };
 
     return (
@@ -175,7 +192,23 @@ export default function SettingsViewMobile() {
 
             <div className="mt-4 bg-card border-y border-border">
                 <Row icon={LogOut} label={dict.appSideBar.navUser.logout} onClick={handleLogout} danger />
+                <Row
+                    icon={UserX}
+                    label={dict.settings.labels.deactivateAccount}
+                    onClick={() => setDeactivateDialogOpen(true)}
+                    danger
+                />
             </div>
+
+            <ConfirmationDialog
+                open={deactivateDialogOpen}
+                onOpenChange={setDeactivateDialogOpen}
+                onConfirm={handleDeactivate}
+                title={dict.settings.labels.deactivateAccount}
+                message={dict.settings.labels.deactivateAccountConfirm}
+                confirmText={deactivating ? dict.settings.labels.deactivating : dict.settings.labels.deactivateAccount}
+                cancelText={dict.button.cancel}
+            />
 
             <p className="px-4 pt-4 font-mono text-xs text-muted-foreground">
                 {dict.settings.labels.version.replace("{version}", packageJson.version)}

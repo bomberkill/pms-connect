@@ -677,6 +677,9 @@
       "notVerified": "Not verified",
       "notificationPreferences": "Notification preferences",
       "manage": "Manage",
+      "deactivateAccount": "Deactivate my account",
+      "deactivateAccountConfirm": "Your account will be deactivated and you'll be signed out. Your existing posts and data aren't erased immediately — contact support for permanent deletion.",
+      "deactivating": "Deactivating…",
       "version": "PMSCONNECT {version}"
     }
   },

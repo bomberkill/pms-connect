@@ -6,6 +6,7 @@ import {
     buildUpdateMyEmailMutation,
     buildUpdateMyProfileMutation,
     buildUnregisterFcmTokenMutation,
+    buildRemoveUserMutation,
 } from "@/graphql/queries/index";
 import {
     login,
@@ -123,6 +124,25 @@ export async function updateUser(updateUserInput: UpdateUserInput): Promise<User
         throw new AuthApiError("UNKNOWN_ERROR", errors[0].message);
     }
     return data.updateMyProfile;
+}
+
+/**
+ * Deactivates the current user's own account (soft delete: accountStatus
+ * -> DEACTIVATED, no data is erased or anonymized). removeUser itself
+ * doesn't touch the Better Auth session, so this always ends with a real
+ * logout — otherwise the caller would stay signed in on a "deactivated"
+ * account, which would be a real (if minor) security-perception bug.
+ */
+export async function deactivateAccount(): Promise<void> {
+    const { errors } = await apolloClient.mutate({
+        mutation: buildRemoveUserMutation(),
+    });
+
+    if (errors && errors.length > 0) {
+        throw new AuthApiError("UNKNOWN_ERROR", errors[0].message);
+    }
+
+    await logoutUser();
 }
 
 /**
