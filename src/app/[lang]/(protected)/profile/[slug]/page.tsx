@@ -14,6 +14,7 @@ import { MAX_FILE_SIZE, uploadFileToR2, deleteUploadedFile } from "@/utils/fileU
 import { updateUser } from "@/graphql/authActions"
 import React, { useEffect, useMemo, useState } from "react"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
+import ReportDialog from "@/components/ReportDialog"
 import UpdateProfileDialog from "@/components/UpdateProfileDialog"
 import CustomLoader from "@/components/Loader"
 import { AccountStatusGQL, UserTypeGQL } from "@/types/User"
@@ -62,6 +63,7 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
   );
 
   const [isUploading, setIsUploading] = useState(false)
+  const [isReportOpen, setIsReportOpen] = useState(false)
   const [dialogConfig, setDialogConfig] = useState<{
     isOpen: boolean;
     title: string;
@@ -311,7 +313,7 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
                 {isConnected && (
                   <>
                     <DropdownMenuSeparator />
@@ -516,6 +518,9 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
         title={dialogConfig.title}
         message={dialogConfig.message}
       />
+      {profileUser && (
+        <ReportDialog open={isReportOpen} onOpenChange={setIsReportOpen} reportedUserId={profileUser.id} />
+      )}
     </div>
   )
 }

@@ -447,6 +447,22 @@
     "edit": "Modifier",
     "delete": "Supprimer"
   },
+  "report": {
+    "title": "Signaler cette publication",
+    "description": "Votre signalement est anonyme. Un modérateur l'examinera rapidement.",
+    "reasons": {
+      "patientData": "Données patient identifiables",
+      "medicalMisinformation": "Information médicale erronée",
+      "advertising": "Publicité déguisée",
+      "titleImpersonation": "Usurpation de titre",
+      "other": "Autre motif"
+    },
+    "detailsPlaceholder": "Décrivez le problème",
+    "submit": "Envoyer le signalement",
+    "successTitle": "Signalement envoyé",
+    "successMessage": "Merci, notre équipe va l'examiner.",
+    "errorTitle": "Échec de l'envoi du signalement"
+  },
   "comingSoon": {
     "notifyMe": "Me prévenir au lancement",
     "notified": "Vous serez prévenu",

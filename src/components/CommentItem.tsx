@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Heart, MessageCircle, Trash2 } from "lucide-react";
+import { Flag, Heart, MessageCircle, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useLikeCommentActions, useLikesSubscription, useCommentActions, useMe } from "@/hooks/useData/index";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Comment, CommentStatus } from "@/types/Comment";
 import { PostMedia } from "./PostMedia";
 import ConfirmationDialog from "./ConfirmationDialog";
+import ReportDialog from "./ReportDialog";
 import { useRouter } from "next/navigation";
 
 const formatTimeAgo = (isoDate: string, dict: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -46,6 +47,7 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(function 
   const { me } = useMe();
   const { removeComment, removing: removingComment } = useCommentActions();
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [isReportOpen, setIsReportOpen] = React.useState(false);
 
   const authorId = comment.author?.id;
   const { likeComment, unlikeComment } = useLikeCommentActions(comment.id);
@@ -87,6 +89,7 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(function 
         confirmText={dict.actions.delete}
         cancelText={dict.common.cancel}
       />
+      <ReportDialog open={isReportOpen} onOpenChange={setIsReportOpen} commentId={comment.id} />
       <div
         className={cn(
           "bg-muted/40 rounded-2xl border-l-2 border-l-primary/25 px-3 py-3 mb-2 transition-colors",
@@ -115,17 +118,29 @@ const CommentItem = React.forwardRef<HTMLDivElement, CommentItemProps>(function 
               )}
             </div>
           </div>
-          {isOwnItem && !isDeletedComment && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 text-muted-foreground hover:text-destructive"
-              aria-label={dict.actions.delete}
-              disabled={removingComment}
-              onClick={() => setIsDeleteOpen(true)}
-            >
-              <Trash2 className="size-3.5" />
-            </Button>
+          {!isDeletedComment && (
+            isOwnItem ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-destructive"
+                aria-label={dict.actions.delete}
+                disabled={removingComment}
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 text-muted-foreground hover:text-foreground"
+                aria-label={dict.actions.report}
+                onClick={() => setIsReportOpen(true)}
+              >
+                <Flag className="size-3.5" />
+              </Button>
+            )
           )}
         </div>
 

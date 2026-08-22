@@ -36,6 +36,7 @@ import { PostMedia } from "./PostMedia";
 import { usePostMutations } from "@/hooks/useData/usePostData";
 import EditPostDialog from "./EditPostDialog";
 import ConfirmationDialog from "./ConfirmationDialog";
+import ReportDialog from "./ReportDialog";
 
 const formatTimeAgo = (isoDate: string, dict: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const date = new Date(isoDate);
@@ -62,6 +63,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
   const { removePost, removing } = usePostMutations();
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [isReportOpen, setIsReportOpen] = React.useState(false);
 
   const authorId = item.author?.id;
   const { likePost, unlikePost, liking, unliking } = useLikePostActions(item.id);
@@ -139,6 +141,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
           post={postItem}
         />
       )}
+      <ReportDialog open={isReportOpen} onOpenChange={setIsReportOpen} postId={item.id} />
       <ConfirmationDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
@@ -191,7 +194,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
                 {item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
               {authorId && authorId !== me?.id && (
                 <DropdownMenuItem className="cursor-pointer" onClick={handleFollowToggle} disabled={followingReq || unfollowing}>{isFollowing ? <><UserMinus className="mr-2 h-4 w-4" /> {dict.actions.unfollow}</> : <><UserPlus className="mr-2 h-4 w-4" /> {dict.actions.follow}</>}
                 </DropdownMenuItem>

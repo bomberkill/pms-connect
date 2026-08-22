@@ -447,6 +447,22 @@
     "edit": "Edit",
     "delete": "Delete"
   },
+  "report": {
+    "title": "Report this post",
+    "description": "Your report is anonymous. A moderator will review it shortly.",
+    "reasons": {
+      "patientData": "Identifiable patient data",
+      "medicalMisinformation": "Medical misinformation",
+      "advertising": "Disguised advertising",
+      "titleImpersonation": "Title impersonation",
+      "other": "Other reason"
+    },
+    "detailsPlaceholder": "Describe the issue",
+    "submit": "Send report",
+    "successTitle": "Report sent",
+    "successMessage": "Thanks, our team will review it.",
+    "errorTitle": "Failed to send report"
+  },
   "comingSoon": {
     "notifyMe": "Notify me at launch",
     "notified": "We'll notify you",
