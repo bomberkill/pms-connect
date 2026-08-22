@@ -15,6 +15,7 @@ import { updateUser } from "@/graphql/authActions"
 import React, { useEffect, useMemo, useState } from "react"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import ReportDialog from "@/components/ReportDialog"
+import { muteAuthor } from "@/lib/muted-authors"
 import UpdateProfileDialog from "@/components/UpdateProfileDialog"
 import CustomLoader from "@/components/Loader"
 import { AccountStatusGQL, UserTypeGQL } from "@/types/User"
@@ -312,7 +313,16 @@ export default function ProfilePage({ params }: { params: Promise<{ slug: string
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
+                <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                        if (!profileUser) return;
+                        muteAuthor(profileUser.id);
+                        open("success", dict.post.mutedTitle, { message: dict.post.mutedMessage });
+                    }}
+                >
+                    <Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}
+                </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
                 {isConnected && (
                   <>

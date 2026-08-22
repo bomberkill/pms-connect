@@ -711,6 +711,8 @@
     "pdfDocument": "PDF Document",
     "deleted": "This post may have been deleted or you don't have permission to view it.",
     "authorBadge": "Author",
+    "mutedTitle": "Author muted",
+    "mutedMessage": "You won't see their posts in your feed on this device anymore.",
     "edited": "Edited",
     "commentDeleted": "This comment was deleted by its author.",
     "replyingTo": "Replying to",

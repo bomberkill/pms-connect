@@ -28,6 +28,7 @@ import { useBookmarkActions, useFollowActions, useMe, useLikePostActions, useLik
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
+import { muteAuthor } from "@/lib/muted-authors";
 import { cn } from "@/lib/utils";
 import { Post } from "@/types/Post";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
@@ -115,6 +116,11 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
     router.push(`/post/${item.id}`);
   };
 
+  const handleMute = () => {
+    muteAuthor(item.author.id);
+    open("success", dict.post.mutedTitle, { message: dict.post.mutedMessage });
+  };
+
   const handleDelete = async () => {
     try {
       await removePost({ variables: { id: postItem.id } });
@@ -193,7 +199,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
                 <Bookmark className={cn("mr-2 h-4 w-4", item.isBookmarked && "fill-primary text-primary")} />
                 {item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={handleMute}><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
               {authorId && authorId !== me?.id && (
                 <DropdownMenuItem className="cursor-pointer" onClick={handleFollowToggle} disabled={followingReq || unfollowing}>{isFollowing ? <><UserMinus className="mr-2 h-4 w-4" /> {dict.actions.unfollow}</> : <><UserPlus className="mr-2 h-4 w-4" /> {dict.actions.follow}</>}

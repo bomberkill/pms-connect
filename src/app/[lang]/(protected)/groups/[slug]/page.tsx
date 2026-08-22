@@ -33,6 +33,7 @@ import { MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GroupMembersPanel from "@/components/groups/GroupMembersPanel";
 import InviteMemberDialog from "@/components/groups/InviteMemberDialog";
+import { useMutedAuthorIds } from "@/hooks/use-muted-authors";
 import GroupJoinRequestsPanel from "@/components/groups/GroupJoinRequestsPanel";
 import PendingGroupPostsPanel from "@/components/groups/PendingGroupPostsPanel";
 import EditGroupDialog from "@/components/groups/EditGroupDialog";
@@ -49,6 +50,10 @@ function privacyLabel(privacy: GroupPrivacy, dict: ReturnType<typeof useDictiona
 function GroupFeed({ groupId }: { groupId: string }) {
     const dict = useDictionary();
     const { posts, loading, loadMore } = useGroupPosts(groupId);
+    const mutedAuthorIds = useMutedAuthorIds();
+    const visiblePosts = mutedAuthorIds.length === 0
+        ? posts
+        : posts.filter((post) => !mutedAuthorIds.includes(post.author.id));
 
     if (loading && posts.length === 0) {
         return (
@@ -72,7 +77,7 @@ function GroupFeed({ groupId }: { groupId: string }) {
 
     return (
         <div className="space-y-4">
-            {posts.map((post) => (
+            {visiblePosts.map((post) => (
                 <FeedItemCard key={post.id} item={post} />
             ))}
             <div className="flex justify-center p-4">

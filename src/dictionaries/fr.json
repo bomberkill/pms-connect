@@ -711,6 +711,8 @@
     "pdfDocument": "Document PDF",
     "deleted": "Cette publication a peut-être été supprimée ou vous n'avez pas la permission de la voir.",
     "authorBadge": "Auteur",
+    "mutedTitle": "Auteur masqué",
+    "mutedMessage": "Vous ne verrez plus ses publications dans votre fil sur cet appareil.",
     "edited": "Modifié",
     "commentDeleted": "Ce commentaire a été supprimé par son auteur.",
     "replyingTo": "En réponse à",
