@@ -26,6 +26,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -45,6 +46,9 @@ interface CreateGroupFormValues {
     name: string;
     description: string;
     privacy: GroupPrivacy;
+    postsRequireApproval: boolean;
+    restrictToVerifiedTitles: boolean;
+    rules: string;
 }
 
 interface CreateGroupDialogProps {
@@ -67,6 +71,9 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
             name: "",
             description: "",
             privacy: GroupPrivacy.PUBLIC,
+            postsRequireApproval: false,
+            restrictToVerifiedTitles: false,
+            rules: "",
         },
         validationSchema: createGroupSchema,
         onSubmit: async (values) => {
@@ -77,6 +84,12 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
                             name: values.name,
                             description: values.description,
                             privacy: values.privacy,
+                            postsRequireApproval: values.postsRequireApproval,
+                            restrictToVerifiedTitles: values.restrictToVerifiedTitles,
+                            rules: values.rules
+                                .split("\n")
+                                .map((r) => r.trim())
+                                .filter(Boolean),
                         }
                     },
                 });
@@ -137,6 +150,36 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
                     </SelectContent>
                 </Select>
                 <p className="text-muted-foreground text-xs">{privacyDesc}</p>
+            </div>
+            <div className="flex items-start gap-2">
+                <Checkbox
+                    id="postsRequireApproval"
+                    checked={formik.values.postsRequireApproval}
+                    onCheckedChange={(checked) => formik.setFieldValue("postsRequireApproval", checked === true)}
+                />
+                <Label htmlFor="postsRequireApproval" className="font-normal leading-tight">
+                    {dict.groups.form.postsRequireApproval}
+                </Label>
+            </div>
+            <div className="flex items-start gap-2">
+                <Checkbox
+                    id="restrictToVerifiedTitles"
+                    checked={formik.values.restrictToVerifiedTitles}
+                    onCheckedChange={(checked) => formik.setFieldValue("restrictToVerifiedTitles", checked === true)}
+                />
+                <Label htmlFor="restrictToVerifiedTitles" className="font-normal leading-tight">
+                    {dict.groups.form.restrictToVerifiedTitles}
+                </Label>
+            </div>
+            <div className="grid gap-1">
+                <Label htmlFor="rules">{dict.groups.form.rules}</Label>
+                <Textarea
+                    id="rules"
+                    placeholder={dict.groups.form.rulesPlaceholder}
+                    className="resize-none"
+                    rows={4}
+                    {...formik.getFieldProps("rules")}
+                />
             </div>
             <Button type="submit" disabled={creating} className="w-full md:w-auto">
                 {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
