@@ -61,11 +61,8 @@ export default function Header() {
       { icon: LogOut, label: dict.appSideBar.navUser.logout, onClick: handleLogout },
     ];
 
-    // ... inside the component, replacing the mobile return:
-
     return (
       <div>
-        {/* <PWABanner /> Removed: Handled by global PwaInstallPrompt */}
         <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden border-b border-border">
           <div className="flex items-center justify-between h-14 px-4">
             <Link href="/">
