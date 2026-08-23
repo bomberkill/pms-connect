@@ -362,10 +362,16 @@ export const useFcmToken = () => {
             if (permission === 'granted') {
                 const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-                // Register Service Worker explicitly to avoid 404/MIME issues with localization middleware
+                // Register Service Worker explicitly to avoid 404/MIME issues with localization middleware.
+                // Scoped to a dedicated path (Firebase's documented pattern for coexisting with
+                // another service worker) — without this, registering at the default root scope
+                // would compete with next-pwa's caching SW for control of "/", since only one SW
+                // can control a given scope at a time.
                 let swRegistration = undefined;
                 try {
-                    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                        scope: '/firebase-cloud-messaging-push-scope',
+                    });
                 } catch {
                     // console.warn("[useFcmToken] SW registration failed, letting getToken handle it:", err);
                 }
