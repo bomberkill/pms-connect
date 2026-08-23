@@ -49,6 +49,12 @@ model Account {
   id                    String    @id
   accountId             String
   providerId            String
+  // Better Auth 1.7's "account identity scoped by issuer" change — accounts
+  // are now looked up by (issuer, accountId), not accountId alone. No
+  // backfill needed here: this table has zero rows in every environment,
+  // so the field goes straight in as required.
+  // https://better-auth.com/docs/guides/1-7-upgrade-guide#account-identity-is-scoped-by-issuer
+  issuer                String
   userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
@@ -61,6 +67,7 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  @@unique([issuer, accountId])
   @@index([userId])
   @@map("auth_account")
 }
