@@ -65,7 +65,18 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/web-app-manifest-192x192.png",
-    apple: "/web-app-manifest-512x512.png",
+    // No `apple` entry here — src/app/apple-icon.png (180x180, the correct
+    // size) is picked up automatically via the App Router file convention.
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PMSCONNECT",
+  },
+  // Chrome/Android's equivalent of apple-mobile-web-app-capable — no
+  // dedicated Metadata field for it, `other` is the documented escape hatch.
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 
@@ -95,10 +106,9 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} suppressHydrationWarning>
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="apple-mobile-web-app-title" content="PmsConnect" />
-      </head>
+      {/* No manual <link rel="manifest">/apple-mobile-web-app-* tags here —
+          metadata.manifest + metadata.appleWebApp above already generate
+          them (duplicated tags otherwise). */}
       <body
         suppressHydrationWarning
         className={`${archivo.variable} ${bricolage.variable} antialiased`}
