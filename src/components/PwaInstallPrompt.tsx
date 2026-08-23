@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Download, X, Share } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +10,9 @@ import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 const DISMISS_KEY = "pwa-prompt-dismissed-at";
 const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days — reappears after a while rather than "never again" or "every page load"
+// Matches the (auth) route group's page segments — the banner has no locale
+// prefix in the pathname to key off, so check the segment after it instead.
+const AUTH_ROUTE_SEGMENTS = ["login", "register", "verify-email", "pending-approval", "reset-password"];
 
 function wasRecentlyDismissed(): boolean {
   const dismissedAt = Number(localStorage.getItem(DISMISS_KEY));
@@ -17,11 +21,14 @@ function wasRecentlyDismissed(): boolean {
 
 export default function PwaInstallPrompt() {
   const dict = useDictionary();
+  const pathname = usePathname();
   const { isInstalled, isIOS, canPromptNatively, promptInstall } = usePwaInstall();
   const [isVisible, setIsVisible] = useState(false);
+  // e.g. "/fr/login" -> "login"; "/fr" -> "" (home, not an auth route)
+  const isAuthRoute = AUTH_ROUTE_SEGMENTS.includes(pathname.split("/")[2] ?? "");
 
   useEffect(() => {
-    if (isInstalled || wasRecentlyDismissed()) {
+    if (isAuthRoute || isInstalled || wasRecentlyDismissed()) {
       setIsVisible(false);
       return;
     }
@@ -31,7 +38,7 @@ export default function PwaInstallPrompt() {
     if (isIOS || canPromptNatively) {
       setIsVisible(true);
     }
-  }, [isInstalled, isIOS, canPromptNatively]);
+  }, [isAuthRoute, isInstalled, isIOS, canPromptNatively]);
 
   const handleInstallClick = async () => {
     const outcome = await promptInstall();
