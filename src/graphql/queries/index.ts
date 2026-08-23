@@ -6,3 +6,6 @@ export * from "./bookmark";
 export * from "./comment";
 export * from "./connection";
 export * from "./like";
+export * from "./storage";
+export * from "./report";
+export * from "./message";

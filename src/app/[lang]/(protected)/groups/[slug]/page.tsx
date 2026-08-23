@@ -1,13 +1,20 @@
 "use client";
 
 import React, { use } from "react";
-import { useGroup, useGroupMutations } from "@/hooks/useData/useGroups";
+import {
+    useGroup,
+    useGroupMutations,
+    useGroupJoinRequests,
+    useMyGroupJoinRequests,
+    useMyGroupMembership,
+    usePendingGroupPosts,
+} from "@/hooks/useData/useGroups";
 import { useGroupMembers } from "@/hooks/useData/useGroupMembers";
-import { GroupMember } from "@/types/Group";
+import { GroupJoinRequestStatus, GroupMemberRole, GroupMembership, GroupPrivacy } from "@/types/Group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, MoreVertical, LogOut } from "lucide-react";
+import { Users, MoreVertical, LogOut, Pencil, Trash2 } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,10 +30,32 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { useGroupPosts } from "@/hooks/useData/usePostData";
 import FeedItemCard from "@/components/FeedItemCard";
 import { MessageCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import GroupMembersPanel from "@/components/groups/GroupMembersPanel";
+import InviteMemberDialog from "@/components/groups/InviteMemberDialog";
+import { useMutedAuthorIds } from "@/hooks/use-muted-authors";
+import GroupJoinRequestsPanel from "@/components/groups/GroupJoinRequestsPanel";
+import PendingGroupPostsPanel from "@/components/groups/PendingGroupPostsPanel";
+import EditGroupDialog from "@/components/groups/EditGroupDialog";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
+
+function privacyLabel(privacy: GroupPrivacy, dict: ReturnType<typeof useDictionary>) {
+    switch (privacy) {
+        case GroupPrivacy.PUBLIC: return dict.groups.form.public;
+        case GroupPrivacy.PRIVATE: return dict.groups.form.private;
+        case GroupPrivacy.SECRET: return dict.groups.form.secret;
+    }
+}
 
 function GroupFeed({ groupId }: { groupId: string }) {
     const dict = useDictionary();
     const { posts, loading, loadMore } = useGroupPosts(groupId);
+    const mutedAuthorIds = useMutedAuthorIds();
+    const { me } = useMe();
+    const blockedAuthorIds = me?.blockedUsers ?? [];
+    const visiblePosts = posts.filter(
+        (post) => !mutedAuthorIds.includes(post.author.id) && !blockedAuthorIds.includes(post.author.id)
+    );
 
     if (loading && posts.length === 0) {
         return (
@@ -50,7 +79,7 @@ function GroupFeed({ groupId }: { groupId: string }) {
 
     return (
         <div className="space-y-4">
-            {posts.map((post) => (
+            {visiblePosts.map((post) => (
                 <FeedItemCard key={post.id} item={post} />
             ))}
             <div className="flex justify-center p-4">
@@ -71,24 +100,232 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
     // Unwrap params using React.use()
     const { slug } = use(params);
     const { group, loading, error } = useGroup(slug);
-    const { leaveGroup } = useGroupMutations();
+    const {
+        leaveGroup,
+        requestToJoinGroup,
+        acceptGroupInvitation,
+        declineGroupInvitation,
+        cancelGroupJoinRequest,
+        approveGroupJoinRequest,
+        rejectGroupJoinRequest,
+        removeGroupMember,
+        updateGroupMemberRole,
+        deleteGroup,
+        leaving,
+        joining,
+        acceptingInvitation,
+        decliningInvitation,
+        cancellingJoinRequest,
+        approvingJoinRequest,
+        rejectingJoinRequest,
+        removingMember,
+        updatingMemberRole,
+        deleting,
+        approveGroupPost,
+        rejectGroupPost,
+        approvingPost,
+        rejectingPost,
+    } = useGroupMutations();
     const router = useRouter();
     const { me } = useMe();
+    const { members, membersCount, loading: membersLoading, refresh: refreshMembers } = useGroupMembers(group?._id || "");
+    const { membership, refresh: refreshMembership } = useMyGroupMembership(group?._id);
+    const { requests, refresh: refreshRequests } = useMyGroupJoinRequests({ groupId: group?._id, limit: 10 });
+    const { requests: joinRequests, refresh: refreshJoinRequests } = useGroupJoinRequests({
+        groupId: group?._id,
+        status: GroupJoinRequestStatus.PENDING,
+    });
+    const canModeratePosts =
+        membership?.role === GroupMemberRole.ADMIN ||
+        membership?.role === GroupMemberRole.MODERATOR;
+    const { posts: pendingPosts, refresh: refreshPendingPosts } = usePendingGroupPosts(group?._id, canModeratePosts);
 
-    // Fetch group members using new GroupMembership collection (Moved up for Rules of Hooks)
-    const { members, membersCount, loading: membersLoading } = useGroupMembers(group?._id || "");
+    const activeRequest = requests.find((request) =>
+        request.status === GroupJoinRequestStatus.PENDING ||
+        request.status === GroupJoinRequestStatus.INVITED
+    );
+    const isMember = Boolean(membership);
+    const isPendingRequest = activeRequest?.status === GroupJoinRequestStatus.PENDING;
+    const isInvitation = activeRequest?.status === GroupJoinRequestStatus.INVITED;
+    const canManageMembers =
+        membership?.role === GroupMemberRole.ADMIN ||
+        membership?.role === GroupMemberRole.MODERATOR;
+    const canManageRequests =
+        membership?.role === GroupMemberRole.ADMIN ||
+        membership?.role === GroupMemberRole.MODERATOR;
+    const canManageRoles = membership?.role === GroupMemberRole.ADMIN;
+    const currentUserId = me?.id || (me as { _id?: string } | undefined)?._id;
+    const creatorId =
+        group?.creator?.id ||
+        (group?.creator as { _id?: string } | undefined)?._id;
+    const isCreator = Boolean(currentUserId && creatorId && currentUserId === creatorId);
+    const actionLoading =
+        leaving ||
+        joining ||
+        acceptingInvitation ||
+        decliningInvitation ||
+        cancellingJoinRequest ||
+        approvingJoinRequest ||
+        rejectingJoinRequest ||
+        removingMember ||
+        updatingMemberRole ||
+        deleting ||
+        approvingPost ||
+        rejectingPost;
+    const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isMember = members.some((m: GroupMember) => m.user.id === me?.id || (m.user as any)._id === me?.id);
+    const refreshGroupState = async () => {
+        await Promise.all([
+            refreshMembership(),
+            refreshRequests(),
+            refreshJoinRequests(),
+            refreshMembers(),
+            refreshPendingPosts(),
+        ]);
+        router.refresh();
+    };
 
     const handleLeave = async () => {
         if (!group) return;
         try {
             await leaveGroup({ variables: { groupId: group._id } });
             toast.success(dict.groups.leftSuccess);
-            router.refresh(); // Or optimistically update
+            await refreshGroupState();
         } catch {
             toast.error(dict.groups.leftError);
+        }
+    };
+
+    const handleJoin = async () => {
+        if (!group) return;
+        try {
+            await requestToJoinGroup({ variables: { groupId: group._id } });
+            toast.success(
+                group.privacy === "PUBLIC"
+                    ? dict.groups.joinedSuccess
+                    : dict.groups.requestSentSuccess
+            );
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.joinError);
+        }
+    };
+
+    const handleCancelRequest = async () => {
+        if (!activeRequest) return;
+        try {
+            await cancelGroupJoinRequest({ variables: { input: { requestId: activeRequest.id } } });
+            toast.success(dict.groups.requestCancelledSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.requestCancelledError);
+        }
+    };
+
+    const handleAcceptInvitation = async () => {
+        if (!activeRequest) return;
+        try {
+            await acceptGroupInvitation({ variables: { input: { requestId: activeRequest.id } } });
+            toast.success(dict.groups.invitationAcceptedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.invitationAcceptedError);
+        }
+    };
+
+    const handleDeclineInvitation = async () => {
+        if (!activeRequest) return;
+        try {
+            await declineGroupInvitation({ variables: { input: { requestId: activeRequest.id } } });
+            toast.success(dict.groups.invitationDeclinedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.invitationDeclinedError);
+        }
+    };
+
+    const handleApproveRequest = async (requestId: string) => {
+        try {
+            await approveGroupJoinRequest({ variables: { input: { requestId } } });
+            toast.success(dict.groups.requestApprovedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.requestApprovedError);
+        }
+    };
+
+    const handleRejectRequest = async (requestId: string) => {
+        try {
+            await rejectGroupJoinRequest({ variables: { input: { requestId } } });
+            toast.success(dict.groups.requestRejectedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.requestRejectedError);
+        }
+    };
+
+    const handleApprovePost = async (postId: string) => {
+        try {
+            await approveGroupPost({ variables: { postId } });
+            toast.success(dict.groups.postApprovedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.postApprovedError);
+        }
+    };
+
+    const handleRejectPost = async (postId: string) => {
+        try {
+            await rejectGroupPost({ variables: { postId } });
+            toast.success(dict.groups.postRejectedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.postRejectedError);
+        }
+    };
+
+    const handleRemoveMember = async (memberUserId: string) => {
+        if (!group) return;
+        try {
+            await removeGroupMember({ variables: { groupId: group._id, userId: memberUserId } });
+            toast.success(dict.groups.memberRemovedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.memberRemovedError);
+        }
+    };
+
+    const handleRoleChange = async (member: GroupMembership, role: GroupMemberRole) => {
+        if (!group) return;
+        const memberUserId = member.user.id || (member.user as { _id?: string })._id;
+        if (!memberUserId || member.role === role) return;
+
+        try {
+            await updateGroupMemberRole({
+                variables: {
+                    groupId: group._id,
+                    updateGroupMemberRoleInput: {
+                        userId: memberUserId,
+                        role,
+                    },
+                },
+            });
+            toast.success(dict.groups.memberRoleUpdatedSuccess);
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.memberRoleUpdatedError);
+        }
+    };
+
+    const handleDeleteGroup = async () => {
+        if (!group) return;
+        try {
+            await deleteGroup({ variables: { groupId: group._id } });
+            toast.success(dict.groups.deleteSuccess);
+            router.push("/groups");
+            router.refresh();
+        } catch {
+            toast.error(dict.groups.deleteError);
         }
     };
 
@@ -107,7 +344,7 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
     if (error || !group) {
         return (
             <div className="p-10 text-center">
-                <h2 className="text-xl font-bold text-red-500">{dict.groups.notFound}</h2>
+                <h2 className="text-xl font-bold text-destructive">{dict.groups.notFound}</h2>
                 <Button onClick={() => router.push("/groups")} variant="link">
                     {dict.common.back}
                 </Button>
@@ -122,72 +359,151 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                 {group.coverImageUrl ? (
                     <Image src={group.coverImageUrl} alt="Cover" fill className="object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                    <div className="w-full h-full bg-gradient-to-r from-primary-400 to-secondary-400" />
                 )}
 
                 {/* Profile Image Overlapping */}
-                <div className="absolute -bottom-10 left-6 md:left-10">
-                    <Avatar className="w-24 h-24 md:w-32 md:h-32 border-4 border-background shadow-lg">
+                <div className="absolute -bottom-8 md:-bottom-10 left-4 md:left-10">
+                    <Avatar shape="establishment" className="w-16 h-16 md:w-32 md:h-32 border-4 border-background shadow-lg">
                         <AvatarImage src={group.profileImageUrl} />
-                        <AvatarFallback className="text-3xl">{group.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="text-xl md:text-3xl">{group.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 </div>
             </div>
 
-            <div className="px-6 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="px-4 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div className="pt-2">
-                    <h1 className="text-2xl md:text-3xl font-bold">{group.name}</h1>
+                    <h1 className="text-xl md:text-3xl font-bold">{group.name}</h1>
                     <div className="flex items-center text-muted-foreground mt-1">
                         <span className="flex items-center mr-4">
                             <Users className="w-4 h-4 mr-1" />
-                            {dict.groups.privacy} &bull; {membersLoading ? '...' : membersCount} {dict.groups.members.toLowerCase()}
+                            {privacyLabel(group.privacy, dict)} &bull; {membersLoading ? '...' : membersCount} {dict.groups.members.toLowerCase()}
                         </span>
                     </div>
                 </div>
 
-                <div className="flex gap-2">
-                    {/* Actions */}
-                    {isMember ? (
+                <div className="flex gap-2 w-full md:w-auto">
+                    {isInvitation ? (
+                        <>
+                            <Button variant="outline" className="flex-1 md:flex-none" onClick={handleDeclineInvitation} disabled={actionLoading}>
+                                {dict.groups.declineInvitation}
+                            </Button>
+                            <Button className="flex-1 md:flex-none" onClick={handleAcceptInvitation} disabled={actionLoading}>
+                                {dict.groups.acceptInvitation}
+                            </Button>
+                        </>
+                    ) : isPendingRequest ? (
+                        <Button variant="outline" className="flex-1 md:flex-none" onClick={handleCancelRequest} disabled={actionLoading}>
+                            {dict.groups.cancelRequest}
+                        </Button>
+                    ) : isMember ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="icon">
+                                <Button variant="outline" size="icon" disabled={actionLoading}>
                                     <MoreVertical className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem className="text-red-500 cursor-pointer" onClick={handleLeave}>
-                                    <LogOut className="mr-2 h-4 w-4" /> {dict.groups.leave}
-                                </DropdownMenuItem>
+                                {canManageRoles && (
+                                    <EditGroupDialog group={group}>
+                                        <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
+                                            <Pencil className="mr-2 h-4 w-4" /> {dict.groups.edit}
+                                        </DropdownMenuItem>
+                                    </EditGroupDialog>
+                                )}
+                                {isCreator && (
+                                    <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive cursor-pointer"
+                                        onClick={() => setDeleteDialogOpen(true)}
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" /> {dict.groups.delete}
+                                    </DropdownMenuItem>
+                                )}
+                                {!isCreator && (
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={handleLeave}>
+                                        <LogOut className="mr-2 h-4 w-4" /> {dict.groups.leave}
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <Button>{dict.groups.join}</Button> // TODO: Implement Join
+                        <Button className="flex-1 md:flex-none" onClick={handleJoin} disabled={actionLoading}>
+                            {dict.groups.join}
+                        </Button>
                     )}
                 </div>
             </div>
 
+            <ConfirmationDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title={dict.groups.deleteConfirmTitle}
+                message={dict.groups.deleteConfirmMessage}
+                confirmText={dict.groups.delete}
+                onConfirm={handleDeleteGroup}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-8">
                 {/* Left: Info */}
                 <div className="md:col-span-1 space-y-6">
-                    <div className="bg-card rounded-xl border p-4 shadow-sm">
-                        <h3 className="font-semibold text-lg mb-2">{dict.groups.about}</h3>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                            {group.description || dict.profile.noBio}
-                        </p>
-                        <div className="mt-4 pt-4 border-t flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{dict.groups.createdBy}</span>
-                            <div className="flex items-center gap-2">
-                                <Avatar className="w-6 h-6">
-                                    <AvatarImage src={group.creator.profilePicUrl} />
-                                    <AvatarFallback>AD</AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm font-medium">
-                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                    {'firstName' in group.creator ? `${group.creator.firstName} ${group.creator.lastName}` : (group.creator as any).entityName}
-                                </span>
+                    <Card>
+                        <CardHeader className="pb-0">
+                            <CardTitle>{dict.groups.about}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4 pb-6">
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {group.description || dict.profile.noBio}
+                            </p>
+                            <div className="pt-4 border-t flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">{dict.groups.createdBy}</span>
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="w-6 h-6">
+                                        <AvatarImage src={group.creator.profilePicUrl} />
+                                        <AvatarFallback>AD</AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium">
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                        {'firstName' in group.creator ? `${group.creator.firstName} ${group.creator.lastName}` : (group.creator as any).entityName}
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
+
+                    {canManageMembers && (
+                        <InviteMemberDialog
+                            groupId={group._id}
+                            existingMemberIds={members.map((m) => m.user.id).filter(Boolean) as string[]}
+                        />
+                    )}
+
+                    <GroupMembersPanel
+                        members={members}
+                        currentUserId={currentUserId}
+                        canManageMembers={canManageMembers}
+                        canManageRoles={Boolean(canManageRoles)}
+                        actionLoading={actionLoading}
+                        onRemoveMember={handleRemoveMember}
+                        onRoleChange={handleRoleChange}
+                    />
+
+                    {canManageRequests && (
+                        <GroupJoinRequestsPanel
+                            requests={joinRequests}
+                            actionLoading={actionLoading}
+                            onApprove={handleApproveRequest}
+                            onReject={handleRejectRequest}
+                        />
+                    )}
+
+                    {canModeratePosts && (
+                        <PendingGroupPostsPanel
+                            posts={pendingPosts}
+                            actionLoading={actionLoading}
+                            onApprove={handleApprovePost}
+                            onReject={handleRejectPost}
+                        />
+                    )}
                 </div>
 
                 {/* Right: Feed */}

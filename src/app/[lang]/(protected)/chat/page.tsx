@@ -1,7 +1,7 @@
-import WorkInProgress from "@/components/WorkInProgress";
+"use client";
+
+import ConversationsListView from "@/components/chat/ConversationsListView";
 
 export default function ChatPage() {
-    return (
-        <WorkInProgress />
-    )
+    return <ConversationsListView />;
 }

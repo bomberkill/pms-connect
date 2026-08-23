@@ -2,17 +2,19 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { useFeed } from "@/hooks/useData/index";
+import { useFeed, useMe } from "@/hooks/useData/index";
 import { Skeleton } from "./ui/skeleton";
 import FeedItemCard from "./FeedItemCard";
 import { Loader2, WifiOff } from "lucide-react";
 import { Button } from "./ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import { NewPostsBadge } from "./feed/NewPostsBadge";
+import { FeedComposerEntry } from "./feed/FeedComposerEntry";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useMutedAuthorIds } from "@/hooks/use-muted-authors";
 
 const PostSkeleton = () => (
-  <div className="border border-border rounded-xl bg-card shadow-sm p-4 mb-6">
+  <div className="border border-border rounded-card bg-card shadow-xs p-4 mb-3">
     <div className="flex items-center gap-3 mb-4">
       <Skeleton className="h-10 w-10 rounded-full" />
       <div className="space-y-2">
@@ -43,6 +45,13 @@ export const Feed = () => {
   } = useFeed({ limit: 15, enablePolling: true });
 
   const { ref, inView } = useInView({ threshold: 0.5 });
+
+  const mutedAuthorIds = useMutedAuthorIds();
+  const { me } = useMe();
+  const blockedAuthorIds = me?.blockedUsers ?? [];
+  const visiblePosts = posts.filter(
+    (post) => !mutedAuthorIds.includes(post.author.id) && !blockedAuthorIds.includes(post.author.id)
+  );
 
   // Badge state
   const [showBadge, setShowBadge] = useState(false);
@@ -177,9 +186,11 @@ export const Feed = () => {
         <Loader2 className={`animate-spin ${isRefreshing ? 'opacity-100' : 'opacity-0'}`} />
       </div>
 
+      <FeedComposerEntry />
+
       {/* Feed posts */}
       <AnimatePresence initial={false}>
-        {posts.map((post) => (
+        {visiblePosts.map((post) => (
           <motion.div
             key={post.id}
             initial={{ opacity: 0, y: 20 }}

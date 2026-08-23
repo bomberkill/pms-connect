@@ -43,7 +43,6 @@ export function SuggestionsSidebar({ ...props }: React.ComponentProps<typeof Sid
   // Données factices pour l'exemple
   const router = useRouter()
   const isTablet = useIsTablet();
-  // const { user, loading: userLoading } = useAppSelector((state) => state.user);
   const { me: user, loading: userLoading } = useMe();
   const dict = useDictionary();
 

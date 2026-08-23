@@ -1,9 +1,5 @@
 import { RegisterForm } from "@/components/Register-form"
 import { Metadata } from "next"
-// import { auth } from "@/lib/firebase";
-// import { useNotification } from "@/lib/hooks";
-// import { getRedirectResult, onAuthStateChanged } from "firebase/auth";
-// import { useEffect } from "react";
 
 export const metadata: Metadata = {
   title: "Join Pms-Connect | Network for Healthcare Professionals",
@@ -11,12 +7,9 @@ export const metadata: Metadata = {
 }
 
 export default function RegisterPage() {
-
   return (
-    <div className="bg-background flex min-h-svh flex-col items-center justify-center">
-      <div className="w-full px-5 md:max-w-9/10">
-        <RegisterForm />
-      </div>
+    <div className="bg-background flex min-h-svh flex-col items-center justify-center px-6 py-10">
+      <RegisterForm />
     </div>
   )
 }

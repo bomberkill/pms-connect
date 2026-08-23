@@ -1,6 +1,5 @@
 "use client"
 
-import { useAppDispatch } from "@/hooks/use-redux"
 import { useDictionary } from "@/hooks/use-dictionary"
 import { useNotification } from "@/hooks/use-notification"
 import { Button } from "@/components/ui/button"
@@ -22,9 +21,10 @@ import data from "../../public/countries.json"
 import { useFormik, getIn } from "formik"
 import * as yup from "yup"
 import { useEffect, useMemo, useState } from "react"
-import { User, UserTypeGQL, UpdateUserInput } from "@/types/User"
-import { Loader2 } from "lucide-react"
-import { updateUser } from "@/redux/services/userService"
+import { User, UserTypeGQL, UpdateUserInput, ProfessionalAccreditation } from "@/types/User"
+import { FileIcon, Loader2, Trash2 } from "lucide-react"
+import { updateUser } from "@/graphql/authActions"
+import { uploadFileToR2 } from "@/utils/fileUpload"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer"
 
@@ -33,12 +33,63 @@ interface UpdateProfileDialogProps {
   user: User
 }
 
+function AccreditationSection({
+  dict,
+  accreditations,
+  existingCount,
+  uploading,
+  onFileChange,
+  onRemove,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dict: any
+  accreditations: ProfessionalAccreditation[]
+  existingCount: number
+  uploading: boolean
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onRemove: (index: number) => void
+}) {
+  return (
+    <div className="grid gap-2">
+      <Label>{dict.updateProfile.accreditations.title}</Label>
+      {accreditations.length > 0 && (
+        <ul className="space-y-1.5">
+          {accreditations.map((acc, i) => (
+            <li key={i} className="flex items-center justify-between gap-2 rounded-field border border-border px-3 py-2 text-sm">
+              <a href={acc.documentUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 min-w-0 hover:underline">
+                <FileIcon className="size-4 shrink-0 text-muted-foreground" />
+                <span className="truncate">{acc.issuingAuthority || acc.accreditationType || dict.updateProfile.accreditations.document}</span>
+              </a>
+              {i >= existingCount && (
+                <button type="button" onClick={() => onRemove(i)} aria-label={dict.actions.delete} className="text-muted-foreground hover:text-destructive shrink-0">
+                  <Trash2 className="size-3.5" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      <label className="inline-flex items-center gap-2 text-sm text-primary cursor-pointer w-fit">
+        {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileIcon className="size-4" />}
+        {dict.updateProfile.accreditations.addButton}
+        <input
+          type="file"
+          className="hidden"
+          accept="application/pdf, image/jpeg, image/png"
+          disabled={uploading}
+          onChange={onFileChange}
+        />
+      </label>
+    </div>
+  )
+}
+
 export default function UpdateProfileDialog({ children, user }: UpdateProfileDialogProps) {
   const dict = useDictionary()
-  const dispatch = useAppDispatch()
   const { open: openNotification } = useNotification()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [uploadingAccreditation, setUploadingAccreditation] = useState(false)
   const isMobile = useIsMobile()
 
   // États pour les listes déroulantes de localisation
@@ -78,6 +129,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
       entityName: "entityName" in user ? user.entityName : "",
       bio: user.bio || "",
       websiteUrl: user.websiteUrl || "",
+      professionalAccreditation: user.professionalAccreditation || [],
       location: {
         country: user.location?.country || "",
         stateOrProvince: user.location?.stateOrProvince || "",
@@ -104,7 +156,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
       }
 
       try {
-        await dispatch(updateUser(changedValues)).unwrap()
+        await updateUser(changedValues)
         openNotification("success", dict.notifications.profileUpdated.title, { message: dict.notifications.profileUpdated.message })
         setOpen(false)
       } catch (error: unknown) {
@@ -118,6 +170,28 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
       }
     },
   })
+
+  const handleAccreditationFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    setUploadingAccreditation(true)
+    try {
+      const { publicUrl } = await uploadFileToR2(file, "ACCREDITATION_DOCUMENT")
+      const current = formik.values.professionalAccreditation || []
+      formik.setFieldValue("professionalAccreditation", [...current, { documentUrl: publicUrl }])
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : dict.notifications.updateFailed.defaultMessage
+      openNotification("error", dict.notifications.updateFailed.title, { message: errorMessage })
+    } finally {
+      setUploadingAccreditation(false)
+    }
+  }
+
+  const handleRemoveAccreditation = (index: number) => {
+    const current = formik.values.professionalAccreditation || []
+    formik.setFieldValue("professionalAccreditation", current.filter((_, i) => i !== index))
+  }
 
   // Initialise les menus déroulants de localisation avec les données de l'utilisateur
   useEffect(() => {
@@ -192,6 +266,14 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
                 <Input id="websiteUrl" type="url" {...formik.getFieldProps("websiteUrl")} />
                 {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-destructive text-xs">{formik.errors.websiteUrl}</p>}
               </div>
+              <AccreditationSection
+                dict={dict}
+                accreditations={formik.values.professionalAccreditation || []}
+                existingCount={user.professionalAccreditation?.length || 0}
+                uploading={uploadingAccreditation}
+                onFileChange={handleAccreditationFileChange}
+                onRemove={handleRemoveAccreditation}
+              />
               <div className="grid gap-2">
                 <Label htmlFor="country">{dict.register.countryLabel}</Label>
                 <Combobox<Country> id="country" name="location.country" data={data} error={countryError} touched={countryTouched} onBlur={formik.handleBlur} value={formik.values.location?.country} onChange={(country) => { setSelectedCountry(country); formik.setFieldValue('location.country', country?.name || '') }} placeholder={dict.combobox.selectCountry} />
@@ -272,6 +354,14 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
               <Input id="websiteUrl" type="url" {...formik.getFieldProps("websiteUrl")} />
               {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-destructive text-xs">{formik.errors.websiteUrl}</p>}
             </div>
+            <AccreditationSection
+              dict={dict}
+              accreditations={formik.values.professionalAccreditation || []}
+              existingCount={user.professionalAccreditation?.length || 0}
+              uploading={uploadingAccreditation}
+              onFileChange={handleAccreditationFileChange}
+              onRemove={handleRemoveAccreditation}
+            />
             <div className="grid gap-2">
               <Label htmlFor="country">{dict.register.countryLabel}</Label>
               <Combobox<Country> id="country" name="location.country" data={data} error={countryError} touched={countryTouched} onBlur={formik.handleBlur} value={formik.values.location?.country} onChange={(country) => { setSelectedCountry(country); formik.setFieldValue('location.country', country?.name || '') }} placeholder={dict.combobox.selectCountry} />

@@ -8,11 +8,15 @@ import {
   Heart,
   MessageCircle,
   MoreVertical,
+  Pencil,
   Share2,
+  ShieldOff,
+  Trash2,
   UserMinus,
   UserPlus,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,16 +25,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useBookmarkActions, useFollowActions, useMe, useLikeCommentActions, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useBookmarkActions, useFollowActions, useBlockActions, useMe, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useNotification } from "@/hooks/use-notification";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
+import { muteAuthor } from "@/lib/muted-authors";
 import { cn } from "@/lib/utils";
-import { Comment } from "@/types/Comment";
 import { Post } from "@/types/Post";
 import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { useRouter } from "next/navigation";
 import { PostMedia } from "./PostMedia";
+import { usePostMutations } from "@/hooks/useData/usePostData";
+import EditPostDialog from "./EditPostDialog";
+import ConfirmationDialog from "./ConfirmationDialog";
+import ReportDialog from "./ReportDialog";
 
 const formatTimeAgo = (isoDate: string, dict: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const date = new Date(isoDate);
@@ -45,98 +53,37 @@ const formatTimeAgo = (isoDate: string, dict: any) => { // eslint-disable-line @
   return date.toLocaleDateString();
 };
 
-// export function PostMedia({ media }: { media?: MediaItem[] }) {
-//   const dict = useDictionary()
-//   if (!media || media.length === 0) return null;
-
-//   if (media.length === 1) {
-//     const m = media[0];
-//     return (
-//       <div className="mt-3 overflow-hidden">
-//         {m.type === MediaType.VIDEO ? (
-//           <video src={m.url} className="w-full max-h-[520px] bg-black rounded-md object-contain" controls onClick={(e) => e.stopPropagation()} />
-//         ) : m.type === MediaType.IMAGE ? (
-//           // eslint-disable-next-line @next/next/no-img-element
-//           <img src={m.url} alt="Post media" className="w-full max-h-[520px] rounded-md object-cover" />
-//         ) : (
-//           <a href={m.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center gap-3 p-4 bg-muted rounded-lg border hover:bg-muted/80">
-//             <FileIcon className="h-8 w-8 text-muted-foreground" />
-//             <div className="flex flex-col">
-//               <span className="text-sm font-medium text-foreground break-all">{m.url.split("/").pop()}</span>
-//               <span className="text-xs text-muted-foreground">{dict.post.pdfDocument}</span>
-//             </div>
-//           </a>
-//         )}
-//       </div>
-//     );
-//   }
-
-//   // const containerClass = cn("mt-3 grid gap-1 rounded-lg overflow-hidden", {
-//   //   "grid-cols-2": media.length > 1,
-//   // });
-
-//   return (
-//     <div className={cn("mt-3 grid gap-1 overflow-hidden", {
-//       "grid-cols-2": media.length === 2,
-//       "grid-cols-3": media.length === 3,
-//       "grid-cols-4": media.length >= 4,
-//     })}>
-//       {media.map((m) => {
-//         if (m.type === MediaType.VIDEO) {
-//           return <video key={m.url} src={m.url} className="w-full h-full rounded-md object-cover" controls onClick={(e) => e.stopPropagation()} />;
-//         }
-//         if (m.type === MediaType.IMAGE) {
-//           return <img key={m.url} src={m.url} alt="Post media" className="w-full h-full rounded-md object-cover" />;
-//         }
-//         // For documents in a grid
-//         return (
-//           <a key={m.url} href={m.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="w-full aspect-square bg-muted rounded-md flex flex-col items-center justify-center p-2 hover:bg-muted/80">
-//             <FileIcon className="h-10 w-10 text-muted-foreground" />
-//             <span className="text-xs text-muted-foreground text-center break-all mt-2">{m.url.split('/').pop()}</span>
-//           </a>
-//         );
-//       })}
-//       {/* TODO: Implement a proper media grid for more than 2 items */}
-//     </div>
-//   );
-// }
-
 interface FeedItemCardProps {
-  item: Post | Comment;
-  isComment?: boolean;
+  item: Post;
 }
 
-export default function FeedItemCard({ item, isComment = false }: FeedItemCardProps) {
+export default function FeedItemCard({ item }: FeedItemCardProps) {
   const dict = useDictionary();
   const router = useRouter();
+  const { open } = useNotification();
   const { me } = useMe();
-  const isMobile = useIsMobile();
+  const { removePost, removing } = usePostMutations();
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [isReportOpen, setIsReportOpen] = React.useState(false);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = React.useState(false);
 
   const authorId = item.author?.id;
   const { likePost, unlikePost, liking, unliking } = useLikePostActions(item.id);
-  const { likeComment, unlikeComment } = useLikeCommentActions(item.id);
-  const { likesUpdate } = useLikesSubscription(item.id, isComment ? 'Comment' : 'Post');
+  useLikesSubscription(item.id, 'Post');
   const { followUser, unfollowUser, following: followingReq, unfollowing } = useFollowActions();
-  const { addBookmark, removeBookmark, adding: addingBookmark, removing: removingBookmark } = useBookmarkActions(item.id, isComment ? 'Comment' : 'Post');
+  const { blockUser, unblockUser, blocking, unblocking } = useBlockActions();
+  const { addBookmark, removeBookmark, adding: addingBookmark, removing: removingBookmark } = useBookmarkActions(item.id, 'Post');
+  const postItem = item;
+  const isOwnItem = authorId === me?.id;
 
-  const isLiked = 'isLiked' in item ? item.isLiked : false;
+  const isLiked = item.isLiked ?? false;
   const isFollowing = !!(authorId && me?.following?.includes(authorId));
-  React.useEffect(() => {
-    if (likesUpdate) {
-      // Optionally handle real-time like updates here
-    }
-  }, [likesUpdate]);
+  const isBlocked = !!(authorId && me?.blockedUsers?.includes(authorId));
 
   const handleLikeToggle = () => {
-    if (isComment) {
-      console.log("is comment and id: ", item.id)
-      if (isLiked) unlikeComment();
-      else likeComment();
-    } else {
-      console.log("is post and id: ", item.id)
-      if (isLiked) unlikePost();
-      else likePost();
-    }
+    if (isLiked) unlikePost();
+    else likePost();
   };
 
   const handleFollowToggle = async () => {
@@ -170,85 +117,165 @@ export default function FeedItemCard({ item, isComment = false }: FeedItemCardPr
     }
   };
   const goToDetail = () => {
-    const postPath = isComment ? `/post/${item.id}?isComment=true` : `/post/${item.id}`;
-    router.push(postPath);
+    router.push(`/post/${item.id}`);
+  };
+
+  const handleMute = () => {
+    muteAuthor(item.author.id);
+    open("success", dict.post.mutedTitle, { message: dict.post.mutedMessage });
+  };
+
+  const handleBlockConfirm = async () => {
+    if (!authorId) return;
+    try {
+      await blockUser({ variables: { userId: authorId } });
+      setIsBlockConfirmOpen(false);
+      open("success", dict.post.blockedTitle, { message: dict.post.blockedMessage });
+    } catch (e) {
+      console.error("Block failed", e);
+    }
+  };
+
+  const handleUnblock = async () => {
+    if (!authorId) return;
+    try {
+      await unblockUser({ variables: { userId: authorId } });
+    } catch (e) {
+      console.error("Unblock failed", e);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await removePost({ variables: { id: postItem.id } });
+      open("success", dict.post.deleteTitle, {
+        message: dict.post.deleteSuccess,
+      });
+      setIsDeleteOpen(false);
+    } catch (error) {
+      open("error", dict.notifications.updateFailed.title, {
+        message:
+          error instanceof Error
+            ? error.message
+            : dict.notifications.updateFailed.defaultMessage,
+      });
+    }
   };
 
   return (
-    <div className={cn(
-      "bg-card text-card-foreground overflow-hidden transition-all duration-200",
-      isMobile ? "border-b border-border pb-2 mb-2" : isComment ? "border-b border-border py-4" : "border border-border rounded-2xl shadow-sm hover:shadow-md my-6"
-    )}>
-      <div className="flex items-center justify-between px-4 py-3">
-        <div onClick={() => router.push(`/profile/${item.author.slug}`)} className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage className="object-cover" src={item.author.profilePicUrl} />
-            <AvatarFallback>{getUserInitials(item.author)}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-sm leading-tight">{getUserDisplayName(item.author)}</span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-xs text-muted-foreground">{formatTimeAgo(item.createdAt, dict)}</span>
+    <>
+      {postItem && (
+        <EditPostDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          post={postItem}
+        />
+      )}
+      <ReportDialog open={isReportOpen} onOpenChange={setIsReportOpen} postId={item.id} />
+      <ConfirmationDialog
+        open={isBlockConfirmOpen}
+        onOpenChange={setIsBlockConfirmOpen}
+        onConfirm={handleBlockConfirm}
+        title={dict.post.blockConfirmTitle}
+        message={dict.post.blockConfirmDescription}
+        confirmText={dict.actions.block}
+        cancelText={dict.common.cancel}
+      />
+      <ConfirmationDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onConfirm={handleDelete}
+        title={dict.post.deleteTitle}
+        message={dict.post.deleteDescription}
+        confirmText={dict.actions.delete}
+        cancelText={dict.common.cancel}
+      />
+      <div className="text-card-foreground rounded-card border border-border bg-card px-4 py-4 shadow-xs mb-3">
+        <div className="flex items-start justify-between">
+          <div onClick={() => router.push(`/profile/${item.author.slug}`)} className="flex items-start gap-2.5 cursor-pointer min-w-0">
+            <Avatar
+              shape={item.author.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"}
+              className="h-10 w-10 shrink-0"
+            >
+              <AvatarImage className="object-cover" src={item.author.profilePicUrl} />
+              <AvatarFallback>{getUserInitials(item.author)}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-[15px] leading-tight truncate">{getUserDisplayName(item.author)}</span>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {item.author.userType === UserTypeGQL.INDIVIDUAL ? (item.author as IndividualUser).professionalTitle : dict.entityTypes[(item.author as LegalEntityUser).entityType]}
+              </p>
+              <span className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(item.createdAt, dict)}</span>
             </div>
-            <p className="text-[13px] text-muted-foreground truncate">
-              {item.author.userType === UserTypeGQL.INDIVIDUAL ? (item.author as IndividualUser).professionalTitle : dict.entityTypes[(item.author as LegalEntityUser).entityType]}
-            </p>
           </div>
-        </div>
-        {!isComment && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button aria-label="More options" className="p-1 rounded-md hover:bg-muted">
+              <button aria-label="More options" className="p-1.5 rounded-full hover:bg-muted">
                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>{dict.common.actions}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer"><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer"><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
+              {isOwnItem && (
+                <>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsEditOpen(true)}>
+                    <Pencil className="mr-2 h-4 w-4" /> {dict.actions.edit}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={() => setIsDeleteOpen(true)} disabled={removing}>
+                    <Trash2 className="mr-2 h-4 w-4" /> {dict.actions.delete}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem className="cursor-pointer" onClick={handleBookmarkToggle} disabled={addingBookmark || removingBookmark}>
+                <Bookmark className={cn("mr-2 h-4 w-4", item.isBookmarked && "fill-primary text-primary")} />
+                {item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={handleMute}><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
               {authorId && authorId !== me?.id && (
-                <DropdownMenuItem className="cursor-pointer" onClick={handleFollowToggle} disabled={followingReq || unfollowing}>{isFollowing ? <><UserMinus className="mr-2 h-4 w-4" /> {dict.actions.unfollow}</> : <><UserPlus className="mr-2 h-4 w-4" /> {dict.actions.follow}</>}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem className="cursor-pointer" onClick={handleFollowToggle} disabled={followingReq || unfollowing}>{isFollowing ? <><UserMinus className="mr-2 h-4 w-4" /> {dict.actions.unfollow}</> : <><UserPlus className="mr-2 h-4 w-4" /> {dict.actions.follow}</>}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={isBlocked ? handleUnblock : () => setIsBlockConfirmOpen(true)}
+                    disabled={blocking || unblocking}
+                  >
+                    <ShieldOff className="mr-2 h-4 w-4" /> {isBlocked ? dict.actions.unblock : dict.actions.block}
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
-      </div>
-
-      <div className="px-4 pb-2">
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{item.content}</p>
-        {'media' in item && <PostMedia media={item.media} />}
-      </div>
-
-      <div className="flex items-center justify-between px-4 py-2 text-muted-foreground">
-        <div className="flex items-center justify-start gap-1">
-          <button onClick={handleLikeToggle} disabled={liking || unliking} className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors" aria-label={isLiked ? dict.actions.unlike : dict.actions.like} aria-pressed={!!isLiked}>
-            <Heart className={cn("size-5", isLiked && "fill-red-500 text-red-500")} />
-            <span className="text-sm font-medium tabular-nums">{'likesCount' in item ? item.likesCount : 0}</span>
-          </button>
-          <button onClick={goToDetail} className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors" aria-label={dict.actions.comment}>
-            <MessageCircle className="size-5" />
-            <span className="text-sm font-medium tabular-nums">{'commentsCount' in item ? item.commentsCount : 0}</span>
-          </button>
-          {!isComment && (
-            <button className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors" aria-label={dict.actions.share}>
-              <Share2 className="size-5" />
-            </button>
-          )}
         </div>
-        {!isComment && (
-          <button
-            onClick={handleBookmarkToggle}
-            disabled={addingBookmark || removingBookmark}
-            className="flex items-center justify-center gap-2 hover:bg-muted/80 rounded-full px-3 py-2 transition-colors"
-            aria-label={item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
-          >
-            <Bookmark className={cn("size-5", item.isBookmarked && "fill-primary text-primary")} />
-          </button>
-        )}
+
+        <div className="pt-2">
+          <p className="text-base leading-relaxed whitespace-pre-wrap">{item.content}</p>
+          {item.media && <PostMedia media={item.media} />}
+        </div>
+
+        <div className="flex items-center gap-1.5 pt-3 text-muted-foreground">
+          <Heart className="size-3.5" />
+          <span className="text-xs">{item.likesCount} {dict.post.reactions}</span>
+          <span className="ml-auto text-xs">{item.commentsCount} {dict.post.comments}</span>
+        </div>
+        <div className="-mx-1 mt-1 flex border-t border-border pt-1">
+          <Button variant="ghost" onClick={handleLikeToggle} disabled={liking || unliking} className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80" aria-pressed={isLiked}>
+            <Heart className={cn("size-4", isLiked && "fill-error text-error")} />
+            {isLiked ? dict.actions.unlike : dict.actions.like}
+          </Button>
+          <Button variant="ghost" onClick={goToDetail} className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80">
+            <MessageCircle className="size-4" />
+            {dict.actions.comment}
+          </Button>
+          <Button variant="ghost" className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80" aria-label={dict.actions.share}>
+            <Share2 className="size-4" />
+            {dict.actions.share}
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -72,7 +72,7 @@ export enum UserTypeGQL {
    */
   interface BaseUser {
     id: string; // MongoDB ObjectId
-    firebaseUid: string;
+    authUserId: string;
     email: string;
     phoneNumber: string;
     slug: string;

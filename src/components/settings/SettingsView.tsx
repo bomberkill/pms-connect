@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { useMutation } from "@apollo/client";
 import { buildUpdateMyEmailMutation } from "@/graphql/queries/user";
 import { useNotification } from "@/hooks/use-notification";
-import { sendPasswordResetEmail, signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { resetPassword } from "@/graphql/betterAuth";
+import { logoutUser, deactivateAccount } from "@/graphql/authActions";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 import {
     Loader2,
     User,
@@ -27,21 +28,30 @@ import {
     Monitor,
     Camera,
     Check,
-    Bell
+    Bell,
+    Download,
+    UserX
 } from "lucide-react";
 import { User as UserType } from "@/types/User";
 import { useFcmToken } from "@/hooks/useData/index";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserInitials, getUserDisplayName } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import SettingsViewMobile from "./SettingsViewMobile";
 
 export default function SettingsView() {
     const dict = useDictionary();
     const { me, loading } = useMe();
-    const { handleLogout } = useFcmToken();
     const router = useRouter();
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return <SettingsViewMobile />;
+    }
 
     if (loading || !me) {
         return (
@@ -83,8 +93,7 @@ export default function SettingsView() {
                             variant="ghost"
                             className="w-full justify-start px-4 py-3 h-auto text-destructive hover:text-destructive hover:bg-destructive/10 mt-auto lg:mt-4"
                             onClick={async () => {
-                                await handleLogout();
-                                await signOut(auth);
+                                await logoutUser();
                                 router.push("/login");
                             }}
                         >
@@ -114,12 +123,28 @@ export default function SettingsView() {
 
 function AccountSettings({ me }: { me: UserType }) {
     const dict = useDictionary();
+    const router = useRouter();
     const [email, setEmail] = useState(me.email);
     const [isEditing, setIsEditing] = useState(false);
+    const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
 
     const UPDATE_EMAIL_MUTATION = buildUpdateMyEmailMutation();
     const [updateEmail, { loading }] = useMutation(UPDATE_EMAIL_MUTATION);
     const notification = useNotification();
+
+    const handleDeactivate = async () => {
+        setDeactivating(true);
+        try {
+            await deactivateAccount();
+            router.push("/login");
+        } catch (e: unknown) {
+            notification.open("error", (e as Error).message || dict.globalErrors.default);
+        } finally {
+            setDeactivating(false);
+            setDeactivateDialogOpen(false);
+        }
+    };
 
     const handleUpdateEmail = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -170,7 +195,7 @@ function AccountSettings({ me }: { me: UserType }) {
                                 <Input disabled value={(me as any).firstName ? `${(me as any).firstName} ${(me as any).lastName}` : (me as any).entityName} className="bg-muted/50 pl-10" />
                                 <User className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
                             </div>
-                            <p className="text-[13px] text-muted-foreground">{dict.settings.labels.managedVia}</p>
+                            <p className="text-xs text-muted-foreground">{dict.settings.labels.managedVia}</p>
                         </div>
                     </div>
                 </CardContent>
@@ -220,6 +245,31 @@ function AccountSettings({ me }: { me: UserType }) {
                     </form>
                 </CardContent>
             </Card>
+
+            <Card className="border-destructive/30">
+                <CardHeader className="p-4 md:p-6">
+                    <CardTitle className="flex items-center gap-2 text-destructive">
+                        <UserX className="w-5 h-5" />
+                        {dict.settings.labels.deactivateAccount}
+                    </CardTitle>
+                    <CardDescription>{dict.settings.labels.deactivateAccountConfirm}</CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6">
+                    <Button variant="destructive" onClick={() => setDeactivateDialogOpen(true)}>
+                        {dict.settings.labels.deactivateAccount}
+                    </Button>
+                </CardContent>
+            </Card>
+
+            <ConfirmationDialog
+                open={deactivateDialogOpen}
+                onOpenChange={setDeactivateDialogOpen}
+                onConfirm={handleDeactivate}
+                title={dict.settings.labels.deactivateAccount}
+                message={dict.settings.labels.deactivateAccountConfirm}
+                confirmText={deactivating ? dict.settings.labels.deactivating : dict.settings.labels.deactivateAccount}
+                cancelText={dict.button.cancel}
+            />
         </div>
     );
 }
@@ -232,7 +282,7 @@ function SecuritySettings({ email }: { email: string }) {
     const handlePasswordReset = async () => {
         setLoading(true);
         try {
-            await sendPasswordResetEmail(auth, email);
+            await resetPassword(email);
             notification.open("success", dict.notifications.forgotPassword.success.title);
         } catch (e: unknown) {
             notification.open("error", (e as Error).message || dict.globalErrors.default);
@@ -272,10 +322,12 @@ function SecuritySettings({ email }: { email: string }) {
 
 function PreferencesSettings() {
     const dict = useDictionary();
+    const router = useRouter();
     const currentLang = typeof window !== 'undefined' && window.location.pathname.startsWith('/fr') ? 'fr' : 'en';
     const { requestPermission, permissionState } = useFcmToken();
     const [notifState, setNotifState] = useState(permissionState);
     const notification = useNotification();
+    const { isInstalled, isIOS, canPromptNatively, promptInstall } = usePwaInstall();
 
     const handleEnableNotifications = async () => {
         const granted = await requestPermission();
@@ -285,6 +337,18 @@ function PreferencesSettings() {
         } else {
             setNotifState('denied');
             notification.open("error", dict.settings.labels.deniedError);
+        }
+    };
+
+    const handleInstallClick = async () => {
+        if (isIOS) {
+            notification.open("info", dict.pwa.installTitle, {
+                message: `${dict.pwa.iosTapShare} ${dict.pwa.iosAndSelect} "${dict.pwa.iosAddHome}"`,
+            });
+            return;
+        }
+        if (canPromptNatively) {
+            await promptInstall();
         }
     };
 
@@ -316,8 +380,34 @@ function PreferencesSettings() {
                             {notifState === 'granted' ? dict.settings.labels.enabled : dict.settings.labels.enable}
                         </Button>
                     </div>
+                    <div className="flex items-center justify-between p-4 border rounded-xl bg-card mt-3">
+                        <span className="font-medium">{dict.settings.labels.notificationPreferences}</span>
+                        <Button variant="outline" onClick={() => router.push("/settings/notifications")}>
+                            {dict.settings.labels.manage}
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
+
+            {!isInstalled && (
+                <Card>
+                    <CardHeader className="p-4 md:p-6">
+                        <CardTitle className="flex items-center gap-2">
+                            <Download className="w-5 h-5" />
+                            {dict.settings.labels.installApp}
+                        </CardTitle>
+                        <CardDescription>{dict.settings.labels.installAppDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6">
+                        <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
+                            <span className="font-medium">{dict.settings.labels.installApp}</span>
+                            <Button onClick={handleInstallClick}>
+                                {dict.common.install}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <Card>
                 <CardHeader className="p-4 md:p-6">
@@ -388,7 +478,7 @@ function PreferencesSettings() {
                             <Sun className="w-6 h-6" />
                             <span className="text-sm font-medium">{dict.settings.sections.light}</span>
                         </div>
-                        <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-slate-950 text-white">
+                        <div className="flex flex-col items-center gap-3 p-4 border rounded-xl bg-neutral-950 text-neutral-50">
                             <Moon className="w-6 h-6" />
                             <span className="text-sm font-medium">{dict.settings.sections.dark}</span>
                         </div>

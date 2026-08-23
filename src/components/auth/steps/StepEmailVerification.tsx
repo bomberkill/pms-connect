@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { MailCheck, Pencil } from 'lucide-react';
-import { auth } from '@/lib/firebase';
-import { sendVerificationEmail } from '@/graphql/firebaseAuth';
+import { sendVerificationEmail } from '@/graphql/betterAuth';
+import { checkEmailVerified } from '@/app/actions/auth-status';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { ChangeEmailForm } from '../../ChangeEmailForm';
 
 interface EmailVerificationStepProps {
   email: string;
-  onVerified: () => void;
+  onVerified: () => void | Promise<void>;
   onBack: () => void;
 }
 
@@ -29,21 +29,32 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
   const [isChangeEmailOpen, setIsChangeEmailOpen] = useState(false);
   const [currentEmail, setCurrentEmail] = useState(email);
 
-  // This effect polls for email verification status
+  // The `email` prop can arrive empty on mount and only get populated a tick
+  // later (e.g. the wizard restoring persisted form values asynchronously
+  // after `currentStep` itself was already restored synchronously). Pick up
+  // that late value once, without ever overwriting a deliberate change made
+  // via ChangeEmailForm below.
+  useEffect(() => {
+    if (email && !currentEmail) {
+      setCurrentEmail(email);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+
+  // This effect polls for email verification status. It checks the account's
+  // state directly in the database (not the local session), so it also
+  // picks up verification done on another device/browser.
   useEffect(() => {
     const interval = setInterval(async () => {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await currentUser.reload();
-        if (currentUser.emailVerified) {
-          clearInterval(interval);
-          onVerified();
-        }
+      const verified = await checkEmailVerified(currentEmail);
+      if (verified) {
+        clearInterval(interval);
+        await onVerified();
       }
     }, 3000); // Check every 3 seconds
 
     return () => clearInterval(interval);
-  }, [onVerified]);
+  }, [currentEmail, onVerified]);
 
   // This effect manages the resend button cooldown
   useEffect(() => {
@@ -57,7 +68,7 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
     if (resendCooldown > 0) return;
     setIsResending(true);
     try {
-      await sendVerificationEmail();
+      await sendVerificationEmail(currentEmail);
       open('success', dict.notifications.verification.resentTitle, { message: dict.notifications.verification.resentMessage });
       setResendCooldown(60); // 60-second cooldown
     } catch (error) {
@@ -69,17 +80,29 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
   };
 
   return (
-    <div className="flex flex-col items-center text-center gap-6 w-full max-w-full px-4 sm:px-0 sm:max-w-md mx-auto">
-      <MailCheck className="w-16 h-16 text-primary" />
-      <h2 className="text-2xl font-bold">{dict.register.verifyEmailTitle}</h2>
-      <p className="text-muted-foreground break-words max-w-full" dangerouslySetInnerHTML={{
-        __html: dict.register.verifyEmailMessage.replace('{email}', `<strong>${currentEmail}</strong>`)
-      }} />
+    <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-6 text-center">
+      <div className="flex size-16 items-center justify-center rounded-full bg-primary-100 text-primary">
+        <MailCheck className="size-8" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <h1 className="font-heading text-2xl font-bold tracking-tight">{dict.register.verifyEmailTitle}</h1>
+        <p className="text-muted-foreground text-sm text-balance" dangerouslySetInnerHTML={{
+          __html: dict.register.verifyEmailMessage.replace('{email}', `<strong class="text-foreground">${currentEmail}</strong>`)
+        }} />
+      </div>
+
+      <Button onClick={handleResendEmail} disabled={isResending || resendCooldown > 0} size="xl">
+        {isResending
+          ? dict.button.sending
+          : resendCooldown > 0
+            ? `${dict.button.resend} (${resendCooldown}s)`
+            : dict.button.resend}
+      </Button>
 
       <Dialog open={isChangeEmailOpen} onOpenChange={setIsChangeEmailOpen}>
         <DialogTrigger asChild>
-          <Button variant="link" className="text-sm">
-            <Pencil className="mr-2 h-4 w-4" />
+          <Button variant="link" size="sm" className="text-sm text-muted-foreground">
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
             {dict.button.changeEmail}
           </Button>
         </DialogTrigger>
@@ -92,19 +115,11 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full mt-4">
-        <Button className="flex-1" variant="outline" onClick={onBack}>
-          {dict.button.back}
-        </Button>
-        <Button className="flex-1" onClick={handleResendEmail} disabled={isResending || resendCooldown > 0}>
-          {isResending
-            ? dict.button.sending
-            : resendCooldown > 0
-              ? `${dict.button.resend} (${resendCooldown}s)`
-              : dict.button.resend}
-        </Button>
-      </div>
-      <p className="text-xs text-muted-foreground mt-4">{dict.register.verifyEmailSpam}</p>
+      <p className="text-xs text-muted-foreground">{dict.register.verifyEmailSpam}</p>
+
+      <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
+        {dict.button.back}
+      </Button>
     </div>
   );
 };

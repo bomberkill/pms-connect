@@ -9,7 +9,7 @@ import {
   split
 } from "@apollo/client";
 import { errorLink } from "@/lib/apolloErrorLink";
-import { getFirebaseToken } from "./firebaseAuth";
+import { getAuthToken } from "./betterAuth";
 import { createClient } from "graphql-ws";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
@@ -32,7 +32,7 @@ const authLink = new ApolloLink((operation, forward) => {
   return new Observable(observer => {
     (async () => {
       try {
-        const token = await getFirebaseToken();
+        const token = await getAuthToken();
 
         operation.setContext(({ headers = {} }) => ({
           headers: {
@@ -60,7 +60,7 @@ const authLink = new ApolloLink((operation, forward) => {
 const wsLink = new GraphQLWsLink(createClient({
   url: WEBSOCKET_URL,
   connectionParams: async () => {
-    const token = await getFirebaseToken();
+    const token = await getAuthToken();
     // console.log('Attempting to connect to WebSocket with token:', token);
     return {
       headers: {
@@ -99,6 +99,12 @@ export const apolloClient = new ApolloClient({
         keyFields: ['id'],
       },
       Comment: {
+        keyFields: ['id'],
+      },
+      Message: {
+        keyFields: ['id'],
+      },
+      Conversation: {
         keyFields: ['id'],
       },
 
@@ -214,6 +220,59 @@ export const apolloClient = new ApolloClient({
           getFollowing: {
             keyArgs: ['userId'], // Cache séparé par utilisateur
             merge(existing = [], incoming = []) {
+              return [...existing, ...incoming];
+            },
+          },
+
+          // ========== BOOKMARKS ==========
+          myBookmarks: {
+            keyArgs: false,
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
+          // ========== COMMENTS ==========
+          getCommentsByPost: {
+            keyArgs: ['postId'], // Cache séparé par post
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
+          getCommentReplies: {
+            keyArgs: ['parentId'], // Cache séparé par commentaire parent
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
+          // ========== MESSAGES ==========
+          getMessages: {
+            keyArgs: ['conversationId'], // Cache séparé par conversation
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
+              return [...existing, ...incoming];
+            },
+          },
+
+          getMyConversations: {
+            keyArgs: false,
+            merge(existing = [], incoming = [], { args }) {
+              if (args?.skip === 0 || args?.skip === undefined) {
+                return incoming;
+              }
               return [...existing, ...incoming];
             },
           },

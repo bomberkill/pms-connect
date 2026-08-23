@@ -2,7 +2,6 @@ import { useQuery, useMutation, useSubscription, gql, Reference } from '@apollo/
 import {
     buildGetConnectionsQuery,
     buildGetMyConnectionRequestsQuery,
-    buildGetMeQuery,
     buildSendConnectionRequestMutation,
     buildAcceptConnectionRequestMutation,
     buildDeclineOrCancelConnectionRequestMutation,
@@ -183,14 +182,12 @@ export const useConnectionRequestUpdatedSubscription = () => {
 };
 
 /**
- * Hook to fetch user connections.
+ * Hook to fetch the current authenticated user's connections.
  */
-export const useConnections = (userId: string) => {
+export const useMyConnections = () => {
     const { data, loading, error, refetch } = useQuery<{ getConnections: User[] }>(
         buildGetConnectionsQuery(),
         {
-            variables: { userId },
-            skip: !userId,
             fetchPolicy: 'cache-and-network',
         }
     );
@@ -201,19 +198,4 @@ export const useConnections = (userId: string) => {
         error,
         refetch,
     };
-};
-
-/**
- * Hook to fetch the current user's connections.
- * This is a convenience wrapper around useConnections that uses the current user's ID.
- */
-export const useMyConnections = () => {
-    const { data } = useQuery<{ me: User }>(
-        buildGetMeQuery(),
-        {
-            fetchPolicy: 'cache-first',
-        }
-    );
-
-    return useConnections(data?.me?.id || '');
 };

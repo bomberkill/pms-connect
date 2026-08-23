@@ -1,24 +1,56 @@
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { apolloClient } from "@/graphql/apolloClient";
+import { GET_UPLOAD_URL, DELETE_UPLOADED_FILE } from "@/graphql/queries/storage";
 
 export const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
+// Not enforced server-side (no @MaxLength on the API's post content field);
+// this is purely a UI ceiling, chosen to match the mobile design system.
+export const POST_CONTENT_MAX_LENGTH = 3000;
+
+export type UploadPurpose =
+    | "AVATAR"
+    | "COVER_PICTURE"
+    | "POST_MEDIA"
+    | "GROUP_PICTURE"
+    | "ACCREDITATION_DOCUMENT";
+
 /**
- * Uploads a file to Firebase Storage and returns its public URL and path.
- * @param file The file to upload.
- * @param path The path in the bucket (e.g., 'public/userId/profile').
- * @returns An object with the public URL and the uploaded path for rollbacks.
+ * Uploads a file directly to Cloudflare R2 using a presigned URL issued by
+ * the backend, and returns its public URL and object key (needed to delete
+ * it later, e.g. on rollback or when replacing a profile picture).
  */
-export const uploadFileToFirebase = async (
+export const uploadFileToR2 = async (
     file: File,
-    path: string
-): Promise<{ publicUrl: string, uploadedPath: string }> => {
-    const storage = getStorage();
-    const fileName = `${Date.now()}_${file.name}`;
-    const filePath = `${path}/${fileName}`;
-    const storageRef = ref(storage, filePath);
+    purpose: UploadPurpose
+): Promise<{ publicUrl: string; key: string }> => {
+    const { data } = await apolloClient.mutate({
+        mutation: GET_UPLOAD_URL,
+        variables: {
+            input: { purpose, fileName: file.name, contentType: file.type },
+        },
+    });
 
-    const snapshot = await uploadBytes(storageRef, file);
-    const publicUrl = await getDownloadURL(snapshot.ref);
+    const { uploadUrl, publicUrl, key } = data.getUploadUrl;
 
-    return { publicUrl, uploadedPath: snapshot.ref.fullPath };
+    const response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+    });
+    if (!response.ok) {
+        throw new Error(`Failed to upload file to storage (${response.status}).`);
+    }
+
+    return { publicUrl, key };
+};
+
+/**
+ * Deletes a previously uploaded file (rollback on failure, or replacing an
+ * existing profile/cover picture).
+ */
+export const deleteUploadedFile = async (key: string): Promise<void> => {
+    await apolloClient.mutate({
+        mutation: DELETE_UPLOADED_FILE,
+        variables: { key },
+    });
 };

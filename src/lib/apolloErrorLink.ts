@@ -16,14 +16,12 @@ export const errorLink = onError(({ graphQLErrors, networkError }) => {
 
     if (graphQLErrors) {
         graphQLErrors.forEach(({ message, locations, path, extensions }) => {
-            console.error(
-                `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(locations)}, Path: ${path}`
-            );
-
-            // Handle generic UNAUTHENTICATED error
+            // Not being authenticated yet is routine (e.g. a logged-out
+            // visitor's `me` query on a public page) — not a bug, so it
+            // shouldn't be logged as a console error or Next's dev overlay
+            // treats every anonymous page load as a crash.
             if (extensions?.code === 'UNAUTHENTICATED') {
-                // handleAuthError();
-                console.warn('Auth error (UNAUTHENTICATED) detected');
+                console.debug('[GraphQL] Unauthenticated request (expected while logged out):', path);
                 return;
             }
 
@@ -33,19 +31,20 @@ export const errorLink = onError(({ graphQLErrors, networkError }) => {
             if (errorMessage.includes('auth/id-token-expired') ||
                 (extensions?.exception as Record<string, unknown>)?.codePrefix === 'auth') {
 
-                console.log('🔄 Token expired, attempting handling...');
-
                 if (typeof window !== 'undefined') {
                     // Try to refresh token if possible (client-side)
                     // For now, simpliest approach is to force logout/login to get fresh token
                     // In a more advanced setup we would try `getIdToken(true)` and retry request
                     // handleAuthError();
-                    console.warn('Auth error (Token Expired) detected');
+                    console.debug('[GraphQL] Auth token expired (expected, session will refresh or prompt re-login)');
                 }
                 return;
             }
 
-            // Display toast for other GraphQL errors (Validation, Internal Error, etc.)
+            // Anything else is unexpected — log it and show a toast.
+            console.error(
+                `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(locations)}, Path: ${path}`
+            );
             notify("error", dict.globalErrors.default, {
                 message: message || dict.globalErrors.defaultDescription,
                 duration: 5000,

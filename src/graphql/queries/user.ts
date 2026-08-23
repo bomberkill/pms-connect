@@ -7,7 +7,7 @@ import { gql } from "@apollo/client";
  */
 export const USER_FIELDS = `
   id
-  firebaseUid
+  authUserId
   email
   phoneNumber
   slug
@@ -58,6 +58,44 @@ const CHECK_USER_FIELDS = `
   hasPassword
   providers
   `;
+
+/**
+ * Trimmed field set for viewing another user's public profile (e.g.
+ * profile/[slug] when not the authenticated user). Deliberately excludes
+ * everything the API already nulls for non-self viewers (email,
+ * phoneNumber, authUserId, blockedUsers, fcmTokens, location) so the
+ * client stops asking for data it can't use.
+ */
+export const PUBLIC_PROFILE_FIELDS = `
+  id
+  slug
+  userType
+  profilePicUrl
+  coverPicUrl
+  bio
+  websiteUrl
+  connections
+  accountStatus
+  location {
+    city
+    country
+  }
+  professionalAccreditation {
+    accreditationType
+    issuingAuthority
+    referenceNumber
+  }
+  ... on IndividualUserObject {
+    firstName
+    lastName
+    professionalTitle
+    speciality
+  }
+  ... on LegalEntityUserObject {
+    entityName
+    entityType
+  }
+`;
 
 // =============================================================================
 // == USER QUERIES & MUTATIONS
@@ -193,6 +231,36 @@ export const buildUnfollowMutation = () => {
   `;
 };
 
+// =============================================================================
+// == BLOCK QUERIES & MUTATIONS
+// =============================================================================
+
+/**
+ * Builds a GraphQL mutation for blocking a user.
+ * Corresponds to 'blockUser' resolver in users.resolver.ts.
+ * @returns A gql object.
+ */
+export const buildBlockUserMutation = () => {
+  return gql`
+    mutation BlockUser($userId: ID!) {
+      blockUser(userId: $userId)
+    }
+  `;
+};
+
+/**
+ * Builds a GraphQL mutation for unblocking a user.
+ * Corresponds to 'unblockUser' resolver in users.resolver.ts.
+ * @returns A gql object.
+ */
+export const buildUnblockUserMutation = () => {
+  return gql`
+    mutation UnblockUser($userId: ID!) {
+      unblockUser(userId: $userId)
+    }
+  `;
+};
+
 /**
  * Builds a GraphQL query for fetching a user's followers.
  * Corresponds to 'getFollowers' resolver in users.resolver.ts.
@@ -273,11 +341,11 @@ export const buildUpdateAccountStatusMutation = (meta?: { fields?: string }) => 
  * @param meta - Optional metadata.
  * @returns A gql object.
  */
-export const buildGetUserByUidQuery = (meta?: { fields?: string }) => {
+export const buildGetUserByAuthUserIdQuery = (meta?: { fields?: string }) => {
   const fields = meta?.fields || USER_FIELDS;
   return gql`
-    query GetUserByFirebaseUid($firebaseUid: ID!) { # Argument name from resolver
-      getUserByFirebaseUid(firebaseUid: $firebaseUid) {
+    query GetUserByAuthUserId($authUserId: ID!) { # Argument name from resolver
+      getUserByAuthUserId(authUserId: $authUserId) {
         ${fields}
       }
     }
@@ -340,6 +408,18 @@ export const buildUnregisterFcmTokenMutation = () => {
   return gql`
     mutation UnregisterFcmToken($token: String!) {
       unregisterFcmToken(token: $token)
+    }
+  `;
+};
+
+/**
+ * Builds a GraphQL mutation to deactivate the current user's own account
+ * (soft delete — sets accountStatus to DEACTIVATED, no data is erased).
+ */
+export const buildRemoveUserMutation = () => {
+  return gql`
+    mutation RemoveUser {
+      removeUser
     }
   `;
 };

@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import {
+  Bookmark,
   BriefcaseBusiness,
-  LibraryBig,
+  Download,
   MessageCircle,
   Newspaper,
   Settings,
@@ -30,15 +31,30 @@ import { Skeleton } from "@/components/ui/skeleton"
 import Image from "next/image"
 import { useCleanPathname } from "./Header"
 import { useMe } from "@/hooks/useData/index"
+import { usePwaInstall } from "@/hooks/use-pwa-install"
+import { useNotification } from "@/hooks/use-notification"
 
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const dict = useDictionary()
-  // const {user} = useAppSelector((state) => state.user)
   const { me: user } = useMe();
   const router = useRouter()
   const pathname = useCleanPathname()
+  const { isInstalled, isIOS, canPromptNatively, promptInstall } = usePwaInstall()
+  const { open } = useNotification()
+
+  const handleInstallClick = async () => {
+    if (isIOS) {
+      open("info", dict.pwa.installTitle, {
+        message: `${dict.pwa.iosTapShare} ${dict.pwa.iosAndSelect} "${dict.pwa.iosAddHome}"`,
+      })
+      return
+    }
+    if (canPromptNatively) {
+      await promptInstall()
+    }
+  }
   const data = React.useMemo(() => ({
     navMain: [
       {
@@ -84,10 +100,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
-        title: dict.appSideBar.navMain.library,
-        url: "/library",
-        icon: LibraryBig,
-        isActive: pathname === "/library",
+        title: dict.appSideBar.navMain.bookmarks,
+        url: "/bookmarks",
+        icon: Bookmark,
+        isActive: pathname === "/bookmarks",
         items: [
         ],
       },
@@ -135,6 +151,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter>
+        {!isInstalled && (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="sm" onClick={handleInstallClick}>
+                <Download />
+                <span>{dict.settings.labels.installApp}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
         {!user ? (
           <div className="flex items-center gap-3 p-2">
             <Skeleton className="size-9 rounded-full" />

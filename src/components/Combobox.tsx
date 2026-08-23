@@ -32,6 +32,7 @@ type ComboboxProps<T> = {
   onChange?: (item: T) => void
   onBlur?: React.FocusEventHandler<HTMLButtonElement>
   disabled?: boolean
+  searchable?: boolean
 }
 
 export function Combobox<T extends Country | State | City>({
@@ -43,6 +44,7 @@ export function Combobox<T extends Country | State | City>({
   onChange,
   onBlur,
   disabled = false,
+  searchable = true,
 
 }: ComboboxProps<T>) {
   const [open, setOpen] = React.useState(false)
@@ -54,6 +56,7 @@ export function Combobox<T extends Country | State | City>({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           id={id}
           name={name}
           variant="outline"
@@ -68,12 +71,15 @@ export function Combobox<T extends Country | State | City>({
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
         {/* {touched && error && (
-          <p className="text-red-500 text-xs">{error}</p>
+          <p className="text-destructive text-xs">{error}</p>
         )} */}
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] min-w-60 p-0"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <Command>
-          <CommandInput placeholder={displayPlaceholder} />
+          {searchable && <CommandInput placeholder={displayPlaceholder} />}
           <CommandList>
             <CommandEmpty>{dict.combobox.noResults}</CommandEmpty>
             <CommandGroup>

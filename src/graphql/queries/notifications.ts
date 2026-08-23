@@ -80,3 +80,36 @@ export const buildUnreadNotificationsCountQuery = () => {
     }
   `;
 };
+
+const NOTIFICATION_PREFERENCE_FIELDS = `
+  notifyReplies
+  notifyMentions
+  notifyConnectionRequests
+  notifyReactions
+  notifyGroupActivity
+  notifyEstablishmentAnnouncements
+  quietHoursEnabled
+  quietHoursStart
+  quietHoursEnd
+  weeklyEmailDigest
+`;
+
+export const buildGetMyNotificationPreferencesQuery = () => {
+  return gql`
+    query GetMyNotificationPreferences {
+      getMyNotificationPreferences {
+        ${NOTIFICATION_PREFERENCE_FIELDS}
+      }
+    }
+  `;
+};
+
+export const buildUpdateNotificationPreferencesMutation = () => {
+  return gql`
+    mutation UpdateNotificationPreferences($input: UpdateNotificationPreferencesInput!) {
+      updateNotificationPreferences(input: $input) {
+        ${NOTIFICATION_PREFERENCE_FIELDS}
+      }
+    }
+  `;
+};

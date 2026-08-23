@@ -4,8 +4,10 @@ import {
     buildMarkNotificationsAsReadMutation,
     buildNotificationAddedSubscription,
     buildUnreadNotificationsCountQuery,
+    buildGetMyNotificationPreferencesQuery,
+    buildUpdateNotificationPreferencesMutation,
 } from '@/graphql/queries/index';
-import { Notification } from '@/types/Notification';
+import { Notification, NotificationPreference, UpdateNotificationPreferencesInput } from '@/types/Notification';
 
 // =============================================================================
 // == NOTIFICATIONS
@@ -90,6 +92,47 @@ export const useNotificationSubscription = () => {
         loading,
         error,
     };
+};
+
+/**
+ * Hook to fetch the current user's notification preferences.
+ */
+export const useNotificationPreferences = () => {
+    const { data, loading, error, refetch } = useQuery<{ getMyNotificationPreferences: NotificationPreference }>(
+        buildGetMyNotificationPreferencesQuery(),
+        {
+            fetchPolicy: 'cache-and-network',
+        }
+    );
+
+    return {
+        preferences: data?.getMyNotificationPreferences,
+        loading,
+        error,
+        refresh: refetch,
+    };
+};
+
+/**
+ * Hook to update notification preferences. Callers typically pass one
+ * field at a time (auto-save on toggle), same pattern as the existing
+ * push-notification row in SettingsViewMobile.
+ */
+export const useUpdateNotificationPreferences = () => {
+    const [updateNotificationPreferences, { loading: updating, error: updateError }] = useMutation<
+        { updateNotificationPreferences: NotificationPreference },
+        { input: UpdateNotificationPreferencesInput }
+    >(buildUpdateNotificationPreferencesMutation(), {
+        update(cache, { data }) {
+            if (!data?.updateNotificationPreferences) return;
+            cache.writeQuery({
+                query: buildGetMyNotificationPreferencesQuery(),
+                data: { getMyNotificationPreferences: data.updateNotificationPreferences },
+            });
+        },
+    });
+
+    return { updateNotificationPreferences, updating, updateError };
 };
 
 /**

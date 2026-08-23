@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Archivo, Bricolage_Grotesque } from "next/font/google";
 import "../../app/globals.css";
 import Providers from "../Providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -9,13 +9,13 @@ import { Toaster } from "@/components/ui/sonner";
 //   subsets: ["latin"],
 // });
 
-const inter = Inter({
-  variable: "--font-inter-sans",
+const archivo = Archivo({
+  variable: "--font-archivo-sans",
   subsets: ["latin"],
 });
 
-const manrope = Manrope({
-  variable: "--font-manrope-sans",
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage-sans",
   subsets: ["latin"],
 });
 
@@ -63,9 +63,26 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
+  // Explicit `apple` entry required: setting `metadata.icons` at all makes
+  // Next.js skip file-convention auto-detection entirely (verified against
+  // the rendered DOM — apple-icon.png/icon1.png weren't linked at all once
+  // `icons.icon` was set), it doesn't just override the one slot you named.
   icons: {
     icon: "/web-app-manifest-192x192.png",
-    apple: "/web-app-manifest-512x512.png",
+    apple: "/apple-icon.png",
+  },
+  // Next.js's `appleWebApp.capable` renders `mobile-web-app-capable` (the
+  // Chrome/Android tag) but NOT `apple-mobile-web-app-capable` itself —
+  // verified against the actual rendered HTML, an easy assumption to get
+  // wrong. Some iOS Safari versions specifically check the apple-prefixed
+  // tag for standalone mode, so it's added explicitly via `other`.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PMSCONNECT",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
   },
 };
 
@@ -95,13 +112,12 @@ export default async function RootLayout({
 
   return (
     <html lang={lang} suppressHydrationWarning>
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="apple-mobile-web-app-title" content="PmsConnect" />
-      </head>
+      {/* No manual <link rel="manifest">/apple-mobile-web-app-* tags here —
+          metadata.manifest + metadata.appleWebApp above already generate
+          them (duplicated tags otherwise). */}
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${manrope.variable} antialiased`}
+        className={`${archivo.variable} ${bricolage.variable} antialiased`}
       >
         <Providers dictionary={dictionary}>
           <PwaInstallPrompt />

@@ -445,11 +445,11 @@ function MediaPreview({
       onClick={onClick}
       className="w-full h-60 bg-muted border border-border flex flex-col items-center justify-center rounded-md cursor-pointer hover:bg-muted/80 transition group relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 p-2 bg-red-500 text-white text-[10px] font-bold rounded-bl-lg shadow-sm">
+      <div className="absolute top-0 right-0 p-2 bg-error text-error-foreground text-2xs font-bold rounded-bl-lg shadow-sm">
         {dict.common.pdf}
       </div>
       <div className="p-4 bg-card rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
-        <FileIcon className="w-8 h-8 text-red-500" />
+        <FileIcon className="w-8 h-8 text-error" />
       </div>
       <span className="text-sm font-medium text-foreground text-center px-4 line-clamp-2 break-words max-w-full">
         {media.url.split("/").pop() || dict.post.pdfDocument}

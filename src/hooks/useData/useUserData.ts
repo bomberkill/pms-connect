@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useSubscription, useLazyQuery } from '@apollo/client';
+import { useQuery, useMutation, useSubscription, useLazyQuery, Reference } from '@apollo/client';
 import {
     buildGetAllUsersQuery,
     buildGetMeQuery,
@@ -10,6 +10,8 @@ import {
     buildUpdateMyEmailMutation,
     buildFollowMutation,
     buildUnfollowMutation,
+    buildBlockUserMutation,
+    buildUnblockUserMutation,
     buildFollowsUpdatedSubscription,
     buildCheckUserExistsByEmailQuery,
     buildCheckUserExistsByPhoneNumberQuery,
@@ -17,8 +19,6 @@ import {
     buildUnregisterFcmTokenMutation,
 } from '@/graphql/queries/index';
 import { CheckUserExistsResponse, FollowsUpdated, User, UpdateUserInput } from '@/types/User';
-// import { useAppSelector, useAppDispatch } from '@/lib/hooks';
-// import { setUser } from '@/redux/slices/userSlice';
 import { useEffect, useCallback } from 'react';
 
 // =============================================================================
@@ -34,12 +34,10 @@ interface UseUsersOptions {
  */
 export const useUsers = (options: UseUsersOptions = {}) => {
     const { limit = 5 } = options;
-    //   const { user } = useAppSelector((state) => state.user);
 
     const { data, loading, error, ...rest } = useQuery(buildGetAllUsersQuery(), {
         variables: { limit },
-        fetchPolicy: 'cache-and-network', // ✅ Added
-        // skip: !user,
+        fetchPolicy: 'cache-and-network',
     });
 
     const suggestions: User[] = data?.getAllUsers || [];
@@ -50,11 +48,9 @@ export const useUsers = (options: UseUsersOptions = {}) => {
 /**
  * Hook to get the current authenticated user's data.
  */
-export const useMe = () => {
-    //   const { user } = useAppSelector((state) => state.user);
-    //   const dispatch = useAppDispatch();
+export const useMe = (options?: { skip?: boolean }) => {
     const { data, loading, error, refetch } = useQuery<{ me: User }>(buildGetMeQuery(), {
-        // skip: !user,
+        skip: options?.skip,
         fetchPolicy: 'cache-and-network',
     });
 
@@ -91,11 +87,14 @@ export const useUser = (userId: string) => {
 };
 
 /**
- * Hook to fetch a user by slug.
+ * Hook to fetch a user by slug. Pass `fields` to override the default
+ * USER_FIELDS selection (e.g. PUBLIC_PROFILE_FIELDS when viewing another
+ * user's profile, to avoid requesting fields the API nulls for non-self
+ * viewers anyway).
  */
-export const useUserBySlug = (slug: string) => {
+export const useUserBySlug = (slug: string, options?: { fields?: string }) => {
     const { data, loading, error, refetch } = useQuery<{ getUserBySlug: User }>(
-        buildGetUserBySlugQuery(),
+        buildGetUserBySlugQuery({ fields: options?.fields }),
         {
             variables: { slug },
             skip: !slug,
@@ -217,6 +216,52 @@ export const useFollowActions = () => {
     return { followUser, following, followError, unfollowUser, unfollowing, unfollowError };
 };
 
+/**
+ * Hook that provides block/unblock actions. Blocking hides content in
+ * both directions server-side (see PostsService.blockedAuthorsFilter);
+ * client-side we only need to keep `me.blockedUsers` in sync so the
+ * "Bloqué"/"Bloquer" UI state and any local filtering reflect the change
+ * immediately without a refetch.
+ */
+export const useBlockActions = () => {
+    const { me } = useMe();
+    const [blockUser, { loading: blocking, error: blockError }] = useMutation<{ blockUser: boolean }, { userId: string }>(buildBlockUserMutation(), {
+        optimisticResponse: { blockUser: true },
+        update(cache, { data }, { variables }) {
+            if (data?.blockUser && variables?.userId && me) {
+                cache.modify({
+                    id: cache.identify({ __typename: 'User', id: me.id }),
+                    fields: {
+                        blockedUsers: (existing: string[] | Reference = []) => {
+                            const ids = Array.isArray(existing) ? existing : [];
+                            return ids.includes(variables.userId) ? ids : [...ids, variables.userId];
+                        },
+                    }
+                });
+            }
+        }
+    });
+
+    const [unblockUser, { loading: unblocking, error: unblockError }] = useMutation<{ unblockUser: boolean }, { userId: string }>(buildUnblockUserMutation(), {
+        optimisticResponse: { unblockUser: true },
+        update(cache, { data }, { variables }) {
+            if (data?.unblockUser && variables?.userId && me) {
+                cache.modify({
+                    id: cache.identify({ __typename: 'User', id: me.id }),
+                    fields: {
+                        blockedUsers: (existing: string[] | Reference = []) => {
+                            const ids = Array.isArray(existing) ? existing : [];
+                            return ids.filter((id) => id !== variables.userId);
+                        },
+                    }
+                });
+            }
+        }
+    });
+
+    return { blockUser, blocking, blockError, unblockUser, unblocking, unblockError };
+};
+
 export const useFollowsSubscription = (userId: string) => {
     const { data, loading, error } = useSubscription<{ followsUpdated: FollowsUpdated }>(buildFollowsUpdatedSubscription(), {
         variables: { userId }
@@ -317,10 +362,16 @@ export const useFcmToken = () => {
             if (permission === 'granted') {
                 const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-                // Register Service Worker explicitly to avoid 404/MIME issues with localization middleware
+                // Register Service Worker explicitly to avoid 404/MIME issues with localization middleware.
+                // Scoped to a dedicated path (Firebase's documented pattern for coexisting with
+                // another service worker) — without this, registering at the default root scope
+                // would compete with next-pwa's caching SW for control of "/", since only one SW
+                // can control a given scope at a time.
                 let swRegistration = undefined;
                 try {
-                    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                        scope: '/firebase-cloud-messaging-push-scope',
+                    });
                 } catch {
                     // console.warn("[useFcmToken] SW registration failed, letting getToken handle it:", err);
                 }
@@ -383,19 +434,6 @@ export const useFcmToken = () => {
         }
     };
 
-    // Helper to unregister token on logout
-    const handleLogout = async () => {
-        const token = localStorage.getItem(LAST_FCM_TOKEN_KEY);
-        if (token) {
-            try {
-                await unregisterToken({ variables: { token } });
-                localStorage.removeItem(LAST_FCM_TOKEN_KEY);
-            } catch (e) {
-                console.warn("Failed to unregister token on logout:", e);
-            }
-        }
-    };
-
     return {
         registerToken,
         registering,
@@ -405,6 +443,5 @@ export const useFcmToken = () => {
         unregisterError,
         requestPermission,
         permissionState: typeof window !== "undefined" ? Notification.permission : 'default',
-        handleLogout // Expose this for Logout buttons
     };
 };

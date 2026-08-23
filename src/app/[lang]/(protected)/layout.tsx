@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
 import { useAuthObserver } from "@/hooks/use-auth";
-import { useAppSelector } from "@/hooks/use-redux";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import {
@@ -13,6 +12,8 @@ import { SuggestionsSidebar } from "@/components/Suggestions-sidebar";
 import Header from "@/components/Header";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AccountStatusGQL } from "@/types/User";
+import { useMe } from "@/hooks/useData";
 
 export default function ProtectedLayout({
   children,
@@ -20,24 +21,42 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { initialized, firebaseUid: uid } = useAuthObserver();
-  const { firebaseUid, loading: authLoading } = useAppSelector(
-    (state) => state.auth
-  );
+  const { initialized, authUserId: uid } = useAuthObserver();
+  const authLoading = !initialized;
   const isMobile = useIsMobile();
+  const { me, loading: meLoading, error: meError } = useMe({ skip: !uid });
 
   useEffect(() => {
-    // console.log("start protected layout useEffect, authLoading: ", authLoading, "firebaseUid: ", firebaseUid, "initialized: ", initialized, "uid: ", uid);
-
     if (initialized && !uid && !authLoading) {
-      // console.log("no firebaseUid found. redirect to login, authLoading: ", authLoading, "firebaseUid: ", firebaseUid, "initialized: ", initialized, "uid: ", uid);
       router.push("/login");
     }
   }, [initialized, authLoading, uid, router]);
 
+  useEffect(() => {
+    if (uid && me?.accountStatus === AccountStatusGQL.PENDING_VERIFICATION) {
+      router.replace("/pending-approval");
+    }
+  }, [uid, me?.accountStatus, router]);
+
+  // Deactivating a device's own session forces a logout right after the
+  // mutation (see SettingsView), but removeUser itself never invalidates
+  // the Better Auth session server-side — this is the safety net for any
+  // other session already open elsewhere (another tab, another device).
+  useEffect(() => {
+    if (uid && me?.accountStatus === AccountStatusGQL.DEACTIVATED) {
+      router.replace("/login");
+    }
+  }, [uid, me?.accountStatus, router]);
+
+  useEffect(() => {
+    if (uid && !meLoading && !me && !meError) {
+      router.replace("/register");
+    }
+  }, [uid, meLoading, me, meError, router]);
+
   // Pendant le SSR ou le rendu initial du client, et pendant que l'état d'authentification se charge, on affiche un loader.
   // Cela garantit que le rendu du serveur correspond au rendu initial du client, évitant une erreur d'hydratation.
-  if (authLoading) {
+  if (authLoading || (uid && meLoading)) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -47,7 +66,15 @@ export default function ProtectedLayout({
 
   // Si la vérification de l'authentification est terminée et qu'il n'y a pas d'utilisateur, nous pouvons retourner null
   // pendant que la redirection vers /login se produit. Cela évite de faire clignoter le contenu protégé.
-  if (!firebaseUid) {
+  if (!uid) {
+    return null;
+  }
+
+  if (!meLoading && !me && !meError) {
+    return null;
+  }
+
+  if (me?.accountStatus === AccountStatusGQL.PENDING_VERIFICATION) {
     return null;
   }
 

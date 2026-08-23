@@ -3,21 +3,57 @@
 import { EmailVerificationStep } from "@/components/auth/steps/StepEmailVerification";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
+import { authClient } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 function VerifyEmailPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get('email');
+    const token = searchParams.get('token');
     const { open } = useNotification();
     const dict = useDictionary();
 
-    if (!email) {
-        // Rediriger si aucun e-mail n'est fourni
-        if (typeof window !== "undefined") {
+    // Coming from the link in the verification email: consume the token
+    // directly instead of showing the "check your inbox" polling UI below.
+    const [isConsumingToken, setIsConsumingToken] = useState(!!token);
+
+    useEffect(() => {
+        if (!token) return;
+        authClient.verifyEmail({ query: { token } })
+            .then(({ error }) => {
+                if (error) {
+                    open("error", dict.globalErrors.default, { message: error.message || dict.globalErrors.defaultDescription });
+                    router.replace('/login');
+                    return;
+                }
+                open("success", dict.notifications.verification.successTitle, { message: dict.notifications.verification.successMessage });
+                router.replace('/login');
+            })
+            .finally(() => setIsConsumingToken(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token]);
+
+    // Redirect if neither a token (from the emailed link) nor an email (from
+    // the "check your inbox" redirect) is present. Done in an effect, not
+    // during render, so we don't setState-on-Router while this component is
+    // still rendering.
+    useEffect(() => {
+        if (!isConsumingToken && !token && !email) {
             router.replace('/login');
         }
+    }, [isConsumingToken, token, email, router]);
+
+    if (isConsumingToken) {
+        return (
+            <div className="container relative flex min-h-svh flex-col items-center justify-center px-4">
+                <p className="text-muted-foreground">{dict.button.sending}</p>
+            </div>
+        );
+    }
+
+    if (!email) {
         return null;
     }
 

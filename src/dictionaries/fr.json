@@ -3,16 +3,16 @@
     "title": "et voyez vos changements instantanément."
   },
   "login": {
-    "title": "Connectez-vous à votre compte",
-    "description": "Entrez votre email ci-dessous pour vous connecter",
-    "emailLabel": "Email",
+    "title": "Bon retour",
+    "description": "Le réseau des professionnels de santé, des établissements et de l'industrie.",
+    "emailLabel": "Adresse e-mail",
     "passwordLabel": "Mot de passe",
-    "forgotPassword": "Mot de passe oublié ?",
+    "forgotPassword": "Oublié ?",
     "loginButton": "Se connecter",
-    "continueWith": "Ou continuer avec",
-    "googleButton": "Se connecter avec Google",
-    "noAccount": "Vous n'avez pas de compte ?",
-    "signUp": "S'inscrire"
+    "continueWith": "ou",
+    "googleButton": "Continuer avec Google",
+    "noAccount": "Pas encore de compte ?",
+    "signUp": "Créer un compte"
   },
   "auth": {
     "otp": {
@@ -41,12 +41,19 @@
     },
     "post": {
       "contentRequired": "Le contenu de la publication ne peut pas être vide.",
-      "contentMax": "Le contenu de la publication ne peut pas dépasser 2000 caractères."
+      "contentMax": "Le contenu de la publication ne peut pas dépasser 3000 caractères."
     },
     "password": {
-      "min": "Le mot de passe doit contenir au moins 6 caractères",
+      "min": "Le mot de passe doit contenir au moins 12 caractères, dont un chiffre",
       "required": "Le mot de passe est requis",
-      "weak": "Le mot de passe est trop faible, veuillez choisir un mot de passe plus fort"
+      "weak": "Le mot de passe est trop faible, veuillez choisir un mot de passe plus fort",
+      "strength": {
+        "0": "Faible",
+        "1": "Moyen",
+        "2": "Solide",
+        "3": "Très solide",
+        "hint": "Ajoutez un caractère spécial pour atteindre le niveau maximal"
+      }
     },
     "file": {
       "required": "Un fichier est requis",
@@ -84,8 +91,15 @@
     "title": "Notifications",
     "markAllRead": "Tout marquer comme lu",
     "noNotifications": "Aucune notification pour le moment",
+    "today": "Aujourd'hui",
+    "thisWeek": "Cette semaine",
+    "earlier": "Plus tôt",
     "error": "Erreur lors du chargement des notifications.",
     "warning": "Attention",
+    "linkCopied": {
+      "title": "Lien copié",
+      "message": "Le lien du profil a été copié dans le presse-papiers."
+    },
     "verification": {
       "resentTitle": "E-mail renvoyé",
       "resentMessage": "Un nouveau lien de vérification a été envoyé à votre adresse e-mail.",
@@ -110,6 +124,10 @@
           "auth/user-not-found": "Aucun utilisateur trouvé avec cet e-mail.",
           "auth/network-request-failed": "Vérifiez votre connexion internet et réessayez",
           "auth/too-many-requests": "Trop de tentatives. Veuillez réessayer plus tard.",
+          "auth/account-pending-approval": {
+            "title": "Compte en attente de validation",
+            "message": "Votre compte a été créé et attend encore la validation d'un administrateur."
+          },
           "auth/email-not-verified": {
             "title": "E-mail non vérifié",
             "message": "Vous devez vérifier votre adresse e-mail avant de vous connecter. Veuillez consulter votre boîte de réception pour le lien de vérification."
@@ -124,6 +142,10 @@
         "googleAccount": {
           "title": "Compte Google lié",
           "message": "Votre compte Google a été lié avec succès, Veuillez compléter votre profil pour continuer."
+        },
+        "pendingVerification": {
+          "title": "Compte créé",
+          "message": "Votre compte a été créé. Vérifiez votre boîte mail pour confirmer votre adresse, puis connectez-vous."
         }
       },
       "error": {
@@ -157,6 +179,16 @@
         "message": "Impossible d’envoyer le lien de réinitialisation. Veuillez réessayer."
       }
     },
+    "passwordReset": {
+      "success": {
+        "title": "Mot de passe mis à jour",
+        "message": "Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter."
+      },
+      "error": {
+        "title": "Échec de la réinitialisation",
+        "message": "Impossible de réinitialiser le mot de passe. Le lien est peut-être expiré."
+      }
+    },
     "noChanges": {
       "title": "Aucun changement",
       "message": "Vous n'avez fait aucune modification."
@@ -178,8 +210,21 @@
   "register": {
     "title": "Créer votre compte",
     "description": "Commencez votre parcours avec nous !",
-    "step1Title": "Type de compte et identifiants",
-    "step1Description": "Choisissez votre type de compte et définissez vos identifiants.",
+    "stepCredentialsBadge": "Identifiants",
+    "stepCredentialsTitle": "Créons votre compte",
+    "stepCredentialsDescription": "Utilisez votre adresse professionnelle : elle accélère la vérification de votre titre.",
+    "stepAccountTypeBadge": "Type de compte",
+    "stepAccountTypeTitle": "Qui êtes-vous ?",
+    "stepAccountTypeDescription": "Ce choix détermine les informations demandées et la façon dont votre profil apparaît. Il n'est pas modifiable ensuite.",
+    "stepDetailsBadge": "Votre exercice",
+    "stepDetailsTitle": "Votre exercice",
+    "stepDetailsDescription": "Ces informations apparaissent sur votre profil et servent à vérifier votre titre.",
+    "stepDetailsBadgeEntity": "Votre structure",
+    "stepDetailsTitleEntity": "Votre structure",
+    "stepDetailsDescriptionEntity": "Ces informations sont vérifiées auprès du registre du commerce ou de l'autorité de santé compétente.",
+    "stepProfileBadge": "Profil",
+    "stepProfileTitle": "Complétez votre profil",
+    "stepProfileDescription": "Facultatif, mais un profil complet obtient trois fois plus de mises en relation.",
     "userTypeLabel": "Type d'utilisateur",
     "individual": "Personne physique",
     "legalEntity": "Entité légale",
@@ -189,16 +234,12 @@
     "phoneNmmberLabel": "Numéro de téléphone",
     "passwordLabel": "Mot de passe",
     "confirmPasswordLabel": "Confirmer le mot de passe",
-    "step2Title": "Détails personnels",
-    "step2Description": "Fournissez quelques informations sur vous-même.",
     "firstNameLabel": "Prénom",
     "lastNameLabel": "Nom",
     "specialityLabel": "Spécialité",
     "professionalTitleLabel": "Titre professionnel",
     "entityNameLabel": "Nom de l'entité",
     "entityTypeLabel": "Type d'entité",
-    "step3Title": "Détails du profil et localisation",
-    "step3Description": "Ajoutez des informations facultatives pour votre profil et votre adresse.",
     "bioLabel": "Biographie",
     "profilePicUrlLabel": "URL de la photo de profil",
     "coverPicUrlLabel": "URL de la photo de couverture",
@@ -209,14 +250,15 @@
     "stateOrProvinceLabel": "État/Province",
     "postalCodeLabel": "Code postal",
     "countryLabel": "Pays",
-    "next": "Suivant",
+    "next": "Continuer",
     "previous": "Précédent",
-    "registerButton": "S'inscrire",
-    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "registerButton": "Terminer l'inscription",
+    "skipStep": "Passer cette étape",
+    "alreadyHaveAccount": "Déjà inscrit ?",
     "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
     "uploadProfilePic": "Téléverser une photo de profil",
     "uploadCoverPic": "Téléverser une photo de couverture",
-    "uploadAccreditations": "Téléverser des accréditations professionnelles (PDF, JPG, PNG)",
+    "uploadAccreditations": "Téléverser des accréditations professionnelles (PDF, JPG, PNG) — optionnel, vous pourrez les ajouter plus tard",
     "professionalAccreditations": "Accréditations professionnelles",
     "accreditationType": "Type d'accréditation",
     "document": "Document (PDF, JPG, PNG)",
@@ -226,7 +268,8 @@
     "verifyEmailMessage": "Nous avons envoyé un lien de vérification à {email}. Veuillez consulter votre boîte de réception pour continuer.",
     "verifyEmailSpam": "Vous ne trouvez pas l'e-mail ? Vérifiez votre dossier de spam.",
     "googleAccountLinked": "Compte Google lié",
-    "noPasswordNeeded": "Aucun mot de passe requis pour l'inscription via Google."
+    "noPasswordNeeded": "Aucun mot de passe requis pour l'inscription via Google.",
+    "emailVerifiedByGoogle": "Adresse e-mail vérifiée par Google."
   },
   "specialities": {
     "MEDICAL_DOCTORS": "Médecins",
@@ -255,14 +298,16 @@
   },
   "appSideBar": {
     "navMain": {
-      "feed": "Fil d'actualité",
-      "friends": "Amis",
+      "feed": "Fil",
+      "friends": "Relations",
       "chat": "Discussions",
+      "messages": "Messages",
       "job": "Emplois",
-      "profile": "Profile",
+      "profile": "Profil",
       "settings": "Paramètres",
       "marketplace": "Marketplace",
       "library": "Bibliothèque",
+      "bookmarks": "Enregistrements",
       "more": "Plus",
       "groups": "Groupes"
     },
@@ -298,7 +343,10 @@
       "posts": "Publications",
       "followers": "Abonnés",
       "following": "Abonnements"
-    }
+    },
+    "verifiedIndividual": "Titre vérifié",
+    "verifiedOrganization": "Établissement vérifié",
+    "accreditations": "Accréditations"
   },
   "button": {
     "edit": "Modifier le profil",
@@ -311,11 +359,17 @@
     "sending": "Envoi en cours...",
     "resend": "Renvoyer l'e-mail",
     "changeEmail": "Changer l'adresse e-mail",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "add": "Ajouter"
   },
   "updateProfile": {
     "title": "Modifier le profil",
-    "description": "Mettez à jour vos informations. Cliquez sur \"Enregistrer\" lorsque vous avez terminé."
+    "description": "Mettez à jour vos informations. Cliquez sur \"Enregistrer\" lorsque vous avez terminé.",
+    "accreditations": {
+      "title": "Accréditations professionnelles",
+      "addButton": "Ajouter un document",
+      "document": "Document"
+    }
   },
   "combobox": {
     "selectCountry": "Sélectionnez un pays",
@@ -333,12 +387,26 @@
   "resetPassword": {
     "title": "Réinitialiser le mot de passe",
     "description": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
-    "emailLabel": "Adresse e-mail"
+    "emailLabel": "Adresse e-mail",
+    "newPasswordTitle": "Choisir un nouveau mot de passe",
+    "newPasswordDescription": "Vous serez déconnecté de vos autres appareils.",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "confirmNewPasswordLabel": "Confirmer le nouveau mot de passe",
+    "submitButton": "Réinitialiser le mot de passe",
+    "invalidToken": "Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau."
+  },
+  "bookmarks": {
+    "title": "Mes enregistrements",
+    "subtitle": "Publications et commentaires que vous avez enregistrés.",
+    "emptyTitle": "Aucun enregistrement",
+    "emptyDescription": "Les publications et commentaires que vous enregistrez apparaîtront ici.",
+    "commentBadge": "Commentaire"
   },
   "friends": {
     "connectionRequests": "Mes demandes de connexion",
     "suggestions": "Suggestions",
     "noSuggestions": "Aucune suggestion pour le moment.",
+    "mutualConnections": "{count} en commun",
     "title": "Relations",
     "subtitle": "Gérez votre réseau professionnel.",
     "searchPlaceholder": "Rechercher une relation...",
@@ -379,15 +447,69 @@
     "acceptRequest": "Accepter la demande",
     "disconnect": "Se déconnecter",
     "connect": "Se connecter",
+    "contact": "Contacter",
     "back": "Retour",
     "likes": "J'aime",
     "loadMore": "Charger plus",
     "download": "Télécharger",
-    "like": "J'aime",
-    "unlike": "Je n'aime plus",
+    "like": "J'apprécie",
+    "unlike": "Je n'apprécie plus",
     "comment": "Commenter",
     "bookmark": "Enregistrer",
-    "removeBookmark": "Retirer des enregistrements"
+    "removeBookmark": "Retirer des enregistrements",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "block": "Bloquer",
+    "unblock": "Débloquer",
+    "message": "Message"
+  },
+  "report": {
+    "title": "Signaler cette publication",
+    "description": "Votre signalement est anonyme. Un modérateur l'examinera rapidement.",
+    "reasons": {
+      "patientData": "Données patient identifiables",
+      "medicalMisinformation": "Information médicale erronée",
+      "advertising": "Publicité déguisée",
+      "titleImpersonation": "Usurpation de titre",
+      "other": "Autre motif"
+    },
+    "detailsPlaceholder": "Décrivez le problème",
+    "submit": "Envoyer le signalement",
+    "successTitle": "Signalement envoyé",
+    "successMessage": "Merci, notre équipe va l'examiner.",
+    "errorTitle": "Échec de l'envoi du signalement"
+  },
+  "comingSoon": {
+    "notifyMe": "Me prévenir au lancement",
+    "notified": "Vous serez prévenu",
+    "notifyConfirmedTitle": "Noté",
+    "notifyConfirmedMessage": "Nous vous préviendrons dès l'ouverture.",
+    "marketplace": {
+      "title": "Marketplace en construction",
+      "description": "Équipements, consommables et prestations entre établissements et fournisseurs vérifiés. Ouverture au second semestre, d'abord aux établissements."
+    },
+    "jobs": {
+      "title": "Offres d'emploi",
+      "description": "Même échéance que la Marketplace — recrutement hospitalier et libéral au second semestre."
+    }
+  },
+  "pendingApproval": {
+    "title": "Compte en attente de validation",
+    "description": "Votre e-mail a bien été vérifié, mais votre profil doit encore être validé par l'équipe PMSCONNECT avant de pouvoir accéder à la plateforme.",
+    "reviewNotice": "Vous pourrez vous connecter dès qu'un administrateur aura validé votre compte.",
+    "backToLogin": "Retour à la connexion",
+    "statusLabel": "Validation en cours",
+    "securityTitle": "Pourquoi cette étape ?",
+    "securityDescription": "PMSCONNECT réserve l'accès aux professionnels et organisations de santé afin de garder un réseau fiable, utile et sécurisé.",
+    "timelineSubmitted": "Profil transmis",
+    "timelineSubmittedDescription": "Vos informations sont bien enregistrées.",
+    "timelineReview": "Revue administrative",
+    "timelineReviewDescription": "L'équipe vérifie les informations professionnelles.",
+    "timelineAccess": "Accès à la plateforme",
+    "timelineAccessDescription": "Vous pourrez vous connecter après validation.",
+    "nextStepTitle": "Ce que vous pouvez faire maintenant",
+    "nextStepDescription": "Gardez votre adresse e-mail accessible. Si une précision est nécessaire, l'équipe PMSCONNECT pourra vous contacter.",
+    "supportHint": "Besoin d'aide ? Contactez l'équipe PMSCONNECT avec l'adresse utilisée lors de l'inscription."
   },
   "changeEmail": {
     "title": "Changer votre adresse e-mail",
@@ -399,6 +521,14 @@
     "defaultDescription": "Erreur inconnue du serveur.",
     "network": "Erreur de connexion",
     "networkDescription": "Impossible de joindre le serveur. Vérifiez votre connexion."
+  },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Rechercher un groupe...",
+    "groupsSectionLabel": "Groupes",
+    "noResults": "Aucun résultat pour cette recherche.",
+    "startTyping": "Commencez à taper pour rechercher un groupe.",
+    "peoplePostsComingSoon": "La recherche de personnes et de publications arrive bientôt."
   },
   "groups": {
     "title": "Groupes",
@@ -412,11 +542,63 @@
     "about": "À propos",
     "createdBy": "Créé par",
     "join": "Rejoindre le groupe",
+    "joinedSuccess": "Vous avez rejoint le groupe.",
+    "joinError": "Échec lors de la tentative de rejoindre le groupe.",
+    "requestSentSuccess": "Votre demande d'adhésion a été envoyée.",
+    "cancelRequest": "Annuler la demande",
+    "requestCancelledSuccess": "Votre demande d'adhésion a été annulée.",
+    "requestCancelledError": "Échec lors de l'annulation de votre demande.",
+    "acceptInvitation": "Accepter l'invitation",
+    "declineInvitation": "Refuser l'invitation",
+    "invitationAcceptedSuccess": "Invitation acceptée.",
+    "invitationAcceptedError": "Échec lors de l'acceptation de l'invitation.",
+    "invitationDeclinedSuccess": "Invitation refusée.",
+    "invitationDeclinedError": "Échec lors du refus de l'invitation.",
+    "approveRequest": "Approuver",
+    "rejectRequest": "Refuser",
+    "requestApprovedSuccess": "Demande d'adhésion approuvée.",
+    "requestApprovedError": "Échec lors de l'approbation de la demande.",
+    "requestRejectedSuccess": "Demande d'adhésion refusée.",
+    "requestRejectedError": "Échec lors du refus de la demande.",
+    "joinRequests": "Demandes d'adhésion",
+    "noJoinRequests": "Aucune demande d'adhésion en attente.",
+    "pendingPosts": "Publications en attente",
+    "noPendingPosts": "Aucune publication en attente de validation.",
+    "approvePost": "Publier",
+    "rejectPost": "Rejeter",
+    "postApprovedSuccess": "Publication approuvée.",
+    "postApprovedError": "Échec de l'approbation de la publication.",
+    "postRejectedSuccess": "Publication rejetée.",
+    "postRejectedError": "Échec du rejet de la publication.",
+    "postPendingApprovalTitle": "Publication envoyée",
+    "postPendingApprovalMessage": "Elle sera visible dans le groupe une fois validée par un modérateur.",
+    "removeMember": "Retirer",
+    "memberRemovedSuccess": "Membre retiré du groupe.",
+    "memberRemovedError": "Échec lors du retrait du membre.",
+    "memberRoleUpdatedSuccess": "Rôle du membre mis à jour.",
+    "memberRoleUpdatedError": "Échec lors de la mise à jour du rôle.",
+    "unknownMember": "Membre inconnu",
+    "edit": "Modifier le groupe",
+    "delete": "Supprimer le groupe",
+    "deleteSuccess": "Groupe supprimé.",
+    "deleteError": "Échec lors de la suppression du groupe.",
+    "deleteConfirmTitle": "Supprimer le groupe",
+    "deleteConfirmMessage": "Cette action est définitive. Supprimer ce groupe ?",
+    "removeMemberConfirmTitle": "Retirer le membre",
+    "removeMemberConfirmMessage": "Retirer {name} de ce groupe ?",
     "leave": "Quitter le groupe",
     "leftSuccess": "Vous avez quitté le groupe.",
     "leftError": "Échec lors de la tentative de quitter le groupe.",
     "members": "Membres du groupe",
     "privacy": "Groupe",
+    "myGroups": "Mes groupes",
+    "discover": "Découvrir",
+    "noDiscoverGroups": "Aucun groupe public à découvrir pour le moment.",
+    "roles": {
+      "admin": "Admin",
+      "moderator": "Modérateur",
+      "member": "Membre"
+    },
     "form": {
       "name": "Nom",
       "namePlaceholder": "ex: Héros React",
@@ -426,13 +608,30 @@
       "selectPrivacy": "Sélectionner la confidentialité",
       "public": "Public",
       "private": "Privé",
+      "secret": "Secret",
       "publicDesc": "Les groupes publics sont visibles par tous.",
       "privateDesc": "Les groupes privés nécessitent une approbation pour rejoindre.",
+      "secretDesc": "Les groupes secrets sont sur invitation uniquement et ne sont pas visibles publiquement.",
+      "postsRequireApproval": "Valider les publications avant qu'elles apparaissent dans le groupe",
+      "restrictToVerifiedTitles": "Réserver ce groupe aux titres vérifiés",
+      "rules": "Règles du groupe",
+      "rulesPlaceholder": "Une règle par ligne",
       "createBtn": "Créer le groupe",
       "createSuccess": "Groupe créé avec succès !",
       "createError": "Échec de la création du groupe.",
+      "updateBtn": "Enregistrer les modifications",
+      "updateSuccess": "Groupe mis à jour avec succès.",
+      "updateError": "Échec de la mise à jour du groupe.",
       "dialogTitle": "Créer un groupe",
-      "dialogDesc": "Créez une nouvelle communauté pour vous connecter."
+      "dialogDesc": "Créez une nouvelle communauté pour vous connecter.",
+      "editDialogTitle": "Modifier le groupe",
+      "editDialogDesc": "Mettez à jour les informations de cette communauté.",
+      "invite": "Inviter",
+      "inviteDialogTitle": "Inviter des membres",
+      "inviteDialogDesc": "Recherchez une personne à inviter dans ce groupe.",
+      "inviteSentSuccess": "Invitation envoyée.",
+      "inviteSentError": "Échec de l'envoi de l'invitation.",
+      "noInviteCandidates": "Aucun utilisateur à inviter."
     }
   },
   "settings": {
@@ -471,11 +670,38 @@
       "enable": "Activer",
       "enabled": "Activé",
       "deniedError": "Notifications refusées. Veuillez les activer dans les paramètres du navigateur.",
-      "enabledSuccess": "Notifications activées !"
+      "enabledSuccess": "Notifications activées !",
+      "verificationDocuments": "Documents et vérification",
+      "verified": "Vérifié",
+      "notVerified": "Non vérifié",
+      "notificationPreferences": "Préférences de notifications",
+      "manage": "Gérer",
+      "installApp": "Installer l'application",
+      "installAppDescription": "Ajoutez PMSCONNECT à votre écran d'accueil pour un accès plus rapide et une meilleure expérience.",
+      "deactivateAccount": "Désactiver mon compte",
+      "deactivateAccountConfirm": "Votre compte sera désactivé et vous serez déconnecté(e). Vos publications et données existantes ne sont pas supprimées immédiatement — contactez le support pour une suppression définitive.",
+      "deactivating": "Désactivation…",
+      "version": "PMSCONNECT {version}"
     }
   },
+  "notificationPreferences": {
+    "title": "Préférences de notifications",
+    "typesSection": "Types de notifications",
+    "notifyReplies": "Réponses à mes publications",
+    "notifyMentions": "Mentions",
+    "notifyConnectionRequests": "Demandes de relation",
+    "notifyReactions": "Réactions",
+    "notifyGroupActivity": "Activité de groupes",
+    "notifyEstablishmentAnnouncements": "Annonces d'établissements",
+    "quietHoursSection": "Heures calmes",
+    "quietHoursEnabled": "Activer les heures calmes",
+    "quietHoursStart": "Début",
+    "quietHoursEnd": "Fin",
+    "emailSection": "E-mail",
+    "weeklyEmailDigest": "Résumé hebdomadaire par e-mail"
+  },
   "post": {
-    "createPostTitle": "Créer une publication",
+    "createPostTitle": "Nouvelle publication",
     "whatsOnYourMind": "Quoi de neuf",
     "addToPost": "Ajouter à votre publication",
     "mediaPreviewAlt": "Aperçu du média",
@@ -485,9 +711,31 @@
     "noComments": "Aucun commentaire pour le moment.",
     "pdfDocument": "Document PDF",
     "deleted": "Cette publication a peut-être été supprimée ou vous n'avez pas la permission de la voir.",
+    "authorBadge": "Auteur",
+    "mutedTitle": "Auteur masqué",
+    "mutedMessage": "Vous ne verrez plus ses publications dans votre fil sur cet appareil.",
+    "blockedTitle": "Utilisateur bloqué",
+    "blockedMessage": "Vous ne verrez plus son contenu, et il ne verra plus le vôtre.",
+    "blockConfirmTitle": "Bloquer cet utilisateur ?",
+    "blockConfirmDescription": "Vous ne verrez plus son contenu et il ne verra plus le vôtre, sur tous vos appareils. Vous pourrez le débloquer à tout moment.",
+    "edited": "Modifié",
+    "commentDeleted": "Ce commentaire a été supprimé par son auteur.",
     "replyingTo": "En réponse à",
+    "reply": "Répondre",
+    "viewReplies": "Voir {count} réponses",
+    "hideReplies": "Masquer les réponses",
+    "cancelReply": "Annuler la réponse",
+    "editTitle": "Modifier la publication",
+    "editDescription": "Mettez à jour le contenu de votre publication.",
+    "editPlaceholder": "Modifiez votre publication",
+    "editSuccess": "Votre publication a été mise à jour.",
+    "deleteTitle": "Supprimer la publication",
+    "deleteDescription": "Cette action va archiver la publication et la retirer de votre fil.",
+    "deleteSuccess": "Votre publication a été supprimée.",
     "clickToView": "Cliquer pour voir",
-    "speed": "Vitesse"
+    "speed": "Vitesse",
+    "reactions": "réactions",
+    "comments": "commentaires"
   },
   "common": {
     "loading": "Chargement...",
@@ -518,10 +766,20 @@
   "pwa": {
     "installTitle": "Installer l'application",
     "installDesc": "Installez cette application sur votre écran d'accueil pour une meilleure expérience.",
-    "installBanner": "Installez l’app sur votre écran d’accueil",
-    "browserInstruction": "Utilisez le menu du navigateur pour installer l’application.",
     "iosTapShare": "Appuyez sur le bouton de partage",
     "iosAndSelect": "et sélectionnez",
     "iosAddHome": "Sur l'écran d'accueil"
+  },
+  "chat": {
+    "title": "Messages",
+    "noConversationsTitle": "Aucune conversation",
+    "noConversationsDescription": "Envoyez un message depuis le profil d'un professionnel pour démarrer une conversation.",
+    "noMessagesYet": "Aucun message pour le moment. Dites bonjour !",
+    "messageDeletedPreview": "Message supprimé",
+    "messageDeleted": "Ce message a été supprimé.",
+    "composerPlaceholder": "Écrire un message...",
+    "send": "Envoyer",
+    "online": "En ligne",
+    "typing": "En train d'écrire..."
   }
 }

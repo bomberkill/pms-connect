@@ -11,14 +11,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupCardSkeletonList } from "@/components/skeletons/GroupCardSkeleton";
 import { useDictionary } from "@/hooks/use-dictionary";
+import { useIsMobile } from "@/hooks/use-mobile";
+import GroupsListMobile from "@/components/groups/GroupsListMobile";
 
 export default function GroupsPage() {
     const dict = useDictionary();
     const { groups, loading, error } = useGroups({ limit: 20 });
+    const isMobile = useIsMobile();
+
+    if (isMobile) {
+        return <GroupsListMobile />;
+    }
 
     if (error) {
         return (
-            <div className="p-4 text-center text-red-500">
+            <div className="p-4 text-center text-destructive">
                 {dict.globalErrors.default}
             </div>
         );
@@ -61,7 +68,7 @@ export default function GroupsPage() {
                                     {group.coverImageUrl ? (
                                         <Image src={group.coverImageUrl} alt={group.name} fill className="object-cover" />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500" />
+                                        <div className="w-full h-full bg-gradient-to-r from-primary-400 to-secondary-400" />
                                     )}
                                 </div>
                                 <CardHeader className="relative pt-12 pb-2">

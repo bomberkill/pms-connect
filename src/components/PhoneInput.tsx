@@ -134,7 +134,7 @@ export default function PhoneInput({
                   <span className="text-sm">{selected.dial_code}</span>
                 </>
               ) : (
-                <span className="text-gray-400">{dict.common.choose}</span>
+                <span className="text-muted-foreground">{dict.common.choose}</span>
               )}
               <ChevronDown className="w-4 h-4 opacity-50" />
             </Button>
@@ -172,7 +172,7 @@ export default function PhoneInput({
         </div>
       </div>
 
-      {(touched && error) && <p className="text-red-500 text-xs">{error}</p>}
+      {(touched && error) && <p className="text-destructive text-xs">{error}</p>}
     </div>
   );
 }

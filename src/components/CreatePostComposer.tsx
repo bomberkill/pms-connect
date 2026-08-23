@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Trash2, Video, FileIcon, X, Loader2 } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { usePostMutations, useMe } from "@/hooks/useData/index";
-import { MAX_FILE_SIZE, uploadFileToFirebase } from "@/utils/fileUpload";
+import { MAX_FILE_SIZE, POST_CONTENT_MAX_LENGTH, uploadFileToR2 } from "@/utils/fileUpload";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MediaItem, MediaType } from "@/types/Post";
@@ -28,7 +28,6 @@ export type CreatePostComposerProps = {
 
 export default function CreatePostComposer({ onCreated, onClose, placeholder }: CreatePostComposerProps) {
   const dict = useDictionary();
-  // const { user } = useAppSelector((state) => state.user);
   const { me: user } = useMe();
   const { createPost, creating } = usePostMutations();
   const { open } = useNotification();
@@ -41,7 +40,7 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
     content: yup
       .string()
       .required(dict.validation.post.contentRequired)
-      .max(2000, dict.validation.post.contentMax),
+      .max(POST_CONTENT_MAX_LENGTH, dict.validation.post.contentMax),
     mediaFile: yup
       .array()
       .of(
@@ -74,7 +73,7 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
       try {
         if (mediaFiles.length > 0) {
           const uploadResults = await Promise.all(
-            mediaFiles.map((file) => uploadFileToFirebase(file, `public/${user.firebaseUid}/posts`))
+            mediaFiles.map((file) => uploadFileToR2(file, "POST_MEDIA"))
           );
 
           media = mediaFiles.reduce<MediaItem[]>((acc, file, idx) => {
@@ -168,7 +167,7 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
           />
         </div>
         {formik.touched.content && formik.errors.content && (
-          <p className="text-red-500 text-xs mt-1">{formik.errors.content}</p>
+          <p className="text-destructive text-xs mt-1">{formik.errors.content}</p>
         )}
       </div>
 
@@ -224,14 +223,14 @@ export default function CreatePostComposer({ onCreated, onClose, placeholder }: 
           <span className="text-sm font-medium">{dict.post.addToPost}</span>
           <div className="flex items-center gap-3">
             <label htmlFor="media-upload" className="cursor-pointer">
-              <ImageIcon className="h-6 w-6 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors" />
+              <ImageIcon className="h-6 w-6 text-success-600 dark:text-success-400 hover:text-success-700 dark:hover:text-success-300 transition-colors" />
             </label>
             <input id="media-upload" type="file" multiple className="hidden" accept="image/*,video/mp4,video/quicktime,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
             <label htmlFor="media-upload" className="cursor-pointer">
-              <Video className="h-6 w-6 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors" />
+              <Video className="h-6 w-6 text-info-600 dark:text-info-400 hover:text-info-700 dark:hover:text-info-300 transition-colors" />
             </label>
             <label htmlFor="media-upload" className="cursor-pointer">
-              <FileIcon className="h-6 w-6 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors" />
+              <FileIcon className="h-6 w-6 text-warning-600 dark:text-warning-400 hover:text-warning-700 dark:hover:text-warning-300 transition-colors" />
             </label>
           </div>
         </div>
