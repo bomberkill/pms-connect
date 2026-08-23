@@ -6,6 +6,7 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { useMe } from "@/hooks/useData/useUserData";
 import { useFcmToken } from "@/hooks/useData/index";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { resetPassword } from "@/graphql/betterAuth";
@@ -19,6 +20,7 @@ import {
     ShieldCheck,
     Languages,
     Bell,
+    Download,
     LogOut,
     Loader2,
     UserX,
@@ -73,6 +75,7 @@ export default function SettingsViewMobile() {
     const { me, loading: meLoading } = useMe();
     const { requestPermission, permissionState } = useFcmToken();
     const [notifState, setNotifState] = useState(permissionState);
+    const { isInstalled, isIOS, canPromptNatively, promptInstall } = usePwaInstall();
     const [sendingReset, setSendingReset] = useState(false);
     const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
     const [deactivating, setDeactivating] = useState(false);
@@ -97,6 +100,18 @@ export default function SettingsViewMobile() {
             open("error", (e as Error).message || dict.globalErrors.default);
         } finally {
             setSendingReset(false);
+        }
+    };
+
+    const handleInstallClick = async () => {
+        if (isIOS) {
+            open("info", dict.pwa.installTitle, {
+                message: `${dict.pwa.iosTapShare} ${dict.pwa.iosAndSelect} "${dict.pwa.iosAddHome}"`,
+            });
+            return;
+        }
+        if (canPromptNatively) {
+            await promptInstall();
         }
     };
 
@@ -188,6 +203,14 @@ export default function SettingsViewMobile() {
                     label={dict.settings.labels.notificationPreferences}
                     onClick={() => router.push("/settings/notifications")}
                 />
+                {!isInstalled && (
+                    <Row
+                        icon={Download}
+                        label={dict.settings.labels.installApp}
+                        onClick={handleInstallClick}
+                        value={<span className="text-sm text-muted-foreground mr-1">{dict.common.install}</span>}
+                    />
+                )}
             </div>
 
             <div className="mt-4 bg-card border-y border-border">

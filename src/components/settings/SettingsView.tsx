@@ -29,10 +29,12 @@ import {
     Camera,
     Check,
     Bell,
+    Download,
     UserX
 } from "lucide-react";
 import { User as UserType } from "@/types/User";
 import { useFcmToken } from "@/hooks/useData/index";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -325,6 +327,7 @@ function PreferencesSettings() {
     const { requestPermission, permissionState } = useFcmToken();
     const [notifState, setNotifState] = useState(permissionState);
     const notification = useNotification();
+    const { isInstalled, isIOS, canPromptNatively, promptInstall } = usePwaInstall();
 
     const handleEnableNotifications = async () => {
         const granted = await requestPermission();
@@ -334,6 +337,18 @@ function PreferencesSettings() {
         } else {
             setNotifState('denied');
             notification.open("error", dict.settings.labels.deniedError);
+        }
+    };
+
+    const handleInstallClick = async () => {
+        if (isIOS) {
+            notification.open("info", dict.pwa.installTitle, {
+                message: `${dict.pwa.iosTapShare} ${dict.pwa.iosAndSelect} "${dict.pwa.iosAddHome}"`,
+            });
+            return;
+        }
+        if (canPromptNatively) {
+            await promptInstall();
         }
     };
 
@@ -373,6 +388,26 @@ function PreferencesSettings() {
                     </div>
                 </CardContent>
             </Card>
+
+            {!isInstalled && (
+                <Card>
+                    <CardHeader className="p-4 md:p-6">
+                        <CardTitle className="flex items-center gap-2">
+                            <Download className="w-5 h-5" />
+                            {dict.settings.labels.installApp}
+                        </CardTitle>
+                        <CardDescription>{dict.settings.labels.installAppDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 md:p-6">
+                        <div className="flex items-center justify-between p-4 border rounded-xl bg-card">
+                            <span className="font-medium">{dict.settings.labels.installApp}</span>
+                            <Button onClick={handleInstallClick}>
+                                {dict.common.install}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <Card>
                 <CardHeader className="p-4 md:p-6">

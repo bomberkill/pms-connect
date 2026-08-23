@@ -676,6 +676,8 @@
       "notVerified": "Non vérifié",
       "notificationPreferences": "Préférences de notifications",
       "manage": "Gérer",
+      "installApp": "Installer l'application",
+      "installAppDescription": "Ajoutez PMSCONNECT à votre écran d'accueil pour un accès plus rapide et une meilleure expérience.",
       "deactivateAccount": "Désactiver mon compte",
       "deactivateAccountConfirm": "Votre compte sera désactivé et vous serez déconnecté(e). Vos publications et données existantes ne sont pas supprimées immédiatement — contactez le support pour une suppression définitive.",
       "deactivating": "Désactivation…",
@@ -764,8 +766,6 @@
   "pwa": {
     "installTitle": "Installer l'application",
     "installDesc": "Installez cette application sur votre écran d'accueil pour une meilleure expérience.",
-    "installBanner": "Installez l’app sur votre écran d’accueil",
-    "browserInstruction": "Utilisez le menu du navigateur pour installer l’application.",
     "iosTapShare": "Appuyez sur le bouton de partage",
     "iosAndSelect": "et sélectionnez",
     "iosAddHome": "Sur l'écran d'accueil"
