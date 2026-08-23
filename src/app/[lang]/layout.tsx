@@ -63,20 +63,26 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
+  // Explicit `apple` entry required: setting `metadata.icons` at all makes
+  // Next.js skip file-convention auto-detection entirely (verified against
+  // the rendered DOM — apple-icon.png/icon1.png weren't linked at all once
+  // `icons.icon` was set), it doesn't just override the one slot you named.
   icons: {
     icon: "/web-app-manifest-192x192.png",
-    // No `apple` entry here — src/app/apple-icon.png (180x180, the correct
-    // size) is picked up automatically via the App Router file convention.
+    apple: "/apple-icon.png",
   },
+  // Next.js's `appleWebApp.capable` renders `mobile-web-app-capable` (the
+  // Chrome/Android tag) but NOT `apple-mobile-web-app-capable` itself —
+  // verified against the actual rendered HTML, an easy assumption to get
+  // wrong. Some iOS Safari versions specifically check the apple-prefixed
+  // tag for standalone mode, so it's added explicitly via `other`.
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "PMSCONNECT",
   },
-  // Chrome/Android's equivalent of apple-mobile-web-app-capable — no
-  // dedicated Metadata field for it, `other` is the documented escape hatch.
   other: {
-    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
   },
 };
 
