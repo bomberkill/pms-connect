@@ -36,6 +36,7 @@ export const Feed = () => {
   const {
     posts,
     loading,
+    isInitialLoading,
     error,
     loadMore,
     refresh,
@@ -128,7 +129,7 @@ export const Feed = () => {
     if (inView && !loading) loadMore();
   }, [inView, loading, loadMore]);
 
-  if (loading && posts.length === 0) {
+  if (isInitialLoading && posts.length === 0) {
     return <div>{[...Array(2)].map((_, i) => <PostSkeleton key={i} />)}</div>;
   }
 
