@@ -1,4 +1,4 @@
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { useQuery, useMutation, gql, NetworkStatus } from '@apollo/client';
 import { useState, useEffect } from 'react';
 import {
   buildGetFeedQuery,
@@ -140,6 +140,14 @@ export const useFeed = (options: { limit?: number; enablePolling?: boolean } = {
   return {
     posts,
     loading,
+    // The background prefetch above (line ~77) calls `refetch` on this same
+    // query, and notifyOnNetworkStatusChange means `loading` goes true for
+    // that too — even though the comment there says "silent". Consumers
+    // that only want to gate a full-page/skeleton loading state on the
+    // TRUE initial fetch (not every background refetch) should use this
+    // instead of `loading`, or the skeleton flickers back on every silent
+    // prefetch for an account with zero visible posts.
+    isInitialLoading: networkStatus === NetworkStatus.loading,
     error,
     loadMore,
     refresh,
