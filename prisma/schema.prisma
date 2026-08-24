@@ -90,6 +90,11 @@ model Jwks {
   privateKey String
   createdAt  DateTime
   expiresAt  DateTime?
+  // Same 1.7 drift as Account.issuer: better-auth's jwt plugin schema
+  // (dist/plugins/jwt/schema.mjs) added these two optional fields; the
+  // model here was still on the pre-1.7 shape.
+  alg        String?
+  crv        String?
 
   @@map("auth_jwks")
 }
