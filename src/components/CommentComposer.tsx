@@ -40,13 +40,13 @@ export default function CommentComposer({ user, placeholder, isSubmitting, onSub
   };
 
   return (
-    <div className="flex items-start gap-3 w-full">
-      <Avatar className="h-8 w-8">
+    <div className="flex w-full items-start gap-3">
+      <Avatar className="h-8 w-8 shrink-0">
         <AvatarImage src={user?.profilePicUrl || ""} />
         <AvatarFallback>{user ? getUserInitials(user) : "U"}</AvatarFallback>
       </Avatar>
-      <form onSubmit={handleSubmit} className="flex-1">
-        <div className="bg-muted/40 border rounded-2xl px-3 py-2">
+      <form onSubmit={handleSubmit} className="min-w-0 flex-1">
+        <div className="rounded-card border border-border bg-card px-3 py-2 shadow-xs">
           {replyingTo && (
             <div className="flex items-center gap-1.5 mb-1.5 text-xs text-muted-foreground">
               <span>{dict.post.replyingTo} <span className="text-primary font-medium">{replyingTo.label}</span></span>
@@ -63,24 +63,24 @@ export default function CommentComposer({ user, placeholder, isSubmitting, onSub
             </div>
           )}
           {mediaPreviews.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+            <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
               {mediaPreviews.map((preview, index) => (
-                <div key={preview.url} className="relative w-full rounded-lg border overflow-hidden aspect-video">
+                <div key={preview.url} className="relative size-20 shrink-0 overflow-hidden rounded-field border border-border">
                   {preview.type === MediaType.VIDEO ? (
-                    <video src={preview.url} className="w-full h-auto max-h-40 object-cover" controls />
+                    <video src={preview.url} className="h-full w-full object-cover" controls />
                   ) : preview.type === MediaType.IMAGE ? (
-                    <Image src={preview.url} alt="Media preview" width={200} height={200} className="object-cover w-full h-auto max-h-40" />
+                    <Image src={preview.url} alt="Media preview" fill className="object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-muted rounded-md flex flex-col items-center justify-center p-2">
-                      <FileIcon className="h-8 w-8 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground text-center break-all mt-1">{preview.name}</span>
+                    <div className="flex h-full w-full flex-col items-center justify-center bg-muted p-1.5">
+                      <FileIcon className="h-6 w-6 text-muted-foreground" />
+                      <span className="mt-1 line-clamp-2 break-all text-center text-2xs text-muted-foreground">{preview.name}</span>
                     </div>
                   )}
                   <Button
                     type="button"
-                    variant="destructive"
+                    variant="ghost"
                     size="icon"
-                    className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                    className="absolute right-1 top-1 size-5 rounded-full bg-black/60 text-white hover:bg-black/75 hover:text-white"
                     onClick={() => removeMedia(index)}
                   >
                     <Trash2 className="h-3 w-3" />
@@ -94,10 +94,10 @@ export default function CommentComposer({ user, placeholder, isSubmitting, onSub
             placeholder={placeholder || dict.post.whatsOnYourMind}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="border-none shadow-none text-sm focus-visible:ring-0 outline-none w-full bg-transparent resize-none"
+            className="w-full resize-none border-none bg-transparent text-[15px] leading-relaxed shadow-none outline-none placeholder:text-muted-foreground focus-visible:ring-0"
             maxRows={8}
           />
-          <div className="flex items-center justify-between mt-1">
+          <div className="mt-1 flex min-w-0 items-center justify-between">
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
@@ -114,7 +114,7 @@ export default function CommentComposer({ user, placeholder, isSubmitting, onSub
               </label>
               <input id="comment-media-upload" type="file" multiple className="hidden" accept="image/*,video/*,application/pdf" onChange={handleFileChange} disabled={mediaPreviews.length >= 4} />
             </div>
-            <Button type="submit" size="icon" className="rounded-full size-8 shrink-0" disabled={(!content.trim() && mediaFiles.length === 0) || isSubmitting}>
+            <Button type="submit" size="icon" className="size-8 shrink-0 rounded-full" disabled={(!content.trim() && mediaFiles.length === 0) || isSubmitting}>
               {!isSubmitting ?
                 <Send className="size-4" />
                 :

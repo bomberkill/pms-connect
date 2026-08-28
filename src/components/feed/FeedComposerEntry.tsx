@@ -25,7 +25,7 @@ export function FeedComposerEntry() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mb-3 flex w-full items-center gap-2.5 rounded-card border border-border bg-card px-3 py-2.5 text-left md:hidden"
+        className="mb-2 flex w-full items-center gap-2.5 border-y border-border bg-card px-4 py-2.5 text-left md:hidden md:rounded-card md:border"
       >
         <Avatar
           shape={user.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"}
@@ -37,16 +37,16 @@ export function FeedComposerEntry() {
         <span className="h-10 flex-1 rounded-full border border-border flex items-center px-3.5 text-sm text-muted-foreground">
           {dict.post.whatsOnYourMind}…
         </span>
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary-950 dark:text-primary-300">
           <ImageIcon className="size-[19px]" />
         </span>
       </button>
 
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerContent>
+        <DrawerContent className="h-[92svh] max-h-[92svh]">
           <DrawerTitle className="sr-only">{dict.header.addNewPost}</DrawerTitle>
           <CreatePostComposerMobile
-            className="w-full max-h-[80vh] overflow-y-auto"
+            className="flex h-full w-full flex-col"
             onCreated={() => setOpen(false)}
           />
         </DrawerContent>

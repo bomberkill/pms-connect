@@ -2,10 +2,9 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, ChevronRight, Clock3, Loader2, Mail, MessageCircle, ShieldAlert, Users, Zap } from "lucide-react";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotificationPreferences, useUpdateNotificationPreferences } from "@/hooks/useData/useNotificationData";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -19,22 +18,70 @@ import { cn } from "@/lib/utils";
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 
-function ToggleRow({
-    label,
+function PreferenceSwitch({
+    checked,
+    disabled,
+    onChange,
+}: {
+    checked: boolean;
+    disabled?: boolean;
+    onChange: (checked: boolean) => void;
+}) {
+    return (
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            disabled={disabled}
+            onClick={() => onChange(!checked)}
+            className={cn(
+                "relative h-7 w-12 shrink-0 rounded-full transition-colors",
+                checked ? "bg-primary" : "bg-muted",
+                disabled && "opacity-60"
+            )}
+        >
+            <span
+                className={cn(
+                    "absolute top-1 size-5 rounded-full bg-white shadow-sm transition-transform",
+                    checked ? "translate-x-6" : "translate-x-1"
+                )}
+            />
+        </button>
+    );
+}
+
+function PreferenceRow({
+    title,
+    subtitle,
+    icon: Icon,
     checked,
     onCheckedChange,
     disabled,
+    chevron,
 }: {
-    label: string;
-    checked: boolean;
-    onCheckedChange: (checked: boolean) => void;
+    title: string;
+    subtitle?: string;
+    icon: typeof Bell;
+    checked?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
     disabled?: boolean;
+    chevron?: boolean;
 }) {
     return (
-        <label className="flex w-full items-center gap-3 px-4 py-3.5 border-t border-border first:border-t-0 cursor-pointer">
-            <span className={cn("flex-1 text-[15px]", disabled && "text-muted-foreground")}>{label}</span>
-            <Checkbox checked={checked} onCheckedChange={(v) => onCheckedChange(v === true)} disabled={disabled} />
-        </label>
+        <div className="flex w-full items-center gap-3 px-4 py-3.5">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary-950">
+                <Icon className="size-4.5" strokeWidth={1.9} />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className={cn("block text-[15px] font-semibold leading-tight", disabled && "text-muted-foreground")}>{title}</span>
+                {subtitle && <span className="mt-0.5 block text-[12.5px] leading-snug text-muted-foreground">{subtitle}</span>}
+            </span>
+            {typeof checked === "boolean" && onCheckedChange ? (
+                <PreferenceSwitch checked={checked} onChange={onCheckedChange} disabled={disabled} />
+            ) : chevron ? (
+                <ChevronRight className="size-4 text-muted-foreground" />
+            ) : null}
+        </div>
     );
 }
 
@@ -59,38 +106,42 @@ export default function NotificationPreferencesView() {
     const toggle = (key: keyof NotificationPreference) => (checked: boolean) => save({ [key]: checked });
 
     return (
-        <div className="pb-6">
-            <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3">
-                <button onClick={() => router.back()} className="p-2 -ml-2 rounded-full hover:bg-accent transition-colors">
+        <div className="min-h-dvh bg-[#F6F8FA] pb-8 text-foreground dark:bg-background">
+            <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-md">
+                <button onClick={() => router.back()} className="-ml-2 flex size-10 items-center justify-center rounded-full hover:bg-muted transition-colors">
                     <ArrowLeft className="h-5 w-5" />
                 </button>
-                <span className="font-semibold text-lg">{dict.notificationPreferences.title}</span>
+                <span className="font-heading text-[18px] font-semibold tracking-[-0.02em]">{dict.notificationPreferences.title}</span>
                 {updating && <Loader2 className="size-4 animate-spin text-muted-foreground ml-auto" />}
             </div>
 
-            <h2 className="px-4 pt-4 pb-1.5 font-mono text-2xs uppercase tracking-wider text-muted-foreground">
+            <h2 className="px-4 pt-5 pb-2 text-[12px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 {dict.notificationPreferences.typesSection}
             </h2>
-            <div className="bg-card border-y border-border">
-                <ToggleRow label={dict.notificationPreferences.notifyReplies} checked={preferences.notifyReplies} onCheckedChange={toggle("notifyReplies")} />
-                <ToggleRow label={dict.notificationPreferences.notifyMentions} checked={preferences.notifyMentions} onCheckedChange={toggle("notifyMentions")} />
-                <ToggleRow label={dict.notificationPreferences.notifyConnectionRequests} checked={preferences.notifyConnectionRequests} onCheckedChange={toggle("notifyConnectionRequests")} />
-                <ToggleRow label={dict.notificationPreferences.notifyReactions} checked={preferences.notifyReactions} onCheckedChange={toggle("notifyReactions")} />
-                <ToggleRow label={dict.notificationPreferences.notifyGroupActivity} checked={preferences.notifyGroupActivity} onCheckedChange={toggle("notifyGroupActivity")} />
-                <ToggleRow label={dict.notificationPreferences.notifyEstablishmentAnnouncements} checked={preferences.notifyEstablishmentAnnouncements} onCheckedChange={toggle("notifyEstablishmentAnnouncements")} />
+            <div className="mx-4 overflow-hidden rounded-[24px] border border-border bg-card shadow-xs divide-y divide-border">
+                <PreferenceRow icon={MessageCircle} title={dict.notificationPreferences.notifyReplies} checked={preferences.notifyReplies} onCheckedChange={toggle("notifyReplies")} />
+                <PreferenceRow icon={Bell} title={dict.notificationPreferences.notifyMentions} checked={preferences.notifyMentions} onCheckedChange={toggle("notifyMentions")} />
+                <PreferenceRow icon={Users} title={dict.notificationPreferences.notifyConnectionRequests} checked={preferences.notifyConnectionRequests} onCheckedChange={toggle("notifyConnectionRequests")} />
+                <PreferenceRow icon={Zap} title={dict.notificationPreferences.notifyReactions} subtitle={dict.notificationPreferences.notifyReactionsDesc} checked={preferences.notifyReactions} onCheckedChange={toggle("notifyReactions")} />
+                <PreferenceRow icon={ShieldAlert} title={dict.notificationPreferences.notifyGroupActivity} subtitle={dict.notificationPreferences.notifyGroupActivityDesc} checked={preferences.notifyGroupActivity} onCheckedChange={toggle("notifyGroupActivity")} />
+                <PreferenceRow icon={Bell} title={dict.notificationPreferences.notifyEstablishmentAnnouncements} checked={preferences.notifyEstablishmentAnnouncements} onCheckedChange={toggle("notifyEstablishmentAnnouncements")} />
             </div>
 
-            <h2 className="px-4 pt-4 pb-1.5 font-mono text-2xs uppercase tracking-wider text-muted-foreground">
+            <h2 className="px-4 pt-5 pb-2 text-[12px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 {dict.notificationPreferences.quietHoursSection}
             </h2>
-            <div className="bg-card border-y border-border">
-                <ToggleRow
-                    label={dict.notificationPreferences.quietHoursEnabled}
+            <div className="mx-4 overflow-hidden rounded-[24px] border border-border bg-card shadow-xs">
+                <PreferenceRow
+                    icon={Clock3}
+                    title={dict.notificationPreferences.quietHoursEnabled}
+                    subtitle={dict.notificationPreferences.quietHoursSummary
+                        .replace("{start}", String(preferences.quietHoursStart ?? 20))
+                        .replace("{end}", String(preferences.quietHoursEnd ?? 7))}
                     checked={preferences.quietHoursEnabled}
                     onCheckedChange={toggle("quietHoursEnabled")}
                 />
                 {preferences.quietHoursEnabled && (
-                    <div className="flex items-center gap-3 px-4 py-3.5 border-t border-border">
+                    <div className="flex items-center gap-3 border-t border-border px-4 py-3.5">
                         <div className="flex-1 grid gap-1">
                             <Label className="text-xs text-muted-foreground">{dict.notificationPreferences.quietHoursStart}</Label>
                             <Select
@@ -117,14 +168,19 @@ export default function NotificationPreferencesView() {
                         </div>
                     </div>
                 )}
+                <p className="border-t border-border px-4 py-3 text-[12.5px] leading-relaxed text-muted-foreground">
+                    {dict.notificationPreferences.quietHoursDescription}
+                </p>
             </div>
 
-            <h2 className="px-4 pt-4 pb-1.5 font-mono text-2xs uppercase tracking-wider text-muted-foreground">
+            <h2 className="px-4 pt-5 pb-2 text-[12px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 {dict.notificationPreferences.emailSection}
             </h2>
-            <div className="bg-card border-y border-border">
-                <ToggleRow
-                    label={dict.notificationPreferences.weeklyEmailDigest}
+            <div className="mx-4 overflow-hidden rounded-[24px] border border-border bg-card shadow-xs">
+                <PreferenceRow
+                    icon={Mail}
+                    title={dict.notificationPreferences.weeklyEmailDigest}
+                    subtitle={dict.notificationPreferences.weeklyEmailDigestDesc}
                     checked={preferences.weeklyEmailDigest}
                     onCheckedChange={toggle("weeklyEmailDigest")}
                 />

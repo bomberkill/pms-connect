@@ -8,11 +8,10 @@ import { useNotification } from "@/hooks/use-notification";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import TextareaAutosize from "react-textarea-autosize";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Trash2, Video, FileIcon, Loader2, Plus } from "lucide-react";
+import { ChevronDown, Image as ImageIcon, Trash2, Video, FileIcon, Loader2, Plus, Users } from "lucide-react";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { usePostMutations } from "@/hooks/useData/index";
 import { MAX_FILE_SIZE, POST_CONTENT_MAX_LENGTH, uploadFileToR2 } from "@/utils/fileUpload";
-import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MediaItem, MediaType } from "@/types/Post";
@@ -62,7 +61,6 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
     },
     validationSchema,
     onSubmit: async (values) => {
-      console.log("Submitting form:", values)
       if (!user) return;
 
       let media: MediaItem[] = [];
@@ -141,33 +139,44 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
         className
       )}
     >
-      <div className="flex items-center justify-between p-4">
+      <div className="flex h-[52px] items-center justify-between border-b border-border px-4">
         {onClose ? (
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" className="px-0 text-muted-foreground hover:bg-transparent" onClick={onClose}>
             {dict.button.cancel}
           </Button>
         ) : <span />}
-        <h2 className="text-sm font-semibold">{dict.post.createPostTitle}</h2>
-        <Button size="sm" onClick={() => formik.handleSubmit()} disabled={disabled}>
+        <h2 className="font-heading text-[17px] font-semibold tracking-tight">{dict.post.createPostTitle}</h2>
+        <Button size="sm" className="h-8.5 rounded-field px-4" onClick={() => formik.handleSubmit()} disabled={disabled}>
           {creating || isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : dict.button.publish}
         </Button>
       </div>
-      <Separator />
-      <div className="p-4 flex-grow">
-        <div className="flex items-start gap-3">
+      <div className="flex-grow overflow-y-auto">
+        <div className="flex items-center gap-3 px-4 pt-3.5">
           <Avatar shape={user.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"} className="h-10 w-10">
             <AvatarImage className="object-cover" src={user.profilePicUrl} alt={getUserDisplayName(user)} />
             <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
           </Avatar>
-          <div className="flex w-full flex-col gap-1">
+          <div className="min-w-0 flex-1">
             <span className="text-sm font-semibold leading-tight">{getUserDisplayName(user)}</span>
+            <button
+              type="button"
+              className="mt-1 inline-flex h-7 items-center gap-1.5 rounded-full border border-border px-2.5 text-xs font-semibold text-muted-foreground"
+            >
+              <Users className="size-3.5" />
+              {dict.common.relations}
+              <ChevronDown className="size-3" />
+            </button>
+          </div>
+        </div>
+        <div className="px-4 pt-4">
+          <div className="flex w-full flex-col gap-1">
             <TextareaAutosize
               id="content"
               name="content"
               placeholder={
                 placeholder || `${dict.post.whatsOnYourMind}, ${getUserDisplayName(user)}?`
               }
-              className="min-h-[80px] w-full text-sm rounded-md bg-transparent placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none border-none shadow-none focus-visible:ring-0 -ml-0 px-0"
+              className="min-h-[132px] w-full resize-none border-none bg-transparent px-0 text-base leading-[1.55] placeholder:text-muted-foreground shadow-none focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
               value={formik.values.content}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
@@ -175,13 +184,12 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
           </div>
         </div>
         {formik.touched.content && formik.errors.content && (
-          <p className="text-destructive text-xs mt-1 ml-14">{formik.errors.content}</p>
+          <p className="text-destructive text-xs mt-1 px-4">{formik.errors.content}</p>
         )}
-      </div>
 
-      {mediaPreviews.length > 0 && (
-        <div className="px-4 mb-4 flex-shrink-0">
-          <div className="flex gap-2">
+        {mediaPreviews.length > 0 && (
+          <div className="px-4 pb-4 pt-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
             {mediaPreviews.map((preview, index) => (
               <div key={preview.url} className="relative size-24 shrink-0">
                 {preview.type === MediaType.VIDEO ? (
@@ -215,11 +223,12 @@ export default function CreatePostComposerMobile({ onCreated, onClose, placehold
                 <span className="text-2xs font-medium">{dict.button.add}</span>
               </label>
             )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className="mt-auto border-t p-1.5 flex items-center gap-1">
+      <div className="mt-auto border-t border-border p-2 flex items-center gap-1">
         <label htmlFor="media-upload-mobile" className="flex size-10.5 cursor-pointer items-center justify-center rounded-button text-primary hover:bg-muted transition-colors">
           <ImageIcon className="h-5 w-5" />
         </label>

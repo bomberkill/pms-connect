@@ -17,9 +17,11 @@ interface UserListItemProps {
     mutualCount?: number;
     onClick?: () => void;
     className?: string;
+    avatarClassName?: string;
+    contentClassName?: string;
 }
 
-export function UserListItem({ user, action, subtitle, mutualCount, onClick, className }: UserListItemProps) {
+export function UserListItem({ user, action, subtitle, mutualCount, onClick, className, avatarClassName, contentClassName }: UserListItemProps) {
     const dict = useDictionary();
     const isEstablishment = user.userType === UserTypeGQL.LEGAL_ENTITY;
 
@@ -29,11 +31,11 @@ export function UserListItem({ user, action, subtitle, mutualCount, onClick, cla
             onClick={onClick}
         >
             <Link href={`/profile/${user.slug}`} className="flex items-center gap-3 overflow-hidden min-w-0">
-                <Avatar shape={isEstablishment ? "establishment" : "person"} className="h-11 w-11 shrink-0">
+                <Avatar shape={isEstablishment ? "establishment" : "person"} className={cn("h-11 w-11 shrink-0", avatarClassName)}>
                     <AvatarImage src={user.profilePicUrl} alt={getUserDisplayName(user)} />
                     <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col min-w-0">
+                <div className={cn("flex flex-col min-w-0", contentClassName)}>
                     <span className="font-semibold text-sm truncate">{getUserDisplayName(user)}</span>
                     <span className="text-xs text-muted-foreground truncate">
                         {subtitle || (user.userType === UserTypeGQL.INDIVIDUAL ? user.professionalTitle : dict.entityTypes[user.entityType])}

@@ -18,6 +18,13 @@ export const GROUP_FIELDS = `
   creator {
     ${USER_FIELDS}
   }
+  members {
+    role
+    joinedAt
+    user {
+      id
+    }
+  }
 `;
 
 export const buildGetGroupsQuery = () => {

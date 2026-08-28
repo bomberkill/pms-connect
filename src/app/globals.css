@@ -100,7 +100,7 @@
   --radius-sheet: 1.5rem;   /* 24px — bottom sheets / modal feuilles */
 
   /* Semantic roles not part of the original shadcn scaffold: status colors
-     (toasts/alerts/badges) and a warm "tertiary" for CTAs, likes, notifications.
+     (toasts/alerts/badges) and a warm "tertiary" for pending/waiting states.
      Named "tertiary" rather than "accent" to avoid colliding with shadcn's
      structural --accent (the subtle hover/selected surface below). */
   --color-success: var(--success);
@@ -229,48 +229,48 @@
      mobile design system: at 245deg the blue read as violet and competed
      with the logo's teal; 264deg keeps blue and teal as a clearly distinct
      structuring pair. */
-  --primary-50: oklch(0.98 0.048 264);
-  --primary-100: oklch(0.95 0.0704 264);
-  --primary-200: oklch(0.9 0.0928 264);
-  --primary-300: oklch(0.83 0.1152 264);
-  --primary-400: oklch(0.74 0.1376 264);
-  --primary-500: oklch(0.64 0.16 264);
-  --primary-600: oklch(0.55 0.1376 264);
-  --primary-700: oklch(0.46 0.1152 264);
-  --primary-800: oklch(0.38 0.0928 264);
-  --primary-900: oklch(0.3 0.0704 264);
-  --primary-950: oklch(0.2 0.048 264);
+  --primary-50: #EFF4FE;
+  --primary-100: #DCE7FD;
+  --primary-200: #C0D3FB;
+  --primary-300: #94B4F8;
+  --primary-400: #628FF3;
+  --primary-500: #3E6DE8;
+  --primary-600: #2B52DC;
+  --primary-700: #2440B4;
+  --primary-800: #23388F;
+  --primary-900: #223471;
+  --primary-950: #0E1A3D;
 
   /* secondary: soft sage/teal. Reserved for verification signals only —
      verified badge, approved account, accreditation chips. Never a CTA:
      that ambiguity is what made the previous version read as unclear. */
-  --secondary-50: oklch(0.98 0.027 170);
-  --secondary-100: oklch(0.95 0.0396 170);
-  --secondary-200: oklch(0.9 0.0522 170);
-  --secondary-300: oklch(0.83 0.0648 170);
-  --secondary-400: oklch(0.74 0.0774 170);
-  --secondary-500: oklch(0.64 0.09 170);
-  --secondary-600: oklch(0.55 0.0774 170);
-  --secondary-700: oklch(0.46 0.0648 170);
-  --secondary-800: oklch(0.38 0.0522 170);
-  --secondary-900: oklch(0.3 0.0396 170);
-  --secondary-950: oklch(0.2 0.027 170);
+  --secondary-50: #E6F7F4;
+  --secondary-100: #D6F2EE;
+  --secondary-200: #B6E8E0;
+  --secondary-300: #7FE3D4;
+  --secondary-400: #3FD0BC;
+  --secondary-500: #12A594;
+  --secondary-600: #0E7A6E;
+  --secondary-700: #0B4D45;
+  --secondary-800: #083D37;
+  --secondary-900: #062F2A;
+  --secondary-950: #031F1C;
 
   /* tertiary: warm amber — the one warm hue, reserved for pending/waiting
      states only (account awaiting approval, unverified e-mail, expiring
      document). Never a CTA or decorative gradient: a user should only see
      amber when an action is being asked of them. */
-  --tertiary-50: oklch(0.98 0.045 45);
-  --tertiary-100: oklch(0.95 0.066 45);
-  --tertiary-200: oklch(0.9 0.087 45);
-  --tertiary-300: oklch(0.83 0.108 45);
-  --tertiary-400: oklch(0.74 0.129 45);
-  --tertiary-500: oklch(0.64 0.15 45);
-  --tertiary-600: oklch(0.55 0.129 45);
-  --tertiary-700: oklch(0.46 0.108 45);
-  --tertiary-800: oklch(0.38 0.087 45);
-  --tertiary-900: oklch(0.3 0.066 45);
-  --tertiary-950: oklch(0.2 0.045 45);
+  --tertiary-50: #FEF6E7;
+  --tertiary-100: #FBECCB;
+  --tertiary-200: #FBE3B4;
+  --tertiary-300: #F8CF79;
+  --tertiary-400: #F5B942;
+  --tertiary-500: #E8930C;
+  --tertiary-600: #B9700A;
+  --tertiary-700: #9C5D08;
+  --tertiary-800: #8A5209;
+  --tertiary-900: #5D3908;
+  --tertiary-950: #3C2505;
 
   /* success */
   --success-50: oklch(0.98 0.042 152);
@@ -325,17 +325,17 @@
   --info-950: oklch(0.2 0.039 230);
 
   /* neutral: same hue as the previous background/border/muted grays */
-  --neutral-50: oklch(0.98 0.0036 240);
-  --neutral-100: oklch(0.95 0.0053 240);
-  --neutral-200: oklch(0.9 0.007 240);
-  --neutral-300: oklch(0.83 0.0086 240);
-  --neutral-400: oklch(0.74 0.0103 240);
-  --neutral-500: oklch(0.64 0.012 240);
-  --neutral-600: oklch(0.55 0.0103 240);
-  --neutral-700: oklch(0.46 0.0086 240);
-  --neutral-800: oklch(0.38 0.007 240);
-  --neutral-900: oklch(0.3 0.0053 240);
-  --neutral-950: oklch(0.2 0.0036 240);
+  --neutral-50: #F6F8FA;
+  --neutral-100: #F0F3F7;
+  --neutral-200: #E3E8EF;
+  --neutral-300: #CBD4E1;
+  --neutral-400: #A9B2BF;
+  --neutral-500: #8A94A3;
+  --neutral-600: #5B6675;
+  --neutral-700: #4E5968;
+  --neutral-800: #2C3542;
+  --neutral-900: #1F2731;
+  --neutral-950: #141A22;
 
   /* ==========================================================================
      Semantic roles (light) — pick a step from the scales above. This is the
@@ -344,10 +344,10 @@
   --background: var(--neutral-50);
   --foreground: var(--neutral-950);
 
-  --card: oklch(1 0 0);
+  --card: #ffffff;
   --card-foreground: var(--neutral-950);
 
-  --popover: oklch(1 0 0);
+  --popover: #ffffff;
   --popover-foreground: var(--neutral-950);
 
   --primary: var(--primary-600);
@@ -368,7 +368,7 @@
   --destructive-foreground: oklch(1 0 0);
 
   --border: var(--neutral-200);
-  --input: var(--neutral-200);
+  --input: var(--neutral-300);
   --ring: oklch(0.55 0.1376 264 / 0.5);
 
   --success: var(--success-600);
@@ -406,21 +406,19 @@
 }
 
 .dark {
-  --background: oklch(0.12 0.01 240);
-  /* Rich Dark Blue-Grey */
-  --foreground: oklch(0.92 0.01 240);
+  --background: #0B1017;
+  --foreground: #F4F6F8;
 
-  --card: oklch(0.15 0.02 240);
-  /* Slightly lighter than bg */
-  --card-foreground: oklch(0.985 0 0);
+  --card: #141A22;
+  --card-foreground: #F4F6F8;
 
-  --popover: oklch(0.15 0.02 240);
-  --popover-foreground: oklch(0.985 0 0);
+  --popover: #141A22;
+  --popover-foreground: #F4F6F8;
 
   /* Buttons flip to a brighter fill + dark ink, since a mid-lightness brand
      color needs dark text (not white) to hold 4.5:1 against a dark page */
   --primary: var(--primary-400);
-  --primary-foreground: var(--neutral-950);
+  --primary-foreground: #0B1017;
 
   --secondary: var(--secondary-800);
   --secondary-foreground: var(--secondary-100);
@@ -432,11 +430,11 @@
   --accent-foreground: var(--neutral-50);
 
   --destructive: var(--error-400);
-  --destructive-foreground: var(--neutral-950);
+  --destructive-foreground: #0B1017;
 
-  --border: var(--neutral-800);
-  --input: var(--neutral-800);
-  --ring: oklch(0.74 0.1376 264 / 0.5);
+  --border: #2C3542;
+  --input: #2C3542;
+  --ring: rgb(98 143 243 / 0.5);
 
   --success: var(--success-400);
   --success-foreground: var(--neutral-950);

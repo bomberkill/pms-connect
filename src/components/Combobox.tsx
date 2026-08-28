@@ -62,7 +62,7 @@ export function Combobox<T extends Country | State | City>({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between border-muted font-normal"
+          className="w-full justify-between border-input bg-card text-[15px] font-normal text-foreground md:text-sm"
           onBlur={onBlur}
           disabled={disabled}
         >
@@ -75,7 +75,7 @@ export function Combobox<T extends Country | State | City>({
         )} */}
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] min-w-60 p-0"
+        className="w-[var(--radix-popover-trigger-width)] min-w-60 rounded-card border-border p-0 shadow-[0_14px_34px_-20px_rgba(11,15,20,.35)]"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <Command>

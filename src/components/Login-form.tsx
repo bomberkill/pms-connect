@@ -12,7 +12,7 @@ import { resetPassword, signInWithGoogle, AuthApiError } from "@/graphql/betterA
 import Link from "next/link"
 import { loginAndFetchUser } from "@/graphql/authActions"
 import { useRouter } from "next/navigation"
-// import { Loader2 } from "lucide-react"
+import { ArrowLeft, Info, LockKeyhole } from "lucide-react"
 import { useCheckUserExists } from "../hooks/useData/index"
 import Image from "next/image"
 import CustomLoader from "./Loader"
@@ -231,12 +231,29 @@ export function LoginForm({
         </form>
       ) : (
         // ---------------- FORGOT PASSWORD FORM (A6) ----------------
-        <form onSubmit={resetFormik.handleSubmit} className={cn("flex flex-col gap-8", className)} {...props}>
-          <div className="flex flex-col gap-1.5">
-            <h1 className="font-heading text-2xl font-bold tracking-tight">{dict.resetPassword.title}</h1>
-            <p className="text-muted-foreground text-sm text-balance">
-              {dict.resetPassword.description}
-            </p>
+        <form onSubmit={resetFormik.handleSubmit} className={cn("flex min-h-[calc(100svh-5rem)] flex-col gap-8", className)} {...props}>
+          <div className="flex h-[52px] items-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowResetForm(false)}
+              className="-ml-2"
+              aria-label={dict.button.backToLogin}
+            >
+              <ArrowLeft className="size-5" />
+            </Button>
+          </div>
+          <div className="flex flex-col gap-5">
+            <div className="flex size-13 items-center justify-center rounded-card border border-primary-100 bg-primary-50 text-primary dark:border-primary-900 dark:bg-primary-950 dark:text-primary-300">
+              <LockKeyhole className="size-6" strokeWidth={1.8} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <h1 className="font-heading text-2xl font-bold tracking-tight">{dict.resetPassword.title}</h1>
+              <p className="text-muted-foreground text-sm leading-relaxed text-balance">
+                {dict.resetPassword.description}
+              </p>
+            </div>
           </div>
           <div className="flex flex-col gap-5">
             <div className="grid gap-1.5">
@@ -257,14 +274,21 @@ export function LoginForm({
             <Button type="submit" size="xl">
               {dict.button.sendLink}
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowResetForm(false)}
-            >
-              {dict.button.backToLogin}
-            </Button>
+            <div className="flex items-start gap-3 rounded-card bg-muted p-4">
+              <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <p className="text-xs leading-5 text-muted-foreground">
+                {dict.notifications.forgotPassword.info.message}
+              </p>
+            </div>
           </div>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowResetForm(false)}
+            className="mt-auto"
+          >
+            {dict.button.backToLogin}
+          </Button>
         </form>
       )}
     </>

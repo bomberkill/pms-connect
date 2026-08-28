@@ -5,7 +5,7 @@ import { useDictionary } from "@/hooks/use-dictionary";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Menu, Bell, Settings, LogOut, Plus, Users2 } from "lucide-react";
+import { Search, Menu, Bell, Settings, LogOut, Users2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,7 +16,6 @@ import { logoutUser } from "@/graphql/authActions";
 import { getUserDisplayName } from "@/lib/user-utils";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import CreatePostComposer from "./CreatePostComposer";
-import CreatePostComposerMobile from "./CreatePostComposerMobile";
 import { useMe } from "@/hooks/useData/useUserData";
 import { BottomNav } from "./BottomNav";
 import { NotificationBadge } from "./NotificationBadge";
@@ -40,11 +39,8 @@ export default function Header() {
   const isMobile = useIsMobile();
   const { me: user } = useMe();
   const router = useRouter();
-  const pathname = usePathname();
+  const cleanPathname = useCleanPathname();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
-
-  const shouldShowFab = !["/post/", "/comment/", "/messages", "/chat", "/jobs", "/marketplace"]
-    .some((path) => pathname?.includes(path));
 
   const handleLogout = async () => {
     if (!user) return;
@@ -55,6 +51,10 @@ export default function Header() {
 
   // Sur mobile, nous affichons une barre de navigation en bas
   if (isMobile) {
+    if (cleanPathname.startsWith("/profile/")) {
+      return <BottomNav />;
+    }
+
     const drawerNavItems = [
       { href: "/groups", icon: Users2, label: dict.appSideBar.navMain.groups, onClick: () => router.push('/groups') },
       { href: "/settings", icon: Settings, label: dict.appSideBar.navUser.settings, onClick: () => router.push('/settings') },
@@ -89,7 +89,7 @@ export default function Header() {
                     <DrawerHeader>
                       {user && (
                         <DrawerClose asChild>
-                          <Link href={`/profile/${user.slug}`} className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-md transition-colors">
+                          <Link href={`/profile/${user.slug}`} className="flex items-center gap-3 rounded-button p-2 transition-colors hover:bg-muted/50">
                             <Avatar className="h-10 w-10">
                               <AvatarImage src={user.profilePicUrl} alt={getUserDisplayName(user)} />
                               <AvatarFallback>CN</AvatarFallback>
@@ -112,7 +112,7 @@ export default function Header() {
                                 <Link
                                   href={drawerItem.href || '#'}
                                   onClick={drawerItem.onClick}
-                                  className="flex items-center gap-4 rounded-md p-3 hover:bg-accent"
+                                  className="flex items-center gap-4 rounded-button p-3 transition-colors hover:bg-accent"
                                 >
                                   <drawerItem.icon className="size-5 text-muted-foreground" />
                                   <span className="font-medium">{drawerItem.label}</span>
@@ -132,25 +132,6 @@ export default function Header() {
 
         <BottomNav />
 
-        {/* Floating Action Button pour ajouter un post */}
-        {shouldShowFab && (
-          <div className="fixed bottom-20 right-4 z-40 md:hidden">
-            <Drawer open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
-              <DrawerTrigger asChild>
-                <Button className="rounded-full w-14 h-14 shadow-lg bg-primary text-primary-foreground hover:scale-105 transition-transform duration-200 active:scale-95">
-                  <Plus className="h-6 w-6" />
-                  <span className="sr-only">{dict.header.addNewPost}</span>
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerTitle className="sr-only">{dict.header.addNewPost}</DrawerTitle>
-                <CreatePostComposerMobile className="w-full max-h-[80vh] overflow-y-auto" onCreated={() => setIsCreatePostOpen(false)} />
-              </DrawerContent>
-            </Drawer>
-          </div>
-        )}
-        {/* <>
-        </> */}
       </div>
     );
   }

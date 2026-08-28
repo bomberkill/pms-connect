@@ -8,6 +8,7 @@ import { StepProps } from "../types";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { AuthUser } from "@/graphql/betterAuth";
 import { PasswordStrengthMeter } from "../PasswordStrengthMeter";
+import { CheckCircle2 } from "lucide-react";
 
 interface StepCredentialsProps extends StepProps {
     googleUser: AuthUser | null;
@@ -16,22 +17,29 @@ interface StepCredentialsProps extends StepProps {
 
 export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, googleUser, handleGoogleSignIn }) => {
     const dict = useDictionary();
+    const emailIsValid = Boolean(formik.values.email && !formik.errors.email);
 
     return (
         <div className="flex w-full flex-col gap-5">
             <div className="grid gap-1.5">
                 <Label htmlFor="email">{dict.register.emailLabel}</Label>
-                <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="email@example.com"
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    value={formik.values.email}
-                    disabled={!!googleUser}
-                    readOnly={!!googleUser}
-                />
+                <div className="relative">
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="email@example.com"
+                        className={emailIsValid ? "pr-10" : undefined}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        value={formik.values.email}
+                        disabled={!!googleUser}
+                        readOnly={!!googleUser}
+                    />
+                    {emailIsValid && (
+                        <CheckCircle2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-secondary-600" strokeWidth={2.4} />
+                    )}
+                </div>
                 {googleUser && (
                     <p className="text-muted-foreground text-xs">{dict.register.emailVerifiedByGoogle}</p>
                 )}
@@ -50,7 +58,7 @@ export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, google
                 />
             </div>
             {googleUser ? (
-                <div className="rounded-field border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4">
+                <div className="rounded-card border border-primary/20 bg-primary-50 p-4 dark:bg-primary-950">
                     <div className="flex items-center gap-3">
                         <Image src="/google-color.svg" alt="Google" width={24} height={24} className="h-6 w-6" />
                         <div className="flex flex-col">
@@ -68,6 +76,7 @@ export const StepCredentials: React.FC<StepCredentialsProps> = ({ formik, google
                             name="password"
                             type="password"
                             placeholder="password"
+                            className={formik.values.password ? "border-primary focus-visible:ring-primary/20" : undefined}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             value={formik.values.password}

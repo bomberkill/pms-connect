@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
 import { useAuthObserver } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import {
   SidebarInset,
@@ -21,10 +21,13 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { initialized, authUserId: uid } = useAuthObserver();
   const authLoading = !initialized;
   const isMobile = useIsMobile();
   const { me, loading: meLoading, error: meError } = useMe({ skip: !uid });
+  const cleanPathname = pathname?.replace(/^\/(en|fr)(?=\/|$)/, "") || "/";
+  const usesRouteNativeMobileHeader = cleanPathname.startsWith("/profile/");
 
   useEffect(() => {
     if (initialized && !uid && !authLoading) {
@@ -84,7 +87,7 @@ export default function ProtectedLayout({
       <AppSidebar />
       <SidebarInset className="relative overflow-hidden">
         <Header />
-        <main className={cn("bg-sidebar pb-20 md:pb-0", isMobile && "pt-14")}>{children}</main>
+        <main className={cn("bg-background pb-20 md:pb-0", isMobile && !usesRouteNativeMobileHeader && "pt-14")}>{children}</main>
       </SidebarInset>
       <SuggestionsSidebar />
     </SidebarProvider>

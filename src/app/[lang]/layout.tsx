@@ -1,13 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Bricolage_Grotesque } from "next/font/google";
+import { Archivo, Bricolage_Grotesque, Geist_Mono } from "next/font/google";
 import "../../app/globals.css";
 import Providers from "../Providers";
 import { Toaster } from "@/components/ui/sonner";
-
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
 
 const archivo = Archivo({
   variable: "--font-archivo-sans",
@@ -16,6 +11,11 @@ const archivo = Archivo({
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -90,8 +90,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+    { media: "(prefers-color-scheme: light)", color: "#F6F8FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B1017" },
   ],
   colorScheme: 'light dark',
 };
@@ -117,7 +117,7 @@ export default async function RootLayout({
           them (duplicated tags otherwise). */}
       <body
         suppressHydrationWarning
-        className={`${archivo.variable} ${bricolage.variable} antialiased`}
+        className={`${archivo.variable} ${bricolage.variable} ${geistMono.variable} antialiased`}
       >
         <Providers dictionary={dictionary}>
           <PwaInstallPrompt />

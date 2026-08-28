@@ -54,6 +54,8 @@ interface EditGroupFormValues {
 interface EditGroupDialogProps {
     group: Group;
     children?: React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
 function EditGroupForm({
@@ -199,10 +201,12 @@ function EditGroupForm({
     );
 }
 
-export default function EditGroupDialog({ group, children }: EditGroupDialogProps) {
-    const [open, setOpen] = useState(false);
+export default function EditGroupDialog({ group, children, open: controlledOpen, onOpenChange }: EditGroupDialogProps) {
+    const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
     const isMobile = useIsMobile();
     const dict = useDictionary();
+    const open = controlledOpen ?? uncontrolledOpen;
+    const setOpen = onOpenChange ?? setUncontrolledOpen;
 
     const trigger = children || (
         <Button variant="outline">

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StepProps } from "../types";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { UserTypeGQL, SpecialityGQL, EntityTypeGQL } from "@/types/User";
+import { Building2, Clock3, Stethoscope } from "lucide-react";
 
 export const StepIdentity: React.FC<StepProps> = ({ formik }) => {
     const dict = useDictionary();
@@ -12,6 +13,15 @@ export const StepIdentity: React.FC<StepProps> = ({ formik }) => {
     if (formik.values.userType === UserTypeGQL.INDIVIDUAL) {
         return (
             <div className="flex w-full flex-col gap-5">
+                <div className="flex items-start gap-3 rounded-card border border-border bg-card p-4">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-button bg-secondary-100 text-secondary-700 dark:bg-secondary-950 dark:text-secondary-300">
+                        <Stethoscope className="size-5" strokeWidth={1.8} />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold">{dict.register.stepDetailsTitle}</p>
+                        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{dict.register.stepDetailsDescription}</p>
+                    </div>
+                </div>
                 <div className="flex items-start gap-3">
                     <div className="grid w-full gap-1.5">
                         <Label htmlFor="firstName">{dict.register.firstNameLabel}</Label>
@@ -71,18 +81,34 @@ export const StepIdentity: React.FC<StepProps> = ({ formik }) => {
                         value={formik.values.professionalTitle}
                     />
                 </div>
+                <div className="flex items-start gap-3 rounded-card border border-tertiary-200 bg-tertiary-50 p-4 text-tertiary-900 dark:border-tertiary-900 dark:bg-tertiary-950 dark:text-tertiary-200">
+                    <Clock3 className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} />
+                    <p className="text-xs leading-5">
+                        {dict.pendingApproval.timelineReviewDescription}
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="flex w-full flex-col gap-5">
+            <div className="flex items-start gap-3 rounded-[18px] border border-border bg-card p-4 shadow-xs">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-[14px] bg-secondary-100 text-secondary-700 dark:bg-secondary-950 dark:text-secondary-300">
+                    <Building2 className="size-5" strokeWidth={1.8} />
+                </div>
+                <div className="min-w-0">
+                    <p className="text-sm font-semibold">{dict.register.stepDetailsTitleEntity}</p>
+                    <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{dict.register.stepDetailsDescriptionEntity}</p>
+                </div>
+            </div>
             <div className="grid gap-1.5">
-                <Label htmlFor="entityName">{dict.register.entityNameLabel}</Label>
+                <Label htmlFor="entityName">{dict.register.entityLegalNameLabel}</Label>
                 <Input
                     id="entityName"
                     name="entityName"
                     type="text"
+                    className="h-12 rounded-[15px]"
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     value={formik.values.entityName}
@@ -92,10 +118,10 @@ export const StepIdentity: React.FC<StepProps> = ({ formik }) => {
                 )}
             </div>
             <div className="grid gap-1.5">
-                <Label htmlFor="entityType">{dict.register.entityTypeLabel}</Label>
+                <Label htmlFor="entityType">{dict.register.entityStructureTypeLabel}</Label>
                 <Select onValueChange={(value) => formik.setFieldValue('entityType', value)} value={formik.values.entityType}>
-                    <SelectTrigger className="w-full" id="entityType">
-                        <SelectValue placeholder={dict.register.entityTypeLabel} />
+                    <SelectTrigger className="h-12 w-full rounded-[15px]" id="entityType">
+                        <SelectValue placeholder={dict.register.entityStructureTypeLabel} />
                     </SelectTrigger>
                     <SelectContent>
                         {Object.entries(EntityTypeGQL).map(([key, value]) =>
@@ -106,6 +132,10 @@ export const StepIdentity: React.FC<StepProps> = ({ formik }) => {
                 {formik.touched.entityType && formik.errors.entityType && (
                     <p className="text-destructive text-xs">{formik.errors.entityType}</p>
                 )}
+            </div>
+            <div className="flex items-start gap-3 rounded-[18px] border border-tertiary-200 bg-tertiary-50 p-4 text-tertiary-900 dark:border-tertiary-900 dark:bg-tertiary-950 dark:text-tertiary-200">
+                <Clock3 className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} />
+                <p className="text-xs leading-5">{dict.pendingApproval.timelineReviewDescription}</p>
             </div>
         </div>
     );

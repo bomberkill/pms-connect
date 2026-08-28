@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as yup from "yup";
-import { Loader2, Plus } from "lucide-react";
+import { ImagePlus, Loader2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,13 +27,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { useGroupMutations } from "@/hooks/useData/useGroups";
 import { GroupPrivacy } from "@/types/Group";
 import { toast } from "sonner";
@@ -55,7 +48,17 @@ interface CreateGroupDialogProps {
     children?: React.ReactNode;
 }
 
-function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, className?: string }) {
+function GroupForm({
+    afterSubmit,
+    className,
+    formId,
+    hideSubmit,
+}: {
+    afterSubmit: () => void;
+    className?: string;
+    formId?: string;
+    hideSubmit?: boolean;
+}) {
     const router = useRouter();
     const { createGroup, creating } = useGroupMutations();
     const dict = useDictionary();
@@ -114,10 +117,18 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
             : dict.groups.form.secretDesc;
 
     return (
-        <form onSubmit={formik.handleSubmit} className={cn("space-y-4", className)}>
+        <form id={formId} onSubmit={formik.handleSubmit} className={cn("space-y-4", className)}>
+            <div className="rounded-[1.35rem] border border-dashed border-border bg-muted/45 p-4">
+                <div className="flex h-24 items-center justify-center rounded-[1rem] bg-background/70 text-muted-foreground">
+                    <div className="flex flex-col items-center gap-2 text-xs font-semibold">
+                        <ImagePlus className="h-5 w-5" />
+                        {dict.groups.form.banner}
+                    </div>
+                </div>
+            </div>
             <div className="grid gap-1">
                 <Label htmlFor="name">{dict.groups.form.name}</Label>
-                <Input id="name" placeholder={dict.groups.form.namePlaceholder} {...formik.getFieldProps("name")} />
+                <Input id="name" className="h-11" placeholder={dict.groups.form.namePlaceholder} {...formik.getFieldProps("name")} />
                 {formik.touched.name && formik.errors.name && (
                     <p className="text-destructive text-xs">{formik.errors.name}</p>
                 )}
@@ -127,7 +138,7 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
                 <Textarea
                     id="description"
                     placeholder={dict.groups.form.descriptionPlaceholder}
-                    className="resize-none"
+                    className="min-h-28 resize-none"
                     {...formik.getFieldProps("description")}
                 />
                 {formik.touched.description && formik.errors.description && (
@@ -136,20 +147,37 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
             </div>
             <div className="grid gap-1">
                 <Label htmlFor="privacy">{dict.groups.form.privacy}</Label>
-                <Select
-                    value={formik.values.privacy}
-                    onValueChange={(value) => formik.setFieldValue("privacy", value)}
-                >
-                    <SelectTrigger id="privacy">
-                        <SelectValue placeholder={dict.groups.form.selectPrivacy} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={GroupPrivacy.PUBLIC}>{dict.groups.form.public}</SelectItem>
-                        <SelectItem value={GroupPrivacy.PRIVATE}>{dict.groups.form.private}</SelectItem>
-                        <SelectItem value={GroupPrivacy.SECRET}>{dict.groups.form.secret}</SelectItem>
-                    </SelectContent>
-                </Select>
-                <p className="text-muted-foreground text-xs">{privacyDesc}</p>
+                <div className="grid gap-2">
+                    {[GroupPrivacy.PRIVATE, GroupPrivacy.PUBLIC, GroupPrivacy.SECRET].map((privacy) => (
+                        <button
+                            key={privacy}
+                            type="button"
+                            onClick={() => formik.setFieldValue("privacy", privacy)}
+                            className={cn(
+                                "rounded-[1.1rem] border p-3 text-left transition-colors",
+                                formik.values.privacy === privacy
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border bg-card"
+                            )}
+                        >
+                            <span className="text-sm font-bold">
+                                {privacy === GroupPrivacy.PUBLIC
+                                    ? dict.groups.form.public
+                                    : privacy === GroupPrivacy.PRIVATE
+                                        ? dict.groups.form.private
+                                        : dict.groups.form.secret}
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                                {privacy === GroupPrivacy.PUBLIC
+                                    ? dict.groups.form.publicDesc
+                                    : privacy === GroupPrivacy.PRIVATE
+                                        ? dict.groups.form.privateDesc
+                                        : dict.groups.form.secretDesc}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+                <p className="sr-only">{privacyDesc}</p>
             </div>
             <div className="flex items-start gap-2">
                 <Checkbox
@@ -181,10 +209,12 @@ function GroupForm({ afterSubmit, className }: { afterSubmit: () => void, classN
                     {...formik.getFieldProps("rules")}
                 />
             </div>
-            <Button type="submit" disabled={creating} className="w-full md:w-auto">
-                {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {dict.groups.form.createBtn}
-            </Button>
+            {!hideSubmit && (
+                <Button type="submit" disabled={creating} className="w-full md:w-auto">
+                    {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {dict.groups.form.createBtn}
+                </Button>
+            )}
         </form>
     );
 }
@@ -204,17 +234,29 @@ export function CreateGroupDialog({ children }: CreateGroupDialogProps) {
                         </Button>
                     )}
                 </DrawerTrigger>
-                <DrawerContent>
-                    <DrawerHeader className="text-left">
-                        <DrawerTitle>{dict.groups.form.dialogTitle}</DrawerTitle>
-                        <DrawerDescription>
+                <DrawerContent className="h-[100svh] rounded-none">
+                    <DrawerHeader className="sticky top-0 z-10 border-b border-border bg-background px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <button type="button" className="text-sm font-semibold text-primary" onClick={() => setOpen(false)}>
+                                {dict.common.cancel}
+                            </button>
+                            <DrawerTitle className="text-base font-black tracking-[-0.02em]">{dict.groups.form.newGroup}</DrawerTitle>
+                            <Button type="submit" form="create-group-mobile-form" size="sm" className="h-8 rounded-full px-4 text-xs">
+                                {dict.groups.form.createAction}
+                            </Button>
+                        </div>
+                        <DrawerDescription className="sr-only">
                             {dict.groups.form.dialogDesc}
                         </DrawerDescription>
                     </DrawerHeader>
-                    <div className="px-4 pb-4">
-                        <GroupForm afterSubmit={() => setOpen(false)} />
+                    <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4">
+                        <GroupForm
+                            formId="create-group-mobile-form"
+                            afterSubmit={() => setOpen(false)}
+                            hideSubmit
+                        />
                     </div>
-                    <DrawerFooter className="pt-2" />
+                    <DrawerFooter className="hidden" />
                 </DrawerContent>
             </Drawer>
         );

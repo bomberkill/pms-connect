@@ -10,7 +10,7 @@ import { fr, enUS } from "date-fns/locale";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { Loader2, Bell, CheckCheck, Heart, MessageCircle, UserPlus, Users, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserTypeGQL } from "@/types/User";
@@ -19,6 +19,8 @@ import { buildGetCommentByIdQuery } from "@/graphql/queries/comment";
 import { Comment } from "@/types/Comment";
 import { buildGetOrCreateConversationWithUserMutation } from "@/graphql/queries/message";
 import { Conversation } from "@/types/Message";
+import { useConnectionActions, useConnectionRequests, useMe } from "@/hooks/useData";
+import { ConnectionRequestStatus } from "@/types/ConnectionRequest";
 
 const ICON_BY_TYPE: Record<NotificationType, { icon: React.ElementType; className: string }> = {
     [NotificationType.POST_LIKE]: { icon: Heart, className: "bg-primary text-primary-foreground" },
@@ -68,8 +70,12 @@ function resolveNotificationHref(notification: Notification): string {
 export default function NotificationsView() {
     const dict = useDictionary();
     const router = useRouter();
-    const dateLocale = typeof window !== "undefined" && window.location.pathname.startsWith("/fr") ? fr : enUS;
+    const params = useParams<{ lang?: string }>();
+    const dateLocale = params?.lang === "fr" ? fr : enUS;
     const [notifications, setNotifications] = useState<Notification[]>([]);
+    const { me } = useMe();
+    const { requests } = useConnectionRequests(ConnectionRequestStatus.PENDING);
+    const { acceptRequest, declineRequest, accepting, declining } = useConnectionActions();
 
     const { loading, error } = useMyNotifications({
         skip: 0,
@@ -147,6 +153,36 @@ export default function NotificationsView() {
         router.push(resolveNotificationHref(notification));
     };
 
+    const handleConnectionRequestAction = async (
+        event: React.MouseEvent<HTMLButtonElement>,
+        notification: Notification,
+        action: "accept" | "decline",
+    ) => {
+        event.stopPropagation();
+        const request = requests.find((item) =>
+            item.status === ConnectionRequestStatus.PENDING &&
+            item.recipient.id === me?.id &&
+            item.requester.id === notification.sender.id
+        );
+        if (!request) {
+            router.push("/friends");
+            return;
+        }
+
+        if (action === "accept") {
+            await acceptRequest({ variables: { requestId: request.id } });
+        } else {
+            await declineRequest({ variables: { requestId: request.id } });
+        }
+
+        setNotifications((prev) => prev.map((item) => (
+            item.id === notification.id ? { ...item, read: true } : item
+        )));
+        if (!notification.read) {
+            await markAsRead({ variables: { notificationIds: [notification.id] } });
+        }
+    };
+
     const groups = useMemo(() => {
         const today: Notification[] = [];
         const thisWeek: Notification[] = [];
@@ -177,18 +213,18 @@ export default function NotificationsView() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto pb-20">
-            <div className="flex items-center justify-between px-4 py-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b">
-                <h1 className="text-xl font-bold font-manrope">{dict.notifications.title}</h1>
+        <div className="mx-auto max-w-2xl pb-24">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/70 bg-background/90 px-4 py-4 backdrop-blur-xl">
+                <h1 className="text-[1.55rem] font-black tracking-[-0.04em]">{dict.notifications.title}</h1>
                 {notifications.some(n => !n.read) && (
-                    <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead} className="text-primary hover:text-primary/80">
-                        <CheckCheck className="w-4 h-4 mr-1" />
+                    <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead} className="h-8 rounded-full px-2 text-xs font-bold text-primary hover:text-primary/80">
+                        <CheckCheck className="mr-1 h-4 w-4" />
                         {dict.notifications.markAllRead}
                     </Button>
                 )}
             </div>
 
-            <div className="px-2 md:px-0">
+            <div className="px-4 md:px-0">
                 {notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                         <Bell className="w-12 h-12 mb-4 opacity-20" />
@@ -203,6 +239,7 @@ export default function NotificationsView() {
                             <AnimatePresence initial={false}>
                                 {group.items.map((notification) => {
                                     const { icon: Icon, className: iconClassName } = ICON_BY_TYPE[notification.type] ?? { icon: Bell, className: "bg-muted text-muted-foreground" };
+                                    const canHandleConnectionRequest = notification.type === NotificationType.CONNECTION_REQUEST;
                                     return (
                                         <motion.div
                                             key={notification.id}
@@ -210,21 +247,21 @@ export default function NotificationsView() {
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, height: 0 }}
                                             className={cn(
-                                                "relative flex items-center gap-4 p-4 my-3 rounded-xl transition-all cursor-pointer border",
+                                                "relative -mx-1 flex cursor-pointer items-start gap-3 rounded-[1.35rem] px-1 py-3 transition-all",
                                                 !notification.read
-                                                    ? "bg-primary/5 border-primary/10 shadow-sm"
-                                                    : "bg-card hover:bg-muted/50 border-transparent hover:border-border"
+                                                    ? "bg-primary/5"
+                                                    : "hover:bg-muted/45"
                                             )}
                                             onClick={() => handleNotificationClick(notification)}
                                         >
                                             {!notification.read && (
-                                                <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-primary" />
+                                                <div className="absolute right-3 top-4 h-2 w-2 rounded-full bg-primary" />
                                             )}
 
                                             <div className="relative shrink-0">
                                                 <Avatar
                                                     shape={notification.sender.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"}
-                                                    className="w-12 h-12 border border-border"
+                                                    className="h-11 w-11 border border-border"
                                                 >
                                                     <AvatarImage src={notification.sender.profilePicUrl} className="object-cover" />
                                                     <AvatarFallback>{getUserInitials(notification.sender)}</AvatarFallback>
@@ -251,6 +288,29 @@ export default function NotificationsView() {
                                                 <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
                                                     <span>{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateLocale })}</span>
                                                 </p>
+                                                {canHandleConnectionRequest && (
+                                                    <div className="mt-3 flex items-center gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            className="h-8 rounded-full px-4 text-xs"
+                                                            disabled={accepting || declining}
+                                                            onClick={(event) => handleConnectionRequestAction(event, notification, "accept")}
+                                                        >
+                                                            {accepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                                                            {dict.actions.accept}
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-8 rounded-full px-4 text-xs"
+                                                            disabled={accepting || declining}
+                                                            onClick={(event) => handleConnectionRequestAction(event, notification, "decline")}
+                                                        >
+                                                            {declining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                                                            {dict.actions.ignore ?? dict.actions.declineRequest}
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </motion.div>
                                     );

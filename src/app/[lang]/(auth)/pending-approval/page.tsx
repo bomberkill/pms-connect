@@ -74,7 +74,7 @@ export default function PendingApprovalPage() {
               <div className={[
                 "relative z-10 flex size-10 shrink-0 items-center justify-center rounded-full border",
                 isDone ? "border-primary bg-primary text-primary-foreground" : "",
-                isCurrent ? "border-tertiary/30 bg-tertiary-100 text-tertiary-700" : "",
+                isCurrent ? "border-tertiary/30 bg-tertiary-100 text-tertiary-700 dark:bg-tertiary-950 dark:text-tertiary-300" : "",
                 !isDone && !isCurrent ? "border-border bg-muted text-muted-foreground" : "",
               ].join(" ")}>
                 <Icon className="size-5" />

@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { usePost, useMe, useBookmarkActions, useLikePostActions } from "@/hooks/useData/index";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, MessageCircle, Bookmark, MoreHorizontal, Pencil, Trash2, Share2 } from "lucide-react";
+import { ArrowLeft, Heart, Bookmark, MoreHorizontal, Pencil, Trash2, Share2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
 import { cn } from "@/lib/utils";
@@ -16,12 +16,7 @@ import { IndividualUser, LegalEntityUser, UserTypeGQL } from "@/types/User";
 import { PostMedia } from "@/components/PostMedia";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ResponsiveActionMenu, ResponsiveActionMenuItem } from "@/components/ui/responsive-action-menu";
 import { usePostMutations } from "@/hooks/useData/usePostData";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 import EditPostDialog from "@/components/EditPostDialog";
@@ -132,6 +127,23 @@ export default function PostDetailPage() {
     }
   };
 
+  const postActionItems: ResponsiveActionMenuItem[] = [
+    {
+      key: "edit",
+      label: dict.actions.edit,
+      icon: Pencil,
+      onSelect: () => setIsEditOpen(true),
+    },
+    {
+      key: "delete",
+      label: dict.actions.delete,
+      icon: Trash2,
+      destructive: true,
+      disabled: removing,
+      onSelect: () => setIsDeleteOpen(true),
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6">
       <EditPostDialog
@@ -170,17 +182,17 @@ export default function PostDetailPage() {
         </div>
 
         {/* Main Post Card */}
-        <Card className="rounded-none md:rounded-2xl border-x-0 md:border border-t-0 md:border-t shadow-none md:shadow-xs overflow-hidden">
+        <Card className="overflow-hidden rounded-none border-x-0 border-t-0 shadow-none md:rounded-card md:border md:border-t md:shadow-xs">
           {/* Author Header */}
-          <div className="p-4 flex items-start justify-between">
-            <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => router.push(`/profile/${post.author.slug}`)}>
-              <Avatar className="h-12 w-12 border border-border">
+          <div className="flex items-start justify-between px-4 pb-2 pt-4">
+            <div className="flex min-w-0 cursor-pointer items-center gap-3 transition-opacity hover:opacity-80" onClick={() => router.push(`/profile/${post.author.slug}`)}>
+              <Avatar className="size-11 shrink-0 border border-border">
                 <AvatarImage src={post.author.profilePicUrl} />
                 <AvatarFallback>{getUserInitials(post.author)}</AvatarFallback>
               </Avatar>
-              <div>
-                <h3 className="font-semibold text-base">{getUserDisplayName(post.author)}</h3>
-                <p className="text-sm text-muted-foreground">
+              <div className="min-w-0">
+                <h3 className="truncate text-[15px] font-semibold leading-tight">{getUserDisplayName(post.author)}</h3>
+                <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
                   {post.author.userType === UserTypeGQL.INDIVIDUAL
                     ? (post.author as IndividualUser).professionalTitle
                     : dict.entityTypes[(post.author as LegalEntityUser).entityType]}
@@ -188,79 +200,66 @@ export default function PostDetailPage() {
               </div>
             </div>
             {canManagePost ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full hover:bg-accent">
+              <ResponsiveActionMenu
+                title={dict.common.actions}
+                items={postActionItems}
+                trigger={
+                  <Button type="button" variant="ghost" size="icon" className="rounded-full hover:bg-accent">
                     <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
-                    <Pencil className="mr-2 h-4 w-4" /> {dict.actions.edit}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setIsDeleteOpen(true)}
-                    disabled={removing}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" /> {dict.actions.delete}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                }
+              />
             ) : null}
           </div>
 
           {/* Content */}
           <div className="px-4 pb-2">
-            <p className="text-base leading-relaxed whitespace-pre-wrap mb-4">{post.content}</p>
+            <p className="mb-3 text-[13px] font-medium text-muted-foreground">
+              {date} {dict.common.at || "à"} {time} · {dict.post.visibilityConnections}
+            </p>
+            <p className="mb-4 whitespace-pre-wrap text-[16px] leading-relaxed text-foreground">{post.content}</p>
             {post.media && post.media.length > 0 && (
-              <div className="rounded-2xl overflow-hidden border border-border">
+              <div className="md:overflow-hidden md:rounded-card md:border md:border-border">
                 <PostMedia media={post.media} />
               </div>
             )}
           </div>
 
-          {/* Date & Meta */}
-          <div className="px-4 py-3 mt-2">
-            <div className="text-sm text-muted-foreground flex items-center gap-2">
-              <span>{time}</span>
-              <span>&bull;</span>
-              <span>{date}</span>
-            </div>
-            <Separator className="my-3" />
-            <div className="flex items-center gap-6 text-sm">
-              <span className="flex items-center gap-1"><strong className="text-foreground">{post.likesCount}</strong> <span className="text-muted-foreground">{dict.actions.likes}</span></span>
-              <span className="flex items-center gap-1"><strong className="text-foreground">{post.commentsCount}</strong> <span className="text-muted-foreground">{dict.profile.tabs.replies}</span></span>
+          {/* Meta & actions */}
+          <div className="px-4 pb-2 pt-1">
+            <div className="flex items-center gap-4 text-[13px]">
+              <span className="font-medium text-muted-foreground">
+                <strong className="font-semibold text-foreground">{post.likesCount}</strong> {dict.post.reactions}
+              </span>
+              <span className="font-medium text-muted-foreground">
+                <strong className="font-semibold text-foreground">{post.commentsCount}</strong> {dict.post.comments}
+              </span>
             </div>
             <Separator className="my-3" />
 
             {/* Actions */}
-            <div className="flex items-center justify-between text-muted-foreground md:px-2">
-              <Button variant="ghost" size="sm" className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors" onClick={() => document.getElementById('comment-input')?.focus()}>
-                <MessageCircle className="h-5 w-5 mr-2" />
-                {dict.profile.tabs.replies}
-              </Button>
+            <div className="flex min-w-0 items-center justify-between text-muted-foreground md:px-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className={cn("flex-1 rounded-full hover:text-error hover:bg-error/5 transition-colors", isLiked && "text-error")}
+                className={cn("min-w-0 flex-1 gap-1 rounded-button px-1.5 hover:bg-error/5 hover:text-error", isLiked && "text-error")}
                 onClick={() => (isLiked ? unlikePost() : likePost())}
               >
-                <Heart className={cn("h-5 w-5 mr-2", isLiked && "fill-error")} />
-                {dict.actions.likes}
+                <Heart className={cn("h-4 w-4 shrink-0", isLiked && "fill-error")} />
+                <span className="min-w-0 truncate">{dict.actions.like}</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors"
+                className="min-w-0 flex-1 gap-1 rounded-button px-1.5 hover:bg-primary/5 hover:text-primary"
                 onClick={() => (post.isBookmarked ? removeBookmark() : addBookmark())}
               >
-                <Bookmark className={cn("h-5 w-5 mr-2", post.isBookmarked && "fill-primary text-primary")} />
-                {dict.actions.bookmark}
+                <Bookmark className={cn("h-4 w-4 shrink-0", post.isBookmarked && "fill-primary text-primary")} />
+                <span className="min-w-0 truncate">{dict.post.interesting}</span>
               </Button>
-              <Button variant="ghost" size="sm" className="flex-1 rounded-full hover:text-primary hover:bg-primary/5 transition-colors" onClick={handleShare}>
-                <Share2 className="h-5 w-5 mr-2" />
-                {dict.actions.share}
+              <Button variant="ghost" size="sm" className="min-w-0 flex-1 gap-1 rounded-button px-1.5 hover:bg-primary/5 hover:text-primary" onClick={handleShare}>
+                <Share2 className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 truncate">{dict.actions.share}</span>
               </Button>
             </div>
           </div>

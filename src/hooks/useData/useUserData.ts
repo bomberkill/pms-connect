@@ -17,8 +17,20 @@ import {
     buildCheckUserExistsByPhoneNumberQuery,
     buildRegisterFcmTokenMutation,
     buildUnregisterFcmTokenMutation,
+    buildGetProfessionalExperiencesQuery,
+    buildAddProfessionalExperienceMutation,
+    buildUpdateProfessionalExperienceMutation,
+    buildRemoveProfessionalExperienceMutation,
 } from '@/graphql/queries/index';
-import { CheckUserExistsResponse, FollowsUpdated, User, UpdateUserInput } from '@/types/User';
+import {
+    CheckUserExistsResponse,
+    CreateProfessionalExperienceInput,
+    FollowsUpdated,
+    ProfessionalExperience,
+    UpdateProfessionalExperienceInput,
+    User,
+    UpdateUserInput,
+} from '@/types/User';
 import { useEffect, useCallback } from 'react';
 
 // =============================================================================
@@ -326,6 +338,54 @@ export const useUserMutations = () => {
         updateEmail,
         updatingEmail,
         emailError,
+    };
+};
+
+export const useProfessionalExperiences = (userId: string) => {
+    const { data, loading, error, refetch } = useQuery<
+        { getProfessionalExperiences: ProfessionalExperience[] },
+        { userId: string }
+    >(buildGetProfessionalExperiencesQuery(), {
+        variables: { userId },
+        skip: !userId,
+        fetchPolicy: 'cache-and-network',
+    });
+
+    const [addProfessionalExperience, { loading: adding, error: addError }] = useMutation<
+        { addProfessionalExperience: ProfessionalExperience },
+        { input: CreateProfessionalExperienceInput }
+    >(buildAddProfessionalExperienceMutation(), {
+        refetchQueries: userId ? [{ query: buildGetProfessionalExperiencesQuery(), variables: { userId } }] : [],
+    });
+
+    const [updateProfessionalExperience, { loading: updating, error: updateError }] = useMutation<
+        { updateProfessionalExperience: ProfessionalExperience },
+        { id: string; input: UpdateProfessionalExperienceInput }
+    >(buildUpdateProfessionalExperienceMutation(), {
+        refetchQueries: userId ? [{ query: buildGetProfessionalExperiencesQuery(), variables: { userId } }] : [],
+    });
+
+    const [removeProfessionalExperience, { loading: removing, error: removeError }] = useMutation<
+        { removeProfessionalExperience: boolean },
+        { id: string }
+    >(buildRemoveProfessionalExperienceMutation(), {
+        refetchQueries: userId ? [{ query: buildGetProfessionalExperiencesQuery(), variables: { userId } }] : [],
+    });
+
+    return {
+        professionalExperiences: data?.getProfessionalExperiences || [],
+        loading,
+        error,
+        refetch,
+        addProfessionalExperience,
+        adding,
+        addError,
+        updateProfessionalExperience,
+        updating,
+        updateError,
+        removeProfessionalExperience,
+        removing,
+        removeError,
     };
 };
 

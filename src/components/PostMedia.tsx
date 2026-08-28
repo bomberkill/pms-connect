@@ -98,7 +98,7 @@ export function PostMedia({ media }: { media?: MediaItem[] }) {
       {/* Grille principale */}
       <div
         className={cn(
-          "mt-3 grid gap-1 overflow-hidden rounded-md",
+          "-mx-4 mt-3 grid gap-1 overflow-hidden border-y border-border md:mx-0 md:rounded-card md:border",
           media.length === 1 && "grid-cols-1",
           media.length === 2 && "grid-cols-2",
           media.length >= 3 && "grid-cols-3"
@@ -401,7 +401,7 @@ function MediaPreview({
   if (media.type === MediaType.IMAGE)
     return (
       <div
-        className="relative w-full h-60 rounded-md overflow-hidden cursor-pointer hover:opacity-90 transition"
+        className="relative h-[196px] w-full cursor-pointer overflow-hidden transition hover:opacity-90 md:h-60 md:rounded-card"
         onClick={onClick}
       >
         <Image
@@ -416,7 +416,7 @@ function MediaPreview({
   if (media.type === MediaType.VIDEO)
     return (
       <div
-        className="relative w-full h-60 bg-black rounded-md overflow-hidden cursor-pointer group"
+        className="group relative h-[196px] w-full cursor-pointer overflow-hidden bg-black md:h-60 md:rounded-card"
         onClick={onClick}
       >
         <video
@@ -443,7 +443,7 @@ function MediaPreview({
   if (media.type === MediaType.DOCUMENT) return (
     <div
       onClick={onClick}
-      className="w-full h-60 bg-muted border border-border flex flex-col items-center justify-center rounded-md cursor-pointer hover:bg-muted/80 transition group relative overflow-hidden"
+      className="group relative flex h-[196px] w-full cursor-pointer flex-col items-center justify-center overflow-hidden bg-muted transition hover:bg-muted/80 md:h-60 md:rounded-card md:border md:border-border"
     >
       <div className="absolute top-0 right-0 p-2 bg-error text-error-foreground text-2xs font-bold rounded-bl-lg shadow-sm">
         {dict.common.pdf}

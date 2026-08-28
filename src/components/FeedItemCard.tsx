@@ -17,14 +17,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { ResponsiveActionMenu, ResponsiveActionMenuItem } from "@/components/ui/responsive-action-menu"
 import { useBookmarkActions, useFollowActions, useBlockActions, useMe, useLikePostActions, useLikesSubscription } from "@/hooks/useData/index"
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
@@ -162,6 +155,66 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
     }
   };
 
+  const actionItems: ResponsiveActionMenuItem[] = [
+    ...(isOwnItem
+      ? [
+        {
+          key: "edit",
+          label: dict.actions.edit,
+          icon: Pencil,
+          onSelect: () => setIsEditOpen(true),
+        },
+        {
+          key: "delete",
+          label: dict.actions.delete,
+          icon: Trash2,
+          destructive: true,
+          disabled: removing,
+          onSelect: () => setIsDeleteOpen(true),
+        },
+      ]
+      : []),
+    {
+      key: "bookmark",
+      label: item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark,
+      icon: Bookmark,
+      disabled: addingBookmark || removingBookmark,
+      separatorBefore: isOwnItem,
+      onSelect: handleBookmarkToggle,
+    },
+    {
+      key: "mute",
+      label: dict.actions.mute,
+      icon: Ban,
+      onSelect: handleMute,
+    },
+    {
+      key: "report",
+      label: dict.actions.report,
+      icon: Flag,
+      onSelect: () => setIsReportOpen(true),
+    },
+    ...(authorId && authorId !== me?.id
+      ? [
+        {
+          key: "follow",
+          label: isFollowing ? dict.actions.unfollow : dict.actions.follow,
+          icon: isFollowing ? UserMinus : UserPlus,
+          disabled: followingReq || unfollowing,
+          onSelect: handleFollowToggle,
+        },
+        {
+          key: "block",
+          label: isBlocked ? dict.actions.unblock : dict.actions.block,
+          icon: ShieldOff,
+          destructive: true,
+          disabled: blocking || unblocking,
+          onSelect: isBlocked ? handleUnblock : () => setIsBlockConfirmOpen(true),
+        },
+      ]
+      : []),
+  ];
+
   return (
     <>
       {postItem && (
@@ -190,7 +243,7 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
         confirmText={dict.actions.delete}
         cancelText={dict.common.cancel}
       />
-      <div className="text-card-foreground rounded-card border border-border bg-card px-4 py-4 shadow-xs mb-3">
+      <div className="mb-2 border-y border-border bg-card px-4 py-3 text-card-foreground shadow-none md:mb-3 md:rounded-card md:border md:py-4 md:shadow-xs">
         <div className="flex items-start justify-between">
           <div onClick={() => router.push(`/profile/${item.author.slug}`)} className="flex items-start gap-2.5 cursor-pointer min-w-0">
             <Avatar
@@ -208,71 +261,48 @@ export default function FeedItemCard({ item }: FeedItemCardProps) {
               <span className="text-xs text-muted-foreground mt-0.5">{formatTimeAgo(item.createdAt, dict)}</span>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button aria-label="More options" className="p-1.5 rounded-full hover:bg-muted">
+          <ResponsiveActionMenu
+            title={dict.common.actions}
+            items={actionItems}
+            trigger={
+              <button type="button" aria-label={dict.common.actions} className="p-1.5 rounded-full hover:bg-muted">
                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>{dict.common.actions}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {isOwnItem && (
-                <>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => setIsEditOpen(true)}>
-                    <Pencil className="mr-2 h-4 w-4" /> {dict.actions.edit}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={() => setIsDeleteOpen(true)} disabled={removing}>
-                    <Trash2 className="mr-2 h-4 w-4" /> {dict.actions.delete}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              <DropdownMenuItem className="cursor-pointer" onClick={handleBookmarkToggle} disabled={addingBookmark || removingBookmark}>
-                <Bookmark className={cn("mr-2 h-4 w-4", item.isBookmarked && "fill-primary text-primary")} />
-                {item.isBookmarked ? dict.actions.removeBookmark : dict.actions.bookmark}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={handleMute}><Ban className="mr-2 h-4 w-4" /> {dict.actions.mute}</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => setIsReportOpen(true)}><Flag className="mr-2 h-4 w-4" /> {dict.actions.report}</DropdownMenuItem>
-              {authorId && authorId !== me?.id && (
-                <>
-                  <DropdownMenuItem className="cursor-pointer" onClick={handleFollowToggle} disabled={followingReq || unfollowing}>{isFollowing ? <><UserMinus className="mr-2 h-4 w-4" /> {dict.actions.unfollow}</> : <><UserPlus className="mr-2 h-4 w-4" /> {dict.actions.follow}</>}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer text-destructive focus:text-destructive"
-                    onClick={isBlocked ? handleUnblock : () => setIsBlockConfirmOpen(true)}
-                    disabled={blocking || unblocking}
-                  >
-                    <ShieldOff className="mr-2 h-4 w-4" /> {isBlocked ? dict.actions.unblock : dict.actions.block}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+          />
         </div>
 
         <div className="pt-2">
-          <p className="text-base leading-relaxed whitespace-pre-wrap">{item.content}</p>
+          <p className="text-[15px] leading-[1.55] whitespace-pre-wrap">{item.content}</p>
           {item.media && <PostMedia media={item.media} />}
         </div>
 
-        <div className="flex items-center gap-1.5 pt-3 text-muted-foreground">
-          <Heart className="size-3.5" />
+        <div className="flex items-center gap-1.5 border-b border-border pt-3 pb-2 text-muted-foreground">
+          {item.likesCount > 0 && (
+            <span className="flex items-center">
+              <span className="flex size-[19px] items-center justify-center rounded-full border border-card bg-primary text-primary-foreground">
+                <Heart className="size-2.5 fill-current" />
+              </span>
+              <span className="-ml-1.5 flex size-[19px] items-center justify-center rounded-full border border-card bg-secondary-500 text-white">
+                <MessageCircle className="size-2.5" strokeWidth={2.4} />
+              </span>
+            </span>
+          )}
           <span className="text-xs">{item.likesCount} {dict.post.reactions}</span>
           <span className="ml-auto text-xs">{item.commentsCount} {dict.post.comments}</span>
         </div>
-        <div className="-mx-1 mt-1 flex border-t border-border pt-1">
-          <Button variant="ghost" onClick={handleLikeToggle} disabled={liking || unliking} className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80" aria-pressed={isLiked}>
-            <Heart className={cn("size-4", isLiked && "fill-error text-error")} />
-            {isLiked ? dict.actions.unlike : dict.actions.like}
+        <div className="-mx-2 mt-1 flex min-w-0 pt-0.5">
+          <Button variant="ghost" onClick={handleLikeToggle} disabled={liking || unliking} className="min-w-0 h-11 flex-1 rounded-button gap-1 px-1.5 py-0 text-[13px] font-semibold hover:bg-muted/80" aria-pressed={isLiked}>
+            <Heart className={cn("size-4 shrink-0", isLiked && "fill-error text-error")} />
+            <span className="min-w-0 truncate">{isLiked ? dict.actions.unlike : dict.actions.like}</span>
           </Button>
-          <Button variant="ghost" onClick={goToDetail} className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80">
-            <MessageCircle className="size-4" />
-            {dict.actions.comment}
+          <Button variant="ghost" onClick={goToDetail} className="min-w-0 h-11 flex-1 rounded-button gap-1 px-1.5 py-0 text-[13px] font-semibold hover:bg-muted/80">
+            <MessageCircle className="size-4 shrink-0" />
+            <span className="min-w-0 truncate">{dict.actions.comment}</span>
           </Button>
-          <Button variant="ghost" className="h-auto flex-1 rounded-lg gap-1.5 py-2.5 text-[13.5px] font-semibold hover:bg-muted/80" aria-label={dict.actions.share}>
-            <Share2 className="size-4" />
-            {dict.actions.share}
+          <Button variant="ghost" className="min-w-0 h-11 flex-1 rounded-button gap-1 px-1.5 py-0 text-[13px] font-semibold hover:bg-muted/80" aria-label={dict.actions.share}>
+            <Share2 className="size-4 shrink-0" />
+            <span className="min-w-0 truncate">{dict.actions.share}</span>
           </Button>
         </div>
       </div>
