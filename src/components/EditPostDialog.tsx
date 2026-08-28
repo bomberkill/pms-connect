@@ -12,10 +12,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { usePostMutations } from "@/hooks/useData/usePostData";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Post } from "@/types/Post";
 
 interface EditPostDialogProps {
@@ -31,6 +40,7 @@ export default function EditPostDialog({
 }: EditPostDialogProps) {
   const dict = useDictionary();
   const { open: notify } = useNotification();
+  const isMobile = useIsMobile();
   const { updatePost, updating } = usePostMutations();
   const [content, setContent] = useState(post.content);
 
@@ -69,6 +79,56 @@ export default function EditPostDialog({
     }
   };
 
+  const formContent = (
+    <>
+      <Textarea
+        value={content}
+        onChange={(event) => setContent(event.target.value)}
+        placeholder={dict.post.editPlaceholder}
+        maxLength={2000}
+        className="min-h-40"
+      />
+    </>
+  );
+
+  const actions = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => onOpenChange(false)}
+      >
+        {dict.common.cancel}
+      </Button>
+      <Button
+        type="button"
+        onClick={handleSave}
+        disabled={updating || content.trim().length === 0 || content.trim() === post.content}
+      >
+        {updating ? <Loader2 className="size-4 animate-spin" /> : dict.button.save}
+      </Button>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{dict.post.editTitle}</DrawerTitle>
+            <DrawerDescription>{dict.post.editDescription}</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-4">
+            {formContent}
+          </div>
+          <DrawerFooter className="pb-[calc(16px+env(safe-area-inset-bottom))]">
+            {actions}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -77,29 +137,9 @@ export default function EditPostDialog({
           <DialogDescription>{dict.post.editDescription}</DialogDescription>
         </DialogHeader>
 
-        <Textarea
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          placeholder={dict.post.editPlaceholder}
-          maxLength={2000}
-          className="min-h-40"
-        />
-
+        {formContent}
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            {dict.common.cancel}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={updating || content.trim().length === 0 || content.trim() === post.content}
-          >
-            {updating ? <Loader2 className="size-4 animate-spin" /> : dict.button.save}
-          </Button>
+          {actions}
         </DialogFooter>
       </DialogContent>
     </Dialog>

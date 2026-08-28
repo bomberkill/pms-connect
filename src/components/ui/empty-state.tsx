@@ -23,21 +23,21 @@ export function EmptyState({
     imageSrc
 }: EmptyStateProps) {
     return (
-        <div className={cn("flex flex-col items-center justify-center text-center p-8 bg-muted/20 rounded-lg border-2 border-dashed border-muted-foreground/25", className)}>
+        <div className={cn("flex flex-col items-center justify-center rounded-card border border-border bg-card/80 p-7 text-center", className)}>
             {imageSrc ? (
                 <Image src={imageSrc} alt="" width={192} height={192} className="mb-4 object-contain opacity-80" />
             ) : Icon ? (
-                <div className="bg-background p-4 rounded-full mb-4 shadow-sm ring-1 ring-border">
-                    <Icon className="w-8 h-8 text-muted-foreground" />
+                <div className="mb-3 flex size-[52px] items-center justify-center rounded-card border border-primary-100 bg-primary-50 dark:border-primary-900 dark:bg-primary-950">
+                    <Icon className="size-6 text-primary" strokeWidth={1.8} />
                 </div>
             ) : null}
 
-            <h3 className="text-lg font-semibold text-foreground mb-1">
+            <h3 className="mb-1 font-heading text-[17px] font-semibold leading-tight tracking-tight text-foreground">
                 {title}
             </h3>
 
             {description && (
-                <p className="text-sm text-muted-foreground max-w-xs mb-6">
+                <p className="mb-5 max-w-xs text-[13.5px] leading-relaxed text-muted-foreground">
                     {description}
                 </p>
             )}

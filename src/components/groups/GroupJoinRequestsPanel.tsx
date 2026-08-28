@@ -36,13 +36,13 @@ export default function GroupJoinRequestsPanel({
     const dict = useDictionary();
 
     return (
-        <Card>
-            <CardHeader className="pb-0">
+        <Card className="rounded-none border-0 shadow-none">
+            <CardHeader className="sr-only">
                 <CardTitle>{dict.groups.joinRequests}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 pb-6">
+            <CardContent className="space-y-0 p-0">
                 {requests.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">{dict.groups.noJoinRequests}</p>
+                    <p className="p-4 text-sm text-muted-foreground">{dict.groups.noJoinRequests}</p>
                 ) : (
                     requests.map((request) => {
                         const requesterName = getRequesterName(
@@ -52,22 +52,26 @@ export default function GroupJoinRequestsPanel({
                         const requester = request.user as { profilePicUrl?: string };
 
                         return (
-                            <div key={request.id} className="rounded-lg border p-3 space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="w-10 h-10">
+                            <div key={request.id} className="space-y-3 border-b border-border/70 p-4 last:border-b-0">
+                                <div className="flex items-start gap-3">
+                                    <Avatar className="h-11 w-11">
                                         <AvatarImage src={requester.profilePicUrl} />
                                         <AvatarFallback>
                                             {requesterName.substring(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium truncate">{requesterName}</p>
-                                        <p className="text-xs text-muted-foreground">{request.status}</p>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-[14.5px] font-semibold">{requesterName}</p>
+                                        <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">{request.status}</p>
+                                        <p className="mt-2 rounded-[10px] bg-muted/45 px-3 py-2 text-[13px] leading-relaxed text-muted-foreground dark:bg-muted/20">
+                                            {dict.groups.joinRequestNoMessage}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 pl-14">
                                     <Button
                                         size="sm"
+                                        className="h-[38px] flex-1 rounded-[11px]"
                                         onClick={() => onApprove(request.id)}
                                         disabled={actionLoading}
                                     >
@@ -76,6 +80,7 @@ export default function GroupJoinRequestsPanel({
                                     <Button
                                         size="sm"
                                         variant="outline"
+                                        className="h-[38px] flex-1 rounded-[11px]"
                                         onClick={() => onReject(request.id)}
                                         disabled={actionLoading}
                                     >

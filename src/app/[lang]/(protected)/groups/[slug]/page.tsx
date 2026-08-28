@@ -14,13 +14,8 @@ import { GroupJoinRequestStatus, GroupMemberRole, GroupMembership, GroupPrivacy 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, MoreVertical, LogOut, Pencil, Trash2 } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, Clock3, FileText, Users, MoreVertical, LogOut, Pencil, Trash2, UserPlus } from "lucide-react";
+import { ResponsiveActionMenu, ResponsiveActionMenuItem } from "@/components/ui/responsive-action-menu";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -31,6 +26,7 @@ import { useGroupPosts } from "@/hooks/useData/usePostData";
 import FeedItemCard from "@/components/FeedItemCard";
 import { MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GroupMembersPanel from "@/components/groups/GroupMembersPanel";
 import InviteMemberDialog from "@/components/groups/InviteMemberDialog";
 import { useMutedAuthorIds } from "@/hooks/use-muted-authors";
@@ -110,7 +106,9 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
         rejectGroupJoinRequest,
         removeGroupMember,
         updateGroupMemberRole,
+        updateGroup,
         deleteGroup,
+        updating,
         leaving,
         joining,
         acceptingInvitation,
@@ -169,10 +167,12 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
         rejectingJoinRequest ||
         removingMember ||
         updatingMemberRole ||
+        updating ||
         deleting ||
         approvingPost ||
         rejectingPost;
     const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+    const [editGroupOpen, setEditGroupOpen] = React.useState(false);
 
     const refreshGroupState = async () => {
         await Promise.all([
@@ -195,6 +195,60 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
             toast.error(dict.groups.leftError);
         }
     };
+
+    const handleToggleGroupSetting = async (
+        key: "postsRequireApproval" | "restrictToVerifiedTitles",
+        checked: boolean
+    ) => {
+        if (!group) return;
+        try {
+            await updateGroup({
+                variables: {
+                    groupId: group._id,
+                    updateGroupInput: {
+                        [key]: checked,
+                    },
+                },
+            });
+            await refreshGroupState();
+        } catch {
+            toast.error(dict.groups.form.updateError);
+        }
+    };
+
+    const groupActionItems: ResponsiveActionMenuItem[] = [
+        ...(canManageRoles
+            ? [
+                {
+                    key: "edit",
+                    label: dict.groups.edit,
+                    icon: Pencil,
+                    onSelect: () => setEditGroupOpen(true),
+                },
+            ]
+            : []),
+        ...(isCreator
+            ? [
+                {
+                    key: "delete",
+                    label: dict.groups.delete,
+                    icon: Trash2,
+                    destructive: true,
+                    disabled: deleting,
+                    onSelect: () => setDeleteDialogOpen(true),
+                },
+            ]
+            : [
+                {
+                    key: "leave",
+                    label: dict.groups.leave,
+                    icon: LogOut,
+                    destructive: true,
+                    disabled: actionLoading,
+                    onSelect: handleLeave,
+                },
+            ]),
+    ];
 
     const handleJoin = async () => {
         if (!group) return;
@@ -353,17 +407,19 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
     }
 
     return (
-        <div className="container max-w-5xl mx-auto pb-20">
+        <div className="mx-auto max-w-5xl pb-24">
             {/* Header / Cover */}
-            <div className="relative h-48 md:h-64 bg-muted rounded-b-xl overflow-hidden mb-12">
+            <div className="relative h-40 overflow-hidden bg-muted md:h-64 md:rounded-b-xl">
                 {group.coverImageUrl ? (
                     <Image src={group.coverImageUrl} alt="Cover" fill className="object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-primary-400 to-secondary-400" />
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/18 via-secondary/12 to-tertiary/18 text-xs font-semibold text-muted-foreground">
+                        {dict.groups.bannerPlaceholder}
+                    </div>
                 )}
 
                 {/* Profile Image Overlapping */}
-                <div className="absolute -bottom-8 md:-bottom-10 left-4 md:left-10">
+                <div className="absolute bottom-3 left-4 md:-bottom-10 md:left-10">
                     <Avatar shape="establishment" className="w-16 h-16 md:w-32 md:h-32 border-4 border-background shadow-lg">
                         <AvatarImage src={group.profileImageUrl} />
                         <AvatarFallback className="text-xl md:text-3xl">{group.name.substring(0, 2).toUpperCase()}</AvatarFallback>
@@ -371,15 +427,20 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                 </div>
             </div>
 
-            <div className="px-4 md:px-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div className="pt-2">
-                    <h1 className="text-xl md:text-3xl font-bold">{group.name}</h1>
-                    <div className="flex items-center text-muted-foreground mt-1">
-                        <span className="flex items-center mr-4">
-                            <Users className="w-4 h-4 mr-1" />
-                            {privacyLabel(group.privacy, dict)} &bull; {membersLoading ? '...' : membersCount} {dict.groups.members.toLowerCase()}
-                        </span>
-                    </div>
+            <div className="mb-5 flex flex-col gap-4 px-4 pt-4 md:mb-6 md:flex-row md:items-center md:justify-between md:px-10 md:pt-12">
+                <div className="min-w-0">
+                    <h1 className="text-[1.45rem] font-black leading-tight tracking-[-0.04em] md:text-3xl">{group.name}</h1>
+                    <p className="mt-1 text-sm font-medium text-muted-foreground">
+                        {privacyLabel(group.privacy, dict)} · {membersLoading ? '...' : membersCount} {dict.groups.memberCountLabel}
+                    </p>
+                    <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                        {group.description || dict.profile.noBio}
+                    </p>
+                    {members.length > 0 && (
+                        <p className="mt-2 text-xs font-medium text-muted-foreground">
+                            {dict.groups.membersPreview.replace("{count}", String(Math.max(0, membersCount - 2)))}
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex gap-2 w-full md:w-auto">
@@ -397,35 +458,28 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                             {dict.groups.cancelRequest}
                         </Button>
                     ) : isMember ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="icon" disabled={actionLoading}>
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                {canManageRoles && (
-                                    <EditGroupDialog group={group}>
-                                        <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
-                                            <Pencil className="mr-2 h-4 w-4" /> {dict.groups.edit}
-                                        </DropdownMenuItem>
-                                    </EditGroupDialog>
-                                )}
-                                {isCreator && (
-                                    <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive cursor-pointer"
-                                        onClick={() => setDeleteDialogOpen(true)}
-                                    >
-                                        <Trash2 className="mr-2 h-4 w-4" /> {dict.groups.delete}
-                                    </DropdownMenuItem>
-                                )}
-                                {!isCreator && (
-                                    <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer" onClick={handleLeave}>
-                                        <LogOut className="mr-2 h-4 w-4" /> {dict.groups.leave}
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <>
+                            <Button className="flex-1 rounded-full md:flex-none" onClick={() => document.getElementById("group-composer")?.scrollIntoView({ behavior: "smooth" })}>
+                                <FileText className="h-4 w-4" />
+                                {dict.button.publish}
+                            </Button>
+                            <Button variant="outline" className="flex-1 rounded-full md:flex-none" onClick={() => document.getElementById("group-members")?.scrollIntoView({ behavior: "smooth" })}>
+                                <Users className="h-4 w-4" />
+                                {dict.groups.membersShort}
+                            </Button>
+                            <EditGroupDialog group={group} open={editGroupOpen} onOpenChange={setEditGroupOpen}>
+                                <span className="hidden" />
+                            </EditGroupDialog>
+                            <ResponsiveActionMenu
+                                title={dict.common.actions}
+                                items={groupActionItems}
+                                trigger={
+                                    <Button type="button" variant="outline" size="icon" className="rounded-full" disabled={actionLoading}>
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                }
+                            />
+                        </>
                     ) : (
                         <Button className="flex-1 md:flex-none" onClick={handleJoin} disabled={actionLoading}>
                             {dict.groups.join}
@@ -443,10 +497,10 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                 onConfirm={handleDeleteGroup}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-4 md:px-8">
+            <div className="grid grid-cols-1 gap-5 px-4 md:grid-cols-3 md:gap-6 md:px-8">
                 {/* Left: Info */}
-                <div className="md:col-span-1 space-y-6">
-                    <Card>
+                <div id="group-members" className="space-y-5 md:col-span-1 md:space-y-6">
+                    <Card className="hidden md:block">
                         <CardHeader className="pb-0">
                             <CardTitle>{dict.groups.about}</CardTitle>
                         </CardHeader>
@@ -470,46 +524,130 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
                         </CardContent>
                     </Card>
 
-                    {canManageMembers && (
-                        <InviteMemberDialog
-                            groupId={group._id}
-                            existingMemberIds={members.map((m) => m.user.id).filter(Boolean) as string[]}
-                        />
-                    )}
-
-                    <GroupMembersPanel
-                        members={members}
-                        currentUserId={currentUserId}
-                        canManageMembers={canManageMembers}
-                        canManageRoles={Boolean(canManageRoles)}
-                        actionLoading={actionLoading}
-                        onRemoveMember={handleRemoveMember}
-                        onRoleChange={handleRoleChange}
-                    />
-
-                    {canManageRequests && (
-                        <GroupJoinRequestsPanel
-                            requests={joinRequests}
-                            actionLoading={actionLoading}
-                            onApprove={handleApproveRequest}
-                            onReject={handleRejectRequest}
-                        />
-                    )}
+                    <section className="overflow-hidden rounded-[22px] border border-border bg-card shadow-xs md:rounded-card">
+                        <div className="flex items-center gap-2 border-b border-border px-3 py-3 md:hidden">
+                            <button
+                                type="button"
+                                className="flex size-9 items-center justify-center rounded-full text-foreground hover:bg-muted"
+                                onClick={() => router.back()}
+                                aria-label={dict.actions.back}
+                            >
+                                <ArrowLeft className="size-5" />
+                            </button>
+                            <div className="min-w-0 flex-1">
+                                <h2 className="font-heading text-[17px] font-semibold tracking-[-0.02em]">{dict.groups.membersHubTitle}</h2>
+                                <p className="truncate text-[12.5px] text-muted-foreground">{group.name}</p>
+                            </div>
+                            {canManageMembers && (
+                                <InviteMemberDialog
+                                    groupId={group._id}
+                                    existingMemberIds={members.map((m) => m.user.id).filter(Boolean) as string[]}
+                                >
+                                    <button type="button" className="flex size-9 items-center justify-center rounded-full text-foreground hover:bg-muted" aria-label={dict.groups.form.invite}>
+                                        <UserPlus className="size-5" strokeWidth={1.9} />
+                                    </button>
+                                </InviteMemberDialog>
+                            )}
+                        </div>
+                        <Tabs defaultValue={canManageRequests ? "requests" : "members"}>
+                            <TabsList className="flex h-11 w-full justify-start rounded-none border-b border-border bg-card px-4 py-0">
+                                {canManageRequests && (
+                                    <TabsTrigger value="requests" className="mr-5 h-11 rounded-none px-0 data-[state=active]:shadow-[inset_0_-2.5px_0_hsl(var(--primary))]">
+                                        {dict.groups.requestsTab}
+                                        {joinRequests.length > 0 && (
+                                            <span className="ml-1.5 rounded-full bg-tertiary-700 px-1.5 py-0.5 text-[12px] font-bold leading-none text-white">
+                                                {joinRequests.length}
+                                            </span>
+                                        )}
+                                    </TabsTrigger>
+                                )}
+                                <TabsTrigger value="members" className="mr-5 h-11 rounded-none px-0 data-[state=active]:shadow-[inset_0_-2.5px_0_hsl(var(--primary))]">
+                                    {dict.groups.membersTab}
+                                </TabsTrigger>
+                                {canManageRoles && (
+                                    <TabsTrigger value="roles" className="h-11 rounded-none px-0 data-[state=active]:shadow-[inset_0_-2.5px_0_hsl(var(--primary))]">
+                                        {dict.groups.rolesTab}
+                                    </TabsTrigger>
+                                )}
+                            </TabsList>
+                            {canManageRequests && (
+                                <TabsContent value="requests" className="m-0">
+                                    {joinRequests.length > 0 && (
+                                        <div className="flex items-center gap-2 border-b border-tertiary-200 bg-tertiary-50 px-4 py-3 text-tertiary-900 dark:border-tertiary-900 dark:bg-tertiary-950 dark:text-tertiary-100">
+                                            <Clock3 className="size-4 shrink-0" strokeWidth={1.9} />
+                                            <p className="min-w-0 flex-1 text-[13px] leading-snug">
+                                                {dict.groups.pendingRequestsSummary.replace("{count}", String(joinRequests.length))}
+                                            </p>
+                                        </div>
+                                    )}
+                                    <GroupJoinRequestsPanel
+                                        requests={joinRequests}
+                                        actionLoading={actionLoading}
+                                        onApprove={handleApproveRequest}
+                                        onReject={handleRejectRequest}
+                                    />
+                                </TabsContent>
+                            )}
+                            <TabsContent value="members" className="m-0">
+                                <div className="hidden border-b border-border p-4 md:block">
+                                    {canManageMembers && (
+                                        <InviteMemberDialog
+                                            groupId={group._id}
+                                            existingMemberIds={members.map((m) => m.user.id).filter(Boolean) as string[]}
+                                        />
+                                    )}
+                                </div>
+                                <GroupMembersPanel
+                                    members={members}
+                                    currentUserId={currentUserId}
+                                    canManageMembers={canManageMembers}
+                                    canManageRoles={Boolean(canManageRoles)}
+                                    actionLoading={actionLoading}
+                                    mode="members"
+                                    onRemoveMember={handleRemoveMember}
+                                    onRoleChange={handleRoleChange}
+                                />
+                            </TabsContent>
+                            {canManageRoles && (
+                                <TabsContent value="roles" className="m-0">
+                                    <GroupMembersPanel
+                                        members={members}
+                                        currentUserId={currentUserId}
+                                        canManageMembers={canManageMembers}
+                                        canManageRoles={Boolean(canManageRoles)}
+                                        actionLoading={actionLoading}
+                                        mode="roles"
+                                        onRemoveMember={handleRemoveMember}
+                                        onRoleChange={handleRoleChange}
+                                    />
+                                </TabsContent>
+                            )}
+                        </Tabs>
+                    </section>
 
                     {canModeratePosts && (
                         <PendingGroupPostsPanel
+                            group={group}
                             posts={pendingPosts}
                             actionLoading={actionLoading}
+                            settingsLoading={actionLoading}
+                            canDelete={isCreator}
                             onApprove={handleApprovePost}
                             onReject={handleRejectPost}
+                            onTogglePostsRequireApproval={(checked) => handleToggleGroupSetting("postsRequireApproval", checked)}
+                            onToggleRestrictToVerifiedTitles={(checked) => handleToggleGroupSetting("restrictToVerifiedTitles", checked)}
+                            onOpenSettings={() => setEditGroupOpen(true)}
+                            onDeleteGroup={() => setDeleteDialogOpen(true)}
                         />
                     )}
                 </div>
 
                 {/* Right: Feed */}
-                <div className="md:col-span-2 space-y-6">
+                <div className="space-y-5 md:col-span-2 md:space-y-6">
                     {isMember && (
-                        <CreatePostComposerMobile groupId={group._id} />
+                        <div id="group-composer">
+                            <CreatePostComposerMobile groupId={group._id} />
+                        </div>
                     )}
 
                     {/* Group Feed */}

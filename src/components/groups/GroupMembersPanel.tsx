@@ -21,6 +21,7 @@ interface GroupMembersPanelProps {
     canManageMembers: boolean;
     canManageRoles: boolean;
     actionLoading: boolean;
+    mode?: "members" | "roles";
     onRemoveMember: (userId: string) => Promise<void>;
     onRoleChange: (member: GroupMembership, role: GroupMemberRole) => Promise<void>;
 }
@@ -45,6 +46,7 @@ export default function GroupMembersPanel({
     canManageMembers,
     canManageRoles,
     actionLoading,
+    mode = "members",
     onRemoveMember,
     onRoleChange,
 }: GroupMembersPanelProps) {
@@ -56,11 +58,11 @@ export default function GroupMembersPanel({
 
     return (
         <>
-            <Card>
-                <CardHeader className="pb-0">
-                    <CardTitle>{dict.groups.members}</CardTitle>
+            <Card className="rounded-none border-0 shadow-none">
+                <CardHeader className="sr-only">
+                    <CardTitle>{mode === "roles" ? dict.groups.rolesTitle : dict.groups.members}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 pb-6">
+                <CardContent className="space-y-0 p-0">
                     {members.map((member) => {
                         const memberUserId =
                             member.user.id ||
@@ -70,10 +72,10 @@ export default function GroupMembersPanel({
                         const memberName = getMemberName(member, dict.groups.unknownMember);
 
                         return (
-                            <div key={`${memberUserId}-${member.joinedAt}`} className="rounded-lg border p-3 space-y-3">
+                            <div key={`${memberUserId}-${member.joinedAt}`} className="space-y-3 border-b border-border/70 p-4 last:border-b-0">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <Avatar className="w-10 h-10">
+                                        <Avatar className="h-[46px] w-[46px]">
                                             <AvatarImage src={member.user.profilePicUrl} />
                                             <AvatarFallback>
                                                 {memberName.substring(0, 2).toUpperCase()}
@@ -81,13 +83,14 @@ export default function GroupMembersPanel({
                                         </Avatar>
                                         <div className="min-w-0">
                                             <p className="text-sm font-medium truncate">{memberName}</p>
-                                            <p className="text-xs text-muted-foreground">{member.role}</p>
+                                            <p className="text-xs text-muted-foreground">{dict.groups.roles[member.role.toLowerCase() as keyof typeof dict.groups.roles] ?? member.role}</p>
                                         </div>
                                     </div>
-                                    {!isSelf && canManageMembers && (
+                                    {mode === "members" && !isSelf && canManageMembers && (
                                         <Button
                                             variant="ghost"
                                             size="sm"
+                                            className="rounded-full"
                                             onClick={() => setMemberToRemove({ userId: memberUserId, name: memberName })}
                                             disabled={actionLoading}
                                         >
@@ -96,7 +99,7 @@ export default function GroupMembersPanel({
                                     )}
                                 </div>
 
-                                {canManageRoles && !isSelf && (
+                                {mode === "roles" && canManageRoles && !isSelf && (
                                     <Select
                                         value={member.role}
                                         onValueChange={(role) => onRoleChange(member, role as GroupMemberRole)}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { useMe } from "@/hooks/useData/useUserData";
@@ -16,14 +16,7 @@ import { AccountStatusGQL, UserTypeGQL } from "@/types/User";
 import { cn } from "@/lib/utils";
 import {
     ChevronRight,
-    Lock,
-    ShieldCheck,
-    Languages,
-    Bell,
-    Download,
-    LogOut,
     Loader2,
-    UserX,
 } from "lucide-react";
 import packageJson from "../../../package.json";
 
@@ -71,6 +64,7 @@ function Row({
 export default function SettingsViewMobile() {
     const dict = useDictionary();
     const router = useRouter();
+    const params = useParams<{ lang?: string }>();
     const { open } = useNotification();
     const { me, loading: meLoading } = useMe();
     const { requestPermission, permissionState } = useFcmToken();
@@ -79,7 +73,7 @@ export default function SettingsViewMobile() {
     const [sendingReset, setSendingReset] = useState(false);
     const [deactivateDialogOpen, setDeactivateDialogOpen] = useState(false);
     const [deactivating, setDeactivating] = useState(false);
-    const currentLang = typeof window !== "undefined" && window.location.pathname.startsWith("/fr") ? "fr" : "en";
+    const currentLang = params?.lang === "fr" ? "fr" : "en";
 
     if (meLoading || !me) {
         return (
@@ -141,11 +135,15 @@ export default function SettingsViewMobile() {
     };
 
     return (
-        <div className="pb-6">
+        <div className="pb-24">
+            <div className="sticky top-0 z-20 border-b border-border/70 bg-background/90 px-4 py-4 backdrop-blur-xl">
+                <h1 className="text-[1.65rem] font-black tracking-[-0.04em]">{dict.settings.title}</h1>
+            </div>
+
             <button
                 type="button"
                 onClick={() => router.push(`/profile/${me.slug}`)}
-                className="flex w-full items-center gap-3 bg-card border-y border-border px-4 py-3.5 text-left"
+                className="mt-3 flex w-full items-center gap-3 border-y border-border bg-card px-4 py-3.5 text-left"
             >
                 <Avatar shape={me.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"} className="size-12 shrink-0">
                     <AvatarImage className="object-cover" src={me.profilePicUrl} alt={getUserDisplayName(me)} />
@@ -163,13 +161,11 @@ export default function SettingsViewMobile() {
             </h2>
             <div className="bg-card border-y border-border">
                 <Row
-                    icon={Lock}
                     label={dict.settings.labels.changePassword}
                     onClick={handlePasswordReset}
                     loading={sendingReset}
                 />
                 <Row
-                    icon={ShieldCheck}
                     label={dict.settings.labels.verificationDocuments}
                     onClick={() => router.push(`/profile/${me.slug}`)}
                     value={
@@ -182,13 +178,36 @@ export default function SettingsViewMobile() {
                     }
                 />
                 <Row
-                    icon={Languages}
                     label={dict.settings.sections.language}
                     value={<span className="text-sm text-muted-foreground mr-1">{currentLang === "fr" ? "Français" : "English"}</span>}
                     onClick={() => { window.location.href = currentLang === "fr" ? "/en/settings" : "/fr/settings"; }}
                 />
+            </div>
+
+            <h2 className="px-4 pt-4 pb-1.5 font-mono text-2xs uppercase tracking-wider text-muted-foreground">
+                {dict.settings.sections.privacy}
+            </h2>
+            <div className="bg-card border-y border-border">
                 <Row
-                    icon={Bell}
+                    label={dict.settings.labels.publicProfileVisibility}
+                    value={<span className="max-w-[11rem] text-right text-sm leading-snug text-muted-foreground">{dict.settings.labels.nameAndSpecialtyOnly}</span>}
+                />
+                <Row
+                    label={dict.settings.labels.whoCanRequest}
+                    value={<span className="max-w-[11rem] text-right text-sm leading-snug text-muted-foreground">{dict.settings.labels.verifiedMembersOnly}</span>}
+                />
+                <Row
+                    label={dict.settings.labels.emailNotifications}
+                    onClick={() => router.push("/settings/notifications")}
+                    value={<span className="text-sm text-muted-foreground mr-1">{dict.settings.labels.manage}</span>}
+                />
+            </div>
+
+            <h2 className="px-4 pt-4 pb-1.5 font-mono text-2xs uppercase tracking-wider text-muted-foreground">
+                {dict.settings.tabs.preferences}
+            </h2>
+            <div className="bg-card border-y border-border">
+                <Row
                     label={dict.settings.labels.pushNotifications}
                     onClick={handleToggleNotifications}
                     disabled={notifState === "granted"}
@@ -199,13 +218,11 @@ export default function SettingsViewMobile() {
                     }
                 />
                 <Row
-                    icon={Bell}
                     label={dict.settings.labels.notificationPreferences}
                     onClick={() => router.push("/settings/notifications")}
                 />
                 {!isInstalled && (
                     <Row
-                        icon={Download}
                         label={dict.settings.labels.installApp}
                         onClick={handleInstallClick}
                         value={<span className="text-sm text-muted-foreground mr-1">{dict.common.install}</span>}
@@ -214,9 +231,8 @@ export default function SettingsViewMobile() {
             </div>
 
             <div className="mt-4 bg-card border-y border-border">
-                <Row icon={LogOut} label={dict.appSideBar.navUser.logout} onClick={handleLogout} danger />
+                <Row label={dict.appSideBar.navUser.logout} onClick={handleLogout} danger />
                 <Row
-                    icon={UserX}
                     label={dict.settings.labels.deactivateAccount}
                     onClick={() => setDeactivateDialogOpen(true)}
                     danger

@@ -9,14 +9,14 @@ import {
     DrawerHeader,
     DrawerTitle,
 } from "@/components/ui/drawer";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { AlertTriangle, BadgeAlert, FileWarning, Loader2, Megaphone, ShieldAlert } from "lucide-react";
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
 import { useReportActions } from "@/hooks/useData/useReportData";
 import { ReportReason } from "@/types/Report";
+import { cn } from "@/lib/utils";
 
 interface ReportDialogProps {
     open: boolean;
@@ -33,6 +33,14 @@ const REASONS = [
     ReportReason.TITLE_IMPERSONATION,
     ReportReason.OTHER,
 ];
+
+const REASON_ICONS: Record<ReportReason, typeof ShieldAlert> = {
+    [ReportReason.PATIENT_DATA]: ShieldAlert,
+    [ReportReason.MEDICAL_MISINFORMATION]: FileWarning,
+    [ReportReason.ADVERTISING]: Megaphone,
+    [ReportReason.TITLE_IMPERSONATION]: BadgeAlert,
+    [ReportReason.OTHER]: AlertTriangle,
+};
 
 export default function ReportDialog({ open, onOpenChange, postId, commentId, reportedUserId }: ReportDialogProps) {
     const dict = useDictionary();
@@ -59,8 +67,7 @@ export default function ReportDialog({ open, onOpenChange, postId, commentId, re
         onOpenChange(next);
     };
 
-    const handleSubmit = async () => {
-        if (!reason) return;
+    const submitReport = async (selectedReason: ReportReason, selectedDetails?: string) => {
         try {
             await createReport({
                 variables: {
@@ -68,8 +75,8 @@ export default function ReportDialog({ open, onOpenChange, postId, commentId, re
                         postId,
                         commentId,
                         reportedUserId,
-                        reason,
-                        details: reason === ReportReason.OTHER ? details.trim() || undefined : undefined,
+                        reason: selectedReason,
+                        details: selectedReason === ReportReason.OTHER ? selectedDetails?.trim() || undefined : undefined,
                     },
                 },
             });
@@ -82,44 +89,80 @@ export default function ReportDialog({ open, onOpenChange, postId, commentId, re
         }
     };
 
+    const handleReasonSelect = (selectedReason: ReportReason) => {
+        setReason(selectedReason);
+        if (selectedReason !== ReportReason.OTHER) {
+            void submitReport(selectedReason);
+        }
+    };
+
+    const handleSubmit = () => {
+        if (!reason) return;
+        void submitReport(reason, details);
+    };
+
     const canSubmit = !!reason && (reason !== ReportReason.OTHER || details.trim().length > 0);
 
     return (
         <Drawer open={open} onOpenChange={handleOpenChange}>
-            <DrawerContent>
-                <DrawerHeader className="text-left">
-                    <DrawerTitle>{dict.report.title}</DrawerTitle>
-                    <DrawerDescription>{dict.report.description}</DrawerDescription>
+            <DrawerContent className="rounded-t-[28px]">
+                <DrawerHeader className="px-5 pb-2 text-left">
+                    <DrawerTitle className="text-[20px]">{dict.report.title}</DrawerTitle>
+                    <DrawerDescription className="text-[13.5px] leading-relaxed">{dict.report.description}</DrawerDescription>
                 </DrawerHeader>
-                <div className="px-4 pb-4 space-y-4">
-                    <RadioGroup value={reason} onValueChange={(v) => setReason(v as ReportReason)} className="gap-2">
-                        {REASONS.map((r) => (
-                            <label
-                                key={r}
-                                htmlFor={`reason-${r}`}
-                                className="flex cursor-pointer items-center gap-3 rounded-field border border-border p-3 transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary-50"
-                            >
-                                <RadioGroupItem value={r} id={`reason-${r}`} />
-                                <span className="text-sm">{reasonLabels[r]}</span>
-                            </label>
-                        ))}
-                    </RadioGroup>
+                <div className="px-3 pb-4">
+                    <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-xs">
+                        {REASONS.map((r) => {
+                            const Icon = REASON_ICONS[r];
+                            const selected = reason === r;
+
+                            return (
+                                <button
+                                    key={r}
+                                    type="button"
+                                    disabled={submitting}
+                                    onClick={() => handleReasonSelect(r)}
+                                    className={cn(
+                                        "flex w-full items-center gap-3 border-b border-border px-4 py-3.5 text-left last:border-b-0 transition-colors hover:bg-muted/60",
+                                        selected && "bg-primary-50 text-primary dark:bg-primary-950"
+                                    )}
+                                >
+                                    <span className={cn(
+                                        "flex size-10 shrink-0 items-center justify-center rounded-full",
+                                        selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                                    )}>
+                                        {submitting && selected ? (
+                                            <Loader2 className="size-4 animate-spin" />
+                                        ) : (
+                                            <Icon className="size-4.5" strokeWidth={1.9} />
+                                        )}
+                                    </span>
+                                    <span className="min-w-0 flex-1 text-[15px] font-semibold leading-tight">{reasonLabels[r]}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                     {reason === ReportReason.OTHER && (
-                        <Textarea
-                            placeholder={dict.report.detailsPlaceholder}
-                            value={details}
-                            onChange={(e) => setDetails(e.target.value)}
-                            className="resize-none"
-                            rows={3}
-                        />
+                        <div className="mt-4 space-y-3">
+                            <Textarea
+                                placeholder={dict.report.detailsPlaceholder}
+                                value={details}
+                                onChange={(e) => setDetails(e.target.value)}
+                                className="min-h-24 resize-none rounded-[18px] border-border bg-background text-[14px]"
+                                rows={3}
+                            />
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={!canSubmit || submitting}
+                                className="h-11 w-full rounded-full"
+                            >
+                                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {dict.report.submit}
+                            </Button>
+                        </div>
                     )}
                 </div>
-                <DrawerFooter className="pt-0">
-                    <Button onClick={handleSubmit} disabled={!canSubmit || submitting}>
-                        {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {dict.report.submit}
-                    </Button>
-                </DrawerFooter>
+                <DrawerFooter className="hidden" />
             </DrawerContent>
         </Drawer>
     );

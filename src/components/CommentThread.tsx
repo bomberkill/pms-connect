@@ -51,7 +51,7 @@ function RepliesBlock({ parentId, highlightCommentId, registerNode, registerRefe
         />
       ))}
       {!loading && replies.length > 0 && replies.length % 10 === 0 && (
-        <div className="ml-8 pb-1">
+        <div className="ml-[56px] pb-1">
           <Button variant="ghost" size="sm" onClick={() => loadMore()}>{dict.actions.loadMore}</Button>
         </div>
       )}
@@ -176,8 +176,8 @@ export default function CommentThread({ postId, postAuthorLabel, highlightCommen
   return (
     <>
       {/* Comment Composer - Desktop only */}
-      <div className="hidden md:block mt-4 bg-card border border-border rounded-2xl p-4">
-        <h4 className="text-sm font-medium mb-3 text-muted-foreground">
+      <div className="mt-4 hidden rounded-card border border-border bg-card p-4 md:block">
+        <h4 className="mb-3 text-sm font-medium text-muted-foreground">
           {dict.post.replyingTo} <span className="text-primary">{replyTarget ? replyTarget.label : postAuthorLabel}</span>
         </h4>
         <div id="comment-input">
@@ -193,10 +193,16 @@ export default function CommentThread({ postId, postAuthorLabel, highlightCommen
       </div>
 
       {/* Comments Section */}
-      <div className="mt-6 space-y-4">
+      <section className="mt-3 border-y border-border bg-card px-4 py-3 md:rounded-card md:border">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <h2 className="font-heading text-[17px] font-semibold tracking-tight">{dict.post.commentsTitle}</h2>
+          <button type="button" className="text-xs font-semibold text-muted-foreground">
+            {dict.post.relevantComments}
+          </button>
+        </div>
         {comments?.length ? (
           comments.map((c) => (
-            <div key={c.id}>
+            <div key={c.id} className="border-t border-border first:border-t-0">
               <CommentItem
                 comment={c}
                 depth={1}
@@ -220,21 +226,21 @@ export default function CommentThread({ postId, postAuthorLabel, highlightCommen
             </div>
           ))
         ) : !loading ? (
-          <div className="text-center py-10 bg-card border border-border rounded-2xl">
-            <MessageCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+          <div className="py-10 text-center">
+            <MessageCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">{dict.post.noComments}</p>
           </div>
         ) : null}
 
         {comments?.length ? (
-          <div className="flex justify-center pt-4 pb-8">
+          <div className="flex justify-center pb-4 pt-4">
             <Button variant="outline" onClick={() => loadMore()}>{dict.actions.loadMore}</Button>
           </div>
         ) : null}
-      </div>
+      </section>
 
       {/* Mobile Sticky Composer */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border p-3 z-50 shadow-md">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card p-3 shadow-[0_-10px_30px_-18px_rgba(11,15,20,.45)] md:hidden">
         <CommentComposer
           user={user}
           isSubmitting={isAddingComment}

@@ -76,7 +76,7 @@ export function InlineCombobox<T extends Country | State | City>({
         variant="outline"
         role="combobox"
         aria-expanded={open}
-        className="justify-between border-muted font-normal w-full"
+        className="w-full justify-between border-input bg-card text-[15px] font-normal text-foreground md:text-sm"
         onClick={() => setOpen((prev) => !prev)}
         onBlur={onBlur}
         disabled={disabled}
@@ -88,7 +88,7 @@ export function InlineCombobox<T extends Country | State | City>({
       {open && (
         <div
           className={cn(
-            "absolute z-300 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+            "absolute z-300 mt-1 w-full rounded-card border border-border bg-popover text-popover-foreground shadow-[0_14px_34px_-20px_rgba(11,15,20,.35)] animate-in fade-in-0"
           )}
         >
           <Command shouldFilter={false}>

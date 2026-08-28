@@ -24,7 +24,7 @@ const PostSkeleton = () => (
     </div>
     <Skeleton className="h-4 w-full mb-2" />
     <Skeleton className="h-4 w-3/4 mb-4" />
-    <Skeleton className="h-40 w-full rounded-lg" />
+    <Skeleton className="h-40 w-full rounded-card" />
   </div>
 );
 
@@ -83,14 +83,10 @@ export const Feed = () => {
   };
 
   const handleRefresh = async () => {
-    console.log("Refreshing...");
     if (isRefreshing) return;
-    console.log("Refreshing2...");
     setIsRefreshing(true);
     await loadNewPosts(); // Use loadNewPosts instead of refresh
-    console.log("Refreshing3...");
     setShowBadge(false); // Hide badge after manual refresh
-    console.log("Refreshing4...");
     setIsRefreshing(false);
     setPullPosition(0);
   };

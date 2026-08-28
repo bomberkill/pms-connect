@@ -1,39 +1,79 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, MoreVertical, Pencil, Send, Trash2 } from "lucide-react";
-import { formatDistanceToNow, type Locale } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import { format, formatDistanceToNow, isSameDay, type Locale } from "date-fns";
+import { enUS, fr } from "date-fns/locale";
+import {
+  ArrowLeft,
+  BellOff,
+  Camera,
+  Check,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  MessageCircle,
+  Mic,
+  MoreVertical,
+  Paperclip,
+  Pencil,
+  Phone,
+  Search,
+  Send,
+  ShieldCheck,
+  Smile,
+  Trash2,
+  Video,
+} from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { ResponsiveActionMenu, ResponsiveActionMenuItem } from "@/components/ui/responsive-action-menu";
+import { Textarea } from "@/components/ui/textarea";
+import { useDictionary } from "@/hooks/use-dictionary";
 import {
   useConversation,
   useConversationMessages,
-  useSendMessage,
-  useEditMessage,
-  useDeleteMessage,
-  useMarkConversationRead,
   useConversationPresence,
-  useTypingIndicator,
-  useSetActiveConversation,
+  useDeleteMessage,
+  useEditMessage,
+  useMarkConversationRead,
   useMe,
+  useSendMessage,
+  useSetActiveConversation,
+  useTypingIndicator,
 } from "@/hooks/useData/index";
-import { useDictionary } from "@/hooks/use-dictionary";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
-import { UserTypeGQL } from "@/types/User";
-import { Message } from "@/types/Message";
 import { cn } from "@/lib/utils";
+import { getUserDisplayName, getUserInitials } from "@/lib/user-utils";
+import { Message } from "@/types/Message";
+import { UserTypeGQL } from "@/types/User";
 
 interface ConversationThreadProps {
   conversationId: string;
+}
+
+type TimelineItem =
+  | { type: "date"; id: string; label: string }
+  | { type: "message"; id: string; message: Message };
+
+function buildTimeline(messages: Message[], dateLocale: Locale): TimelineItem[] {
+  const items: TimelineItem[] = [];
+  let previous: Date | null = null;
+
+  messages.forEach((message) => {
+    const createdAt = new Date(message.createdAt);
+    if (!previous || !isSameDay(previous, createdAt)) {
+      items.push({
+        type: "date",
+        id: `date-${message.createdAt}`,
+        label: format(createdAt, "d MMMM yyyy", { locale: dateLocale }),
+      });
+    }
+    items.push({ type: "message", id: message.id, message });
+    previous = createdAt;
+  });
+
+  return items;
 }
 
 function MessageBubble({
@@ -52,15 +92,31 @@ function MessageBubble({
   onDelete: (messageId: string) => void;
 }) {
   const isEdited = message.updatedAt !== message.createdAt;
+  const actionItems: ResponsiveActionMenuItem[] = [
+    {
+      key: "edit",
+      label: dict.actions.edit,
+      icon: Pencil,
+      onSelect: () => onEdit(message),
+    },
+    {
+      key: "delete",
+      label: dict.actions.delete,
+      icon: Trash2,
+      destructive: true,
+      onSelect: () => onDelete(message.id),
+    },
+  ];
 
   return (
-    <div className={cn("flex items-end gap-2 group", isOwn ? "justify-end" : "justify-start")}>
+    <div className={cn("group flex items-end gap-2", isOwn ? "justify-end" : "justify-start")}>
+      {!isOwn && <div className="mb-2 size-5 shrink-0 rounded-full bg-secondary/15" />}
       <div
         className={cn(
-          "max-w-[75%] px-4 py-2.5 text-sm leading-relaxed",
+          "relative max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed shadow-sm md:max-w-[72%]",
           isOwn
-            ? "bg-primary text-primary-foreground rounded-[14px_4px_14px_14px]"
-            : "bg-muted text-foreground rounded-[4px_14px_14px_14px]"
+            ? "rounded-[18px_6px_18px_18px] bg-primary text-primary-foreground shadow-primary/10"
+            : "rounded-[6px_18px_18px_18px] border border-border/70 bg-card text-foreground"
         )}
       >
         {message.deleted ? (
@@ -68,7 +124,7 @@ function MessageBubble({
         ) : (
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
         )}
-        <div className={cn("flex items-center gap-1.5 mt-1", isOwn ? "justify-end" : "justify-start")}>
+        <div className={cn("mt-1 flex items-center gap-1.5", isOwn ? "justify-end" : "justify-start")}>
           {isEdited && !message.deleted && (
             <span className={cn("text-2xs", isOwn ? "text-primary-foreground/70" : "text-muted-foreground")}>
               {dict.post.edited}
@@ -77,32 +133,24 @@ function MessageBubble({
           <span className={cn("text-2xs", isOwn ? "text-primary-foreground/70" : "text-muted-foreground")}>
             {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true, locale: dateLocale })}
           </span>
+          {isOwn && !message.deleted && <Check className="size-3 text-primary-foreground/75" />}
         </div>
       </div>
 
       {isOwn && !message.deleted && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <ResponsiveActionMenu
+          title={dict.common.actions}
+          items={actionItems}
+          trigger={
             <button
               type="button"
               aria-label={dict.common.actions}
-              className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted shrink-0"
+              className="shrink-0 rounded-full p-1 opacity-0 transition-opacity hover:bg-muted focus:opacity-100 group-hover:opacity-100"
             >
-              <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+              <MoreVertical className="size-3.5 text-muted-foreground" />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem className="cursor-pointer" onClick={() => onEdit(message)}>
-              <Pencil className="mr-2 h-4 w-4" /> {dict.actions.edit}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer text-destructive focus:text-destructive"
-              onClick={() => onDelete(message.id)}
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> {dict.actions.delete}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          }
+        />
       )}
     </div>
   );
@@ -111,7 +159,8 @@ function MessageBubble({
 export default function ConversationThread({ conversationId }: ConversationThreadProps) {
   const dict = useDictionary();
   const router = useRouter();
-  const dateLocale = typeof window !== "undefined" && window.location.pathname.startsWith("/fr") ? fr : enUS;
+  const params = useParams<{ lang?: string }>();
+  const dateLocale = params?.lang === "fr" ? fr : enUS;
   const { me } = useMe();
 
   const { conversation, loading: loadingConversation } = useConversation(conversationId);
@@ -130,6 +179,10 @@ export default function ConversationThread({ conversationId }: ConversationThrea
   const bottomRef = useRef<HTMLDivElement>(null);
   const hasMarkedReadRef = useRef(false);
 
+  const showUnavailable = () => {
+    toast.info(dict.chat.featureUnavailable);
+  };
+
   useEffect(() => {
     if (!hasMarkedReadRef.current && conversation) {
       hasMarkedReadRef.current = true;
@@ -143,6 +196,7 @@ export default function ConversationThread({ conversationId }: ConversationThrea
   }, [messages.length]);
 
   const orderedMessages = [...messages].reverse();
+  const timeline = buildTimeline(orderedMessages, dateLocale);
 
   const handleSend = async () => {
     const trimmed = content.trim();
@@ -181,8 +235,10 @@ export default function ConversationThread({ conversationId }: ConversationThrea
 
   if (loadingConversation && !conversation) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="mx-auto flex min-h-[70svh] max-w-2xl items-center justify-center">
+        <div className="rounded-full bg-primary/10 p-4">
+          <Loader2 className="size-7 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
@@ -190,100 +246,173 @@ export default function ConversationThread({ conversationId }: ConversationThrea
   if (!conversation) return null;
 
   return (
-    <div className="flex flex-col h-[100dvh] md:h-[calc(100vh-2rem)] max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 px-4 py-3 border-b sticky top-0 bg-background/80 backdrop-blur-sm z-10">
-        <button type="button" aria-label={dict.actions.back} onClick={() => router.back()} className="p-1.5 rounded-full hover:bg-muted">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <Avatar
-          shape={conversation.otherParticipant.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"}
-          className="h-9 w-9 shrink-0"
-        >
-          <AvatarImage className="object-cover" src={conversation.otherParticipant.profilePicUrl} />
-          <AvatarFallback>{getUserInitials(conversation.otherParticipant)}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[15px] truncate">{getUserDisplayName(conversation.otherParticipant)}</p>
-          {presence.typing ? (
-            <p className="text-xs text-primary">{dict.chat.typing}</p>
-          ) : presence.online ? (
-            <p className="text-xs text-secondary-600 flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-secondary-600" /> {dict.chat.online}
-            </p>
-          ) : null}
+    <div className="mx-auto flex h-[100dvh] max-w-2xl flex-col overflow-hidden bg-[radial-gradient(circle_at_top_left,var(--primary-100),transparent_34%),linear-gradient(180deg,var(--background),var(--muted))] dark:bg-[radial-gradient(circle_at_top_left,var(--primary-950),transparent_34%),linear-gradient(180deg,var(--background),var(--muted))] md:h-[calc(100vh-2rem)] md:rounded-sheet md:border md:border-border">
+      <div className="sticky top-0 z-20 border-b border-border/70 bg-background/95 px-3 pb-3 pt-[calc(10px+env(safe-area-inset-top))] backdrop-blur-xl">
+        <div className="flex items-center gap-2">
+          <button type="button" aria-label={dict.actions.back} onClick={() => router.back()} className="grid size-10 shrink-0 place-items-center rounded-full hover:bg-muted">
+            <ArrowLeft className="size-5" />
+          </button>
+          <Avatar
+            shape={conversation.otherParticipant.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"}
+            className="size-10 shrink-0"
+          >
+            <AvatarImage className="object-cover" src={conversation.otherParticipant.profilePicUrl} />
+            <AvatarFallback>{getUserInitials(conversation.otherParticipant)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-black tracking-[-0.01em]">{getUserDisplayName(conversation.otherParticipant)}</p>
+            {presence.typing ? (
+              <p className="text-xs font-semibold text-primary">{dict.chat.typing}</p>
+            ) : presence.online ? (
+              <p className="flex items-center gap-1 text-xs font-semibold text-secondary-600">
+                <span className="size-1.5 rounded-full bg-secondary-600" /> {dict.chat.online}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">{dict.chat.encryptedHint}</p>
+            )}
+          </div>
+          <button type="button" aria-label={dict.chat.call} onClick={showUnavailable} className="grid size-10 shrink-0 place-items-center rounded-full text-primary hover:bg-primary/10">
+            <Phone className="size-[18px]" />
+          </button>
+          <button type="button" aria-label={dict.chat.videoCall} onClick={showUnavailable} className="grid size-10 shrink-0 place-items-center rounded-full text-primary hover:bg-primary/10">
+            <Video className="size-[18px]" />
+          </button>
+          <ResponsiveActionMenu
+            title={dict.common.actions}
+            items={[
+              { key: "search", label: dict.chat.searchInConversation, icon: Search, onSelect: showUnavailable },
+              { key: "mute", label: dict.chat.muteConversation, icon: BellOff, onSelect: showUnavailable },
+              { key: "media", label: dict.chat.sharedMedia, icon: ImageIcon, onSelect: showUnavailable },
+            ]}
+            trigger={
+              <button type="button" aria-label={dict.common.actions} className="grid size-10 shrink-0 place-items-center rounded-full hover:bg-muted">
+                <MoreVertical className="size-5" />
+              </button>
+            }
+          />
         </div>
+        <button
+          type="button"
+          onClick={showUnavailable}
+          className="mt-3 flex w-full items-center gap-2 rounded-full bg-primary/8 px-3 py-2 text-left text-xs font-semibold text-primary ring-1 ring-primary/10"
+        >
+          <ShieldCheck className="size-4 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">{dict.chat.textOnlyNotice}</span>
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto px-3 py-4">
         {messages.length > 0 && messages.length % 30 === 0 && !loadingMessages && (
-          <div className="flex justify-center pb-2">
+          <div className="flex justify-center pb-3">
             <Button variant="ghost" size="sm" onClick={() => loadMore()}>{dict.actions.loadMore}</Button>
           </div>
         )}
 
         {orderedMessages.length === 0 && !loadingMessages ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-16">
-            <p>{dict.chat.noMessagesYet}</p>
+          <div className="flex h-full flex-col items-center justify-center px-6 py-16 text-center">
+            <div className="grid size-16 place-items-center rounded-full bg-primary/10 text-primary">
+              <MessageCircle className="size-7" />
+            </div>
+            <p className="mt-4 font-heading text-xl font-black tracking-[-0.03em]">{dict.chat.noMessagesYet}</p>
+            <p className="mt-1 max-w-xs text-sm leading-6 text-muted-foreground">{dict.chat.emptyThreadDescription}</p>
           </div>
         ) : (
-          orderedMessages.map((message) =>
-            editingMessageId === message.id ? (
-              <div key={message.id} className="flex justify-end">
-                <div className="max-w-[75%] w-full space-y-2">
-                  <Textarea
-                    value={editingContent}
-                    onChange={(e) => setEditingContent(e.target.value)}
-                    className="min-h-16 text-sm"
-                    autoFocus
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setEditingMessageId(null)}>{dict.common.cancel}</Button>
-                    <Button size="sm" onClick={handleEditSave}>{dict.button.save}</Button>
+          <div className="space-y-3">
+            {timeline.map((item) =>
+              item.type === "date" ? (
+                <div key={item.id} className="flex justify-center py-1">
+                  <span className="rounded-full border border-border/70 bg-background/85 px-3 py-1 text-2xs font-black uppercase tracking-[0.12em] text-muted-foreground shadow-sm">
+                    {item.label}
+                  </span>
+                </div>
+              ) : editingMessageId === item.message.id ? (
+                <div key={item.id} className="flex justify-end">
+                  <div className="w-full max-w-[82%] space-y-2 rounded-card border border-primary/20 bg-background p-3 shadow-sm">
+                    <Textarea
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      className="min-h-20 border-0 bg-muted/60 text-sm shadow-inner"
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setEditingMessageId(null)}>{dict.common.cancel}</Button>
+                      <Button size="sm" onClick={handleEditSave}>{dict.button.save}</Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={message.sender.id === me?.id}
-                dict={dict}
-                dateLocale={dateLocale}
-                onEdit={handleEditStart}
-                onDelete={handleDelete}
-              />
-            )
-          )
+              ) : (
+                <MessageBubble
+                  key={item.id}
+                  message={item.message}
+                  isOwn={item.message.sender.id === me?.id}
+                  dict={dict}
+                  dateLocale={dateLocale}
+                  onEdit={handleEditStart}
+                  onDelete={handleDelete}
+                />
+              )
+            )}
+          </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t p-3 bg-background sticky bottom-0">
-        <div className="flex items-end gap-2">
-          <Textarea
-            value={content}
-            onChange={(e) => {
-              setContent(e.target.value);
-              notifyTyping();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={dict.chat.composerPlaceholder}
-            className="min-h-11 max-h-32 py-2.5"
+      <div className="border-t border-border/70 bg-background/95 px-3 pb-[calc(10px+env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
+        <div className="flex items-end gap-2 rounded-[1.4rem] border border-border bg-card p-1.5 shadow-lg shadow-foreground/5">
+          <ResponsiveActionMenu
+            title={dict.chat.attachments}
+            align="start"
+            items={[
+              { key: "photo", label: dict.chat.attachPhoto, icon: ImageIcon, onSelect: showUnavailable },
+              { key: "camera", label: dict.chat.openCamera, icon: Camera, onSelect: showUnavailable },
+              { key: "document", label: dict.chat.attachDocument, icon: FileText, onSelect: showUnavailable },
+            ]}
+            trigger={
+              <button type="button" aria-label={dict.chat.attachments} className="grid size-10 shrink-0 place-items-center rounded-full text-primary hover:bg-primary/10">
+                <Paperclip className="size-5" />
+              </button>
+            }
           />
-          <Button
-            size="icon"
-            className="rounded-full shrink-0"
-            onClick={handleSend}
-            disabled={sending || !content.trim()}
-            aria-label={dict.chat.send}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          <div className="flex min-w-0 flex-1 items-end gap-1 rounded-[1.1rem] bg-muted/55 px-1">
+            <Textarea
+              value={content}
+              onChange={(e) => {
+                setContent(e.target.value);
+                notifyTyping();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={dict.chat.composerPlaceholder}
+              className="max-h-32 min-h-10 resize-none border-0 bg-transparent px-2 py-2.5 text-[15px] shadow-none focus:ring-0"
+            />
+            <button type="button" aria-label={dict.chat.emoji} onClick={showUnavailable} className="mb-0.5 grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-background">
+              <Smile className="size-5" />
+            </button>
+          </div>
+          {content.trim() ? (
+            <Button
+              size="icon"
+              className="size-10 rounded-full shadow-md shadow-primary/20"
+              onClick={handleSend}
+              disabled={sending || !content.trim()}
+              aria-label={dict.chat.send}
+            >
+              <Send className="size-4" />
+            </Button>
+          ) : (
+            <button
+              type="button"
+              aria-label={dict.chat.voiceMessage}
+              onClick={showUnavailable}
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/20"
+            >
+              <Mic className="size-[18px]" />
+            </button>
+          )}
         </div>
       </div>
     </div>

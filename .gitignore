@@ -48,3 +48,6 @@ next-env.d.ts
 
 # Prisma generated client (regenerated via `prisma generate`, e.g. postinstall)
 generated/
+
+# Fictional test-account credentials — never committed, real production accounts
+TEST_USERS.md

@@ -56,6 +56,34 @@ export enum UserTypeGQL {
     expirationDate?: string; // GraphQLISODateTime typically comes as string
     issuingAuthority?: string;
   }
+
+  export interface ProfessionalExperience {
+    id: string;
+    userId: string;
+    title: string;
+    organizationName: string;
+    employmentType?: string;
+    location?: string;
+    startDate: string;
+    endDate?: string;
+    isCurrent: boolean;
+    description?: string;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  export interface CreateProfessionalExperienceInput {
+    title: string;
+    organizationName: string;
+    employmentType?: string;
+    location?: string;
+    startDate: string;
+    endDate?: string;
+    isCurrent: boolean;
+    description?: string;
+  }
+
+  export type UpdateProfessionalExperienceInput = Partial<CreateProfessionalExperienceInput>;
   
   export interface Location {
     country: string;
@@ -78,6 +106,7 @@ export enum UserTypeGQL {
     slug: string;
     userType: UserTypeGQL;
     professionalAccreditation: ProfessionalAccreditation[];
+    professionalExperiences?: ProfessionalExperience[];
     profilePicUrl?: string;
     coverPicUrl?: string;
     bio?: string;

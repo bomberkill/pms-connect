@@ -27,6 +27,11 @@ import { updateUser } from "@/graphql/authActions"
 import { uploadFileToR2 } from "@/utils/fileUpload"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getUserDisplayName, getUserInitials } from "@/lib/user-utils"
+import { Camera, Plus } from "lucide-react"
+import ProfessionalExperienceDialog from "@/components/profile/ProfessionalExperienceDialog"
+import { useProfessionalExperiences } from "@/hooks/useData"
 
 interface UpdateProfileDialogProps {
   children: React.ReactNode // Le bouton qui déclenche l'ouverture
@@ -90,7 +95,9 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [uploadingAccreditation, setUploadingAccreditation] = useState(false)
+  const [uploadingProfilePhoto, setUploadingProfilePhoto] = useState(false)
   const isMobile = useIsMobile()
+  const { addProfessionalExperience, adding: addingExperience } = useProfessionalExperiences(user.id)
 
   // États pour les listes déroulantes de localisation
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
@@ -101,9 +108,9 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
       bio: yup.string().notRequired(),
       websiteUrl: yup.string().url(dict.validation.websiteUrl.invalidUrl).notRequired(),
       location: yup.object().shape({
-        country: yup.string().required(dict.validation.country.required),
-        stateOrProvince: yup.string().required(dict.validation.state.required),
-        city: yup.string().required(dict.validation.city.required),
+        country: yup.string().notRequired(),
+        stateOrProvince: yup.string().notRequired(),
+        city: yup.string().notRequired(),
       }),
     }
     if (user.userType === UserTypeGQL.INDIVIDUAL) {
@@ -130,6 +137,7 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
       bio: user.bio || "",
       websiteUrl: user.websiteUrl || "",
       professionalAccreditation: user.professionalAccreditation || [],
+      profilePicUrl: user.profilePicUrl || "",
       location: {
         country: user.location?.country || "",
         stateOrProvince: user.location?.stateOrProvince || "",
@@ -191,6 +199,29 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
   const handleRemoveAccreditation = (index: number) => {
     const current = formik.values.professionalAccreditation || []
     formik.setFieldValue("professionalAccreditation", current.filter((_, i) => i !== index))
+  }
+
+  const handleProfilePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+    setUploadingProfilePhoto(true)
+    try {
+      const { publicUrl } = await uploadFileToR2(file, "AVATAR")
+      formik.setFieldValue("profilePicUrl", publicUrl)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : dict.notifications.updateFailed.defaultMessage
+      openNotification("error", dict.notifications.updateFailed.title, { message: errorMessage })
+    } finally {
+      setUploadingProfilePhoto(false)
+    }
+  }
+
+  const handleAddExperience: React.ComponentProps<typeof ProfessionalExperienceDialog>["onSubmit"] = async (input) => {
+    await addProfessionalExperience({ variables: { input } })
+    openNotification("success", dict.profile.experience.createSuccessTitle, {
+      message: dict.profile.experience.createSuccessMessage,
+    })
   }
 
   // Initialise les menus déroulants de localisation avec les données de l'utilisateur
@@ -310,48 +341,87 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>{children}</DrawerTrigger>
-      <DrawerContent className="items-center px-4">
-        <form className="max-h-[80vh] overflow-y-auto" onSubmit={formik.handleSubmit}>
-          <DrawerHeader className="px-0">
-            <DrawerTitle>{dict.button.edit}</DrawerTitle>
-            <DrawerDescription>
-              {dict.updateProfile.description}
-            </DrawerDescription>
+      <DrawerContent className="max-h-[92vh]">
+        <form onSubmit={formik.handleSubmit}>
+          <DrawerHeader className="border-b border-border px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <button type="button" className="text-[15px] font-medium text-muted-foreground" onClick={() => setOpen(false)}>
+                {dict.button.cancel}
+              </button>
+              <DrawerTitle className="text-center text-[17px]">{dict.updateProfile.title}</DrawerTitle>
+              <button
+                type="button"
+                className="text-[15px] font-semibold text-primary disabled:opacity-50"
+                disabled={isLoading || !formik.dirty}
+                onClick={() => formik.submitForm()}
+              >
+                {dict.button.save}
+              </button>
+            </div>
+            <DrawerDescription className="sr-only">{dict.updateProfile.description}</DrawerDescription>
           </DrawerHeader>
-          <div className="grid gap-4 py-4 ">
+          <div className="max-h-[72vh] overflow-y-auto px-4 py-4">
+            <div className="mb-5 flex items-center gap-3.5">
+              <label className="relative shrink-0 cursor-pointer">
+                <Avatar shape={user.userType === UserTypeGQL.LEGAL_ENTITY ? "establishment" : "person"} className="size-[66px]">
+                  <AvatarImage src={formik.values.profilePicUrl || user.profilePicUrl} alt={getUserDisplayName(user)} />
+                  <AvatarFallback className="text-xl">{getUserInitials(user)}</AvatarFallback>
+                </Avatar>
+                <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border-[2.5px] border-card bg-primary text-primary-foreground">
+                  {uploadingProfilePhoto ? <Loader2 className="size-3 animate-spin" /> : <Camera className="size-3" strokeWidth={2.5} />}
+                </span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/png, image/jpeg"
+                  disabled={uploadingProfilePhoto}
+                  onChange={handleProfilePhotoChange}
+                />
+              </label>
+              <div className="min-w-0">
+                <p className="text-[14.5px] font-semibold">{dict.updateProfile.profilePhotoTitle}</p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{dict.updateProfile.profilePhotoDescription}</p>
+              </div>
+            </div>
+            <div className="grid gap-4">
             {user.userType === UserTypeGQL.INDIVIDUAL ? (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="firstName">{dict.register.firstNameLabel}</Label>
-                    <Input id="firstName" {...formik.getFieldProps("firstName")} />
+                    <Input id="firstName" className="h-[46px] rounded-[10px]" {...formik.getFieldProps("firstName")} />
                     {formik.touched.firstName && formik.errors.firstName && <p className="text-destructive text-xs">{formik.errors.firstName}</p>}
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="lastName">{dict.register.lastNameLabel}</Label>
-                    <Input id="lastName" {...formik.getFieldProps("lastName")} />
+                    <Input id="lastName" className="h-[46px] rounded-[10px]" {...formik.getFieldProps("lastName")} />
                     {formik.touched.lastName && formik.errors.lastName && <p className="text-destructive text-xs">{formik.errors.lastName}</p>}
                   </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="professionalTitle">{dict.register.professionalTitleLabel}</Label>
-                  <Input id="professionalTitle" {...formik.getFieldProps("professionalTitle")} />
+                  <Input id="professionalTitle" className="h-[46px] rounded-[10px]" {...formik.getFieldProps("professionalTitle")} />
                 </div>
               </>
             ) : (
               <div className="grid gap-2">
                 <Label htmlFor="entityName">{dict.register.entityNameLabel}</Label>
-                <Input id="entityName" {...formik.getFieldProps("entityName")} />
+                <Input id="entityName" className="h-[46px] rounded-[10px]" {...formik.getFieldProps("entityName")} />
                 {formik.touched.entityName && formik.errors.entityName && <p className="text-destructive text-xs">{formik.errors.entityName}</p>}
               </div>
             )}
             <div className="grid gap-2">
-              <Label htmlFor="bio">{dict.register.bioLabel}</Label>
-              <Textarea id="bio" {...formik.getFieldProps("bio")} />
+              <div className="flex items-baseline justify-between gap-3">
+                <Label htmlFor="bio">{dict.profile.tabs.about}</Label>
+                <span className="font-mono text-[11.5px] text-muted-foreground">
+                  {(formik.values.bio || "").length} / 600
+                </span>
+              </div>
+              <Textarea id="bio" className="min-h-20 rounded-[10px]" maxLength={600} {...formik.getFieldProps("bio")} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="websiteUrl">{dict.register.websiteUrlLabel}</Label>
-              <Input id="websiteUrl" type="url" {...formik.getFieldProps("websiteUrl")} />
+              <Input id="websiteUrl" className="h-[46px] rounded-[10px]" type="url" {...formik.getFieldProps("websiteUrl")} />
               {formik.touched.websiteUrl && formik.errors.websiteUrl && <p className="text-destructive text-xs">{formik.errors.websiteUrl}</p>}
             </div>
             <AccreditationSection
@@ -381,9 +451,20 @@ export default function UpdateProfileDialog({ children, user }: UpdateProfileDia
                 {cityTouched && cityError && <p className="text-destructive text-xs">{cityError}</p>}
               </div>
             </div>
+            {user.userType === UserTypeGQL.INDIVIDUAL && (
+              <ProfessionalExperienceDialog loading={addingExperience} onSubmit={handleAddExperience}>
+                <button type="button" className="mt-1 flex w-full items-center gap-3 border-t border-border pt-4 text-left">
+                  <span className="flex size-[34px] shrink-0 items-center justify-center rounded-[10px] bg-primary-50 text-primary dark:bg-primary-950">
+                    <Plus className="size-4" strokeWidth={2.2} />
+                  </span>
+                  <span className="text-[14.5px] font-semibold text-primary">{dict.profile.experience.addButton}</span>
+                </button>
+              </ProfessionalExperienceDialog>
+            )}
+            </div>
           </div>
           <DrawerFooter className="px-0">
-            <div className="flex gap-2 w-full">
+            <div className="hidden gap-2 w-full">
               <Button className="flex-1" type="button" variant="outline" onClick={() => setOpen(false)}>{dict.button.cancel}</Button>
               <Button className="flex-1" type="submit" disabled={isLoading || !formik.dirty}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

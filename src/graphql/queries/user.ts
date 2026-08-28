@@ -201,6 +201,59 @@ export const buildUpdateMyEmailMutation = (meta?: { fields?: string }) => {
     }
   `;
 };
+
+export const PROFESSIONAL_EXPERIENCE_FIELDS = `
+  id
+  userId
+  title
+  organizationName
+  employmentType
+  location
+  startDate
+  endDate
+  isCurrent
+  description
+  createdAt
+  updatedAt
+`;
+
+export const buildGetProfessionalExperiencesQuery = () => {
+  return gql`
+    query GetProfessionalExperiences($userId: ID!) {
+      getProfessionalExperiences(userId: $userId) {
+        ${PROFESSIONAL_EXPERIENCE_FIELDS}
+      }
+    }
+  `;
+};
+
+export const buildAddProfessionalExperienceMutation = () => {
+  return gql`
+    mutation AddProfessionalExperience($input: CreateProfessionalExperienceInput!) {
+      addProfessionalExperience(input: $input) {
+        ${PROFESSIONAL_EXPERIENCE_FIELDS}
+      }
+    }
+  `;
+};
+
+export const buildUpdateProfessionalExperienceMutation = () => {
+  return gql`
+    mutation UpdateProfessionalExperience($id: ID!, $input: UpdateProfessionalExperienceInput!) {
+      updateProfessionalExperience(id: $id, input: $input) {
+        ${PROFESSIONAL_EXPERIENCE_FIELDS}
+      }
+    }
+  `;
+};
+
+export const buildRemoveProfessionalExperienceMutation = () => {
+  return gql`
+    mutation RemoveProfessionalExperience($id: ID!) {
+      removeProfessionalExperience(id: $id)
+    }
+  `;
+};
 // =============================================================================
 // == FOLLOW QUERIES & MUTATIONS
 // =============================================================================
@@ -447,5 +500,3 @@ export const buildGetFollowingCountQuery = () => {
     }
   `;
 };
-
-

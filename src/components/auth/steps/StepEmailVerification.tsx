@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useDictionary } from "@/hooks/use-dictionary";
 import { useNotification } from "@/hooks/use-notification";
-import { MailCheck, Pencil } from 'lucide-react';
+import { Info, MailCheck, Pencil } from 'lucide-react';
 import { sendVerificationEmail } from '@/graphql/betterAuth';
 import { checkEmailVerified } from '@/app/actions/auth-status';
 import {
@@ -79,9 +79,15 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
     }
   };
 
+  const resendLabel = isResending
+    ? dict.button.sending
+    : resendCooldown > 0
+      ? `${dict.button.resend} (${resendCooldown}s)`
+      : dict.button.resend;
+
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-6 text-center">
-      <div className="flex size-16 items-center justify-center rounded-full bg-primary-100 text-primary">
+      <div className="flex size-16 items-center justify-center rounded-card bg-primary-50 text-primary dark:bg-primary-950 dark:text-primary-300">
         <MailCheck className="size-8" />
       </div>
       <div className="flex flex-col gap-2">
@@ -91,12 +97,14 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
         }} />
       </div>
 
-      <Button onClick={handleResendEmail} disabled={isResending || resendCooldown > 0} size="xl">
-        {isResending
-          ? dict.button.sending
-          : resendCooldown > 0
-            ? `${dict.button.resend} (${resendCooldown}s)`
-            : dict.button.resend}
+      <Button
+        onClick={handleResendEmail}
+        disabled={isResending || resendCooldown > 0}
+        size="xl"
+        variant={resendCooldown > 0 ? "outline" : "default"}
+        className={resendCooldown > 0 ? "opacity-60" : undefined}
+      >
+        {resendLabel}
       </Button>
 
       <Dialog open={isChangeEmailOpen} onOpenChange={setIsChangeEmailOpen}>
@@ -115,7 +123,10 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({ em
         </DialogContent>
       </Dialog>
 
-      <p className="text-xs text-muted-foreground">{dict.register.verifyEmailSpam}</p>
+      <div className="flex items-start gap-3 rounded-card bg-muted p-4 text-left">
+        <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <p className="text-xs leading-5 text-muted-foreground">{dict.register.verifyEmailSpam}</p>
+      </div>
 
       <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
         {dict.button.back}

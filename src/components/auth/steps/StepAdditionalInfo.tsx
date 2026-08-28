@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/Combobox";
-import { Trash2, Plus, File as FileIcon } from "lucide-react";
+import { Trash2, Plus, File as FileIcon, Image as ImageIcon, MapPin, UploadCloud } from "lucide-react";
 import Image from "next/image";
 import { StepProps, AccreditationPreviewItem } from "../types";
 import { useDictionary } from "@/hooks/use-dictionary";
@@ -36,42 +36,61 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
     const countryTouched = getIn(formik.touched, "location.country");
     const cityError = getIn(formik.errors, "location.city");
     const cityTouched = getIn(formik.touched, "location.city");
+    const initials = useMemo(() => {
+        const first = formik.values.firstName?.[0] ?? formik.values.entityName?.[0] ?? "P";
+        const last = formik.values.lastName?.[0] ?? "";
+        return `${first}${last}`.toUpperCase();
+    }, [formik.values.entityName, formik.values.firstName, formik.values.lastName]);
 
     return (
-        <div className="w-full flex flex-col gap-6 xs:max-w-4/5 sm:max-w-3/5 md:max-w-5/10">
-            {/* Profile Picture */}
-            <div className="grid gap-2">
-                <Label>{dict.register.uploadProfilePic}</Label>
-                <div className="flex justify-center items-center border-2 border-border border-dashed h-40 w-full rounded-md">
-                    {profilePicPreview ? (
-                        <div className="relative">
-                            <Image src={profilePicPreview} alt="Profile preview" width={32} height={32} className="h-32 w-32 rounded-full object-cover relative" />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="cursor-pointer absolute top-2 right-2 h-6 w-6 bg-background/80 rounded-full"
-                                onClick={() => {
-                                    setProfilePicPreview(null);
-                                    formik.setFieldValue("profilePicFile", null);
-                                }}
-                            >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col justify-center items-center gap-5">
-                            <div className="flex flex-col justify-center items-center gap-1">
-                                <Label className="text-sm font-medium">{dict.register.uploadProfilePic}</Label>
-                                <Label className="text-xs text-muted-foreground font-medium">{dict.register.uploadProfilePic}</Label>
+        <div className="flex w-full flex-col gap-5">
+            <section className="overflow-hidden rounded-card border border-border bg-card shadow-xs">
+                <div className="relative">
+                    <label
+                        htmlFor="coverPicFile"
+                        className="relative flex h-28 cursor-pointer items-center justify-center overflow-hidden border-b border-border bg-muted"
+                    >
+                        {coverPicPreview ? (
+                            <Image src={coverPicPreview} alt="Cover preview" fill className="object-cover" />
+                        ) : (
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                <ImageIcon className="size-4" />
+                                {dict.register.uploadCoverPic}
                             </div>
-                            <label htmlFor="profilePicFile">
-                                <div className="rounded-sm bg-secondary py-1 px-3 cursor-pointer hover:bg-secondary/80 transition-colors">
-                                    <span className="text-xs font-medium">Upload</span>
-                                </div>
-                            </label>
-                        </div>
+                        )}
+                        <span className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent" />
+                        <span className="absolute right-3 top-3 rounded-button border border-white/50 bg-white/85 px-3 py-1.5 text-xs font-semibold text-neutral-800 shadow-xs backdrop-blur-sm dark:border-white/10 dark:bg-neutral-950/70 dark:text-white">
+                            {coverPicPreview ? dict.button.edit : "Upload"}
+                        </span>
+                    </label>
+                    {coverPicPreview && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-3 bottom-3 size-8 cursor-pointer rounded-full bg-black/55 text-white hover:bg-black/70 hover:text-white"
+                            onClick={() => {
+                                setCoverPicPreview(null);
+                                formik.setFieldValue("coverPicFile", null);
+                            }}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
                     )}
+                    <div className="absolute -bottom-9 left-4">
+                        <label htmlFor="profilePicFile" className="relative block size-[72px] cursor-pointer">
+                            {profilePicPreview ? (
+                                <Image src={profilePicPreview} alt="Profile preview" fill className="rounded-full border-[3px] border-card object-cover shadow-xs" />
+                            ) : (
+                                <span className="flex size-[72px] items-center justify-center rounded-full border-[3px] border-card bg-gradient-to-br from-secondary-200 to-primary-200 font-heading text-2xl font-semibold text-primary-900 shadow-xs dark:from-secondary-900 dark:to-primary-950 dark:text-primary-100">
+                                    {initials}
+                                </span>
+                            )}
+                            <span className="absolute -right-1 bottom-0 flex size-7 items-center justify-center rounded-full border-[3px] border-card bg-primary text-primary-foreground">
+                                <Plus className="size-3.5" />
+                            </span>
+                        </label>
+                    </div>
                 </div>
                 <Input
                     id="profilePicFile"
@@ -86,99 +105,101 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                     }}
                 />
                 {formik.touched.profilePicFile && formik.errors.profilePicFile && <p className="text-destructive text-xs">{formik.errors.profilePicFile}</p>}
-            </div>
-
-            {/* Cover Picture */}
-            <div className="grid gap-2">
-                <Label htmlFor="coverPicFile">{dict.register.uploadCoverPic}</Label>
-                <div className="flex justify-center items-center border-2 border-border border-dashed h-40 w-full rounded-md">
-                    {coverPicPreview ? (
-                        <div className="relative w-full h-40">
-                            <Image src={coverPicPreview} alt="Cover preview" fill className="h-40 w-full rounded-md object-cover relative" />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="cursor-pointer absolute top-2 right-2 h-6 w-6 bg-background/80 rounded-full"
-                                onClick={() => {
-                                    setCoverPicPreview(null);
-                                    formik.setFieldValue("coverPicFile", null);
-                                }}
-                            >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col justify-center items-center gap-5">
-                            <div className="flex flex-col justify-center items-center gap-1">
-                                <Label className="text-sm font-medium">{dict.register.uploadCoverPic}</Label>
-                                <Label className="text-xs text-muted-foreground font-medium">{dict.register.uploadCoverPic}</Label>
-                            </div>
-                            <label htmlFor="coverPicFile">
-                                <div className="rounded-sm bg-secondary py-1 px-3 cursor-pointer hover:bg-secondary/80 transition-colors">
-                                    <span className="text-xs font-medium">Upload</span>
-                                </div>
-                            </label>
-                        </div>
-                    )}
-                </div>
                 <Input className="hidden" id="coverPicFile" name="coverPicFile" type="file" accept="image/png, image/jpeg" onChange={(event) => {
                     const file = event.currentTarget.files?.[0];
                     formik.setFieldValue("coverPicFile", file);
                     setCoverPicPreview(file ? URL.createObjectURL(file) : null);
                 }} />
                 {formik.touched.coverPicFile && formik.errors.coverPicFile && <p className="text-destructive text-xs">{formik.errors.coverPicFile}</p>}
-            </div>
+                <div className="px-4 pb-4 pt-12">
+                    <p className="font-heading text-lg font-semibold tracking-tight">{dict.register.stepProfileTitle}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{dict.register.stepProfileDescription}</p>
+                </div>
+            </section>
 
-            {/* Accreditations */}
-            <div className="grid gap-2">
-                <Label >{dict.register.professionalAccreditations}</Label>
-                <div className="flex justify-center items-center border-2 border-border border-dashed h-40 w-full rounded-md">
-                    {accreditationsPreview.length > 0 ?
-                        (
-                            <div className="flex px-2 flex-col justify-center gap-5 items-center w-full h-full">
-                                <div className="flex flex-col justify-center items-start gap-2">
-                                    {accreditationsPreview.map((accreditation, index) => (
-                                        <div key={index} className="flex justify-center items-center gap-2 relative">
-                                            <FileIcon className="w-7 h-7  p-1 bg-secondary rounded-sm relative" />
-                                            <span className="text-sm">{accreditation.name}</span>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className=" cursor-pointer h-6 w-6 bg-background/80 rounded-full"
-                                                onClick={() => {
-                                                    formik.setFieldValue('accreditationsFile', formik.values.accreditationsFile.filter((_, i) => i !== index))
-                                                    setAccreditationsPreview(prev => prev.filter((_, i) => i !== index))
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className={accreditationsPreview.length < 2 ? "block" : "hidden"}>
-                                    <label htmlFor="accreditations-input">
-                                        <div className="rounded-sm bg-secondary p-1 cursor-pointer hover:bg-secondary/80 transition-colors">
-                                            <Plus />
-                                        </div>
-                                    </label>
-                                </div>
+            <section className="grid gap-3">
+                <div className="grid gap-1.5">
+                    <Label htmlFor="city">{dict.register.cityLabel}</Label>
+                    <div className="relative">
+                        <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            id="city"
+                            name="location.city"
+                            className="pl-9"
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            value={formik.values.location?.city}
+                        />
+                    </div>
+                    {cityTouched && cityError && (
+                        <p className="text-destructive text-xs">{cityError}</p>
+                    )}
+                </div>
+                <div className="grid gap-1.5">
+                    <Label htmlFor="country">{dict.register.countryLabel}</Label>
+                    <Combobox<Country>
+                        id="country"
+                        name="location.country"
+                        data={countries}
+                        error={countryError}
+                        touched={countryTouched}
+                        onBlur={formik.handleBlur}
+                        value={formik.values.location?.country}
+                        onChange={(country) => {
+                            formik.setFieldValue('location.country', country.name);
+                        }}
+                        placeholder={dict.combobox.selectCountry}
+                        searchable={false}
+                    />
+                    {countryTouched && countryError && (
+                        <p className="text-destructive text-xs">{countryError}</p>
+                    )}
+                </div>
+            </section>
+
+            <section className="grid gap-3">
+                <div className="flex items-baseline justify-between gap-3">
+                    <Label>{dict.register.professionalAccreditations}</Label>
+                    <span className="text-right text-xs text-muted-foreground">PDF/JPG/PNG</span>
+                </div>
+                <div className="grid gap-2">
+                    {accreditationsPreview.map((accreditation, index) => (
+                        <div key={`${accreditation.name}-${index}`} className="flex items-center gap-3 rounded-card border border-border bg-card px-3 py-2.5">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-field bg-secondary-100 text-secondary-700 dark:bg-secondary-950 dark:text-secondary-300">
+                                <FileIcon className="size-4" />
                             </div>
-                        )
-                        : (
-                            <div className="flex flex-col justify-center items-center gap-5">
-                                <div className="flex flex-col justify-center items-center gap-1">
-                                    <Label className="text-sm font-medium">{dict.register.uploadAccreditations}</Label>
-                                    <Label className="text-xs text-muted-foreground font-medium">{dict.register.uploadAccreditations}</Label>
-                                </div>
-                                <label htmlFor="accreditations-input">
-                                    <div className="rounded-sm bg-secondary py-1 px-3 cursor-pointer hover:bg-secondary/80 transition-colors">
-                                        <span className="text-xs font-medium">Upload</span>
-                                    </div>
-                                </label>
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold">{accreditation.name}</p>
+                                <p className="text-xs text-muted-foreground">{accreditation.type || dict.common.document}</p>
                             </div>
-                        )}
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 rounded-full text-muted-foreground hover:text-destructive"
+                                onClick={() => {
+                                    formik.setFieldValue('accreditationsFile', formik.values.accreditationsFile.filter((_, i) => i !== index))
+                                    setAccreditationsPreview(prev => prev.filter((_, i) => i !== index))
+                                }}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                    {accreditationsPreview.length < 2 && (
+                        <label
+                            htmlFor="accreditations-input"
+                            className="flex cursor-pointer items-center gap-3 rounded-card border border-dashed border-border bg-card px-3 py-3 transition-colors hover:border-primary/50 hover:bg-primary-50/50 dark:hover:bg-primary-950/40"
+                        >
+                            <span className="flex size-9 shrink-0 items-center justify-center rounded-field bg-muted text-muted-foreground">
+                                <UploadCloud className="size-4" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-semibold">{dict.register.uploadAccreditations}</span>
+                                <span className="block text-xs text-muted-foreground">PDF, JPG, PNG</span>
+                            </span>
+                        </label>
+                    )}
                     <Input
                         id="accreditations-input"
                         name="accreditationsFile"
@@ -198,48 +219,7 @@ export const StepAdditionalInfo: React.FC<StepAdditionalInfoProps> = ({
                     />
                 </div>
                 {formik.touched.accreditationsFile && formik.errors.accreditationsFile && <p className="text-destructive text-xs">{formik.errors.accreditationsFile.toString()}</p>}
-            </div>
-
-            {/* Location — kept deliberately light (city + country only, no
-                state/province or full address): this step is optional, and
-                the mockup shows a single "Ville d'exercice" field. Country
-                stays a searchable Combobox since the API requires it the
-                moment a location is sent at all; city is free text rather
-                than a cascading picker to avoid forcing state selection
-                first for a field the mockup treats as one simple input. */}
-            <div className="grid gap-1 w-full">
-                <Label htmlFor="city">{dict.register.cityLabel}</Label>
-                <Input
-                    id="city"
-                    name="location.city"
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    value={formik.values.location?.city}
-                />
-                {cityTouched && cityError && (
-                    <p className="text-destructive text-xs">{cityError}</p>
-                )}
-            </div>
-            <div className="grid gap-1 w-full">
-                <Label htmlFor="country">{dict.register.countryLabel}</Label>
-                <Combobox<Country>
-                    id="country"
-                    name="location.country"
-                    data={countries}
-                    error={countryError}
-                    touched={countryTouched}
-                    onBlur={formik.handleBlur}
-                    value={formik.values.location?.country}
-                    onChange={(country) => {
-                        formik.setFieldValue('location.country', country.name);
-                    }}
-                    placeholder={dict.combobox.selectCountry}
-                    searchable={false}
-                />
-                {countryTouched && countryError && (
-                    <p className="text-destructive text-xs">{countryError}</p>
-                )}
-            </div>
+            </section>
         </div>
     );
 };

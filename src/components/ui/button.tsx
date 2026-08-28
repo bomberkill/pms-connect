@@ -10,9 +10,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-all duration-200",
+          "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         secondary:
@@ -22,14 +22,14 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline rounded-none",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        default: "h-11 px-4 py-2 has-[>svg]:px-3 md:h-9",
         sm: "h-9 gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 px-6 has-[>svg]:px-4",
-        icon: "size-9 rounded-button",
+        lg: "h-11 px-6 has-[>svg]:px-4 md:h-10",
+        icon: "size-11 rounded-button md:size-9",
         /* 48px, full-width — reserved for auth screens (login, register,
            reset password): the one primary action on the page. Every other
            in-product action stays 36-44px (default/sm/lg/icon above). */
-        xl: "h-12 w-full px-6 text-base",
+        xl: "h-12 w-full px-6 text-[15px]",
       },
     },
     defaultVariants: {

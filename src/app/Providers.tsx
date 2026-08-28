@@ -6,6 +6,7 @@ import DictionaryProvider from "@/components/DictionaryProvider";
 import { ThemeProvider } from "next-themes";
 import { useFcmToken } from "@/hooks/useData/index";
 import WebSocketReconnector from "@/components/WebSocketReconnector";
+import OfflineStatusBanner from "@/components/OfflineStatusBanner";
 
 // type Dictionary = Awaited<ReturnType<typeof getDictionary>>;
 
@@ -35,6 +36,7 @@ export default function Providers({
         >
           <FcmTokenManager />
           <WebSocketReconnector />
+          <OfflineStatusBanner />
           {children}
         </ThemeProvider>
       </DictionaryProvider>
